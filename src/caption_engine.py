@@ -9,7 +9,7 @@ Guarantees captions NEVER spill outside the screen borders.
 
 import os
 import math
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from PIL import Image, ImageDraw, ImageFont
 
 FONT_CANDIDATES = [
@@ -42,15 +42,15 @@ def group_words_into_phrases(
     word_timings: List[Dict[str, Any]],
     max_words_per_phrase: int = 2,
     max_chars_per_phrase: int = 15,
-    words_per_phrase: int = None
+    words_per_phrase: Optional[int] = None
 ) -> List[Dict[str, Any]]:
-    if words_per_phrase is not None:
-        max_words_per_phrase = words_per_phrase
     """
     Intelligently groups words into punchy 1-2 word phrases.
     Ensures long technical words (e.g. 'ARCHITECTURES', 'DEVELOPMENT')
     get their own focused frame so they NEVER clip the edges.
     """
+    if words_per_phrase is not None:
+        max_words_per_phrase = words_per_phrase
     phrases = []
     current_chunk = []
     current_chars = 0

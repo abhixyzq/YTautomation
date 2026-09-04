@@ -14,7 +14,7 @@ import os
 import sys
 import math
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import numpy as np
 import imageio_ffmpeg
