@@ -1,0 +1,21 @@
+# ==========================================
+# CRITICAL SECURITY: NEVER COMMIT SECRETS
+# ==========================================
+.env
+client_secret.json
+token.json
+
+# Cache & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+
+# Heavy Output and Video Caches
+output/
+temp/
+assets/broll_cache/
+*.mp4
+*.mp3

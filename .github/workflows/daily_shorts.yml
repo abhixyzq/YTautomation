@@ -1,0 +1,62 @@
+name: 🚀 Autonomous Daily Tech Shorts
+
+on:
+  schedule:
+    # 2 times daily (UTC):
+    # 03:30 UTC = 9:00 AM IST (Morning Tech Drop)
+    # 12:30 UTC = 6:00 PM IST (Evening Tech Drop)
+    - cron: '30 3 * * *'
+    - cron: '30 12 * * *'
+  workflow_dispatch: # Allows manual 1-click trigger from GitHub Actions UI
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 📦 Install System Dependencies (FFmpeg & Fonts)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core fonts-liberation
+
+      - name: 📦 Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🔐 Securely Inject Secrets & OAuth Credentials
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          CLIENT_SECRET_JSON: ${{ secrets.CLIENT_SECRET_JSON }}
+          TOKEN_JSON: ${{ secrets.TOKEN_JSON }}
+        run: |
+          echo "GEMINI_API_KEY=$GEMINI_API_KEY" >> .env
+          echo "PEXELS_API_KEY=$PEXELS_API_KEY" >> .env
+          echo "VOICE_NAME=en-US-ChristopherNeural" >> .env
+          echo "VOICE_RATE=+5%" >> .env
+          echo "VOICE_PITCH=+0Hz" >> .env
+          echo "LANGUAGE=ENG" >> .env
+          echo "PUBLISH_MODE=PUBLIC" >> .env
+          echo "YOUTUBE_CLIENT_SECRET_FILE=client_secret.json" >> .env
+
+          echo "$CLIENT_SECRET_JSON" > client_secret.json
+          echo "$TOKEN_JSON" > token.json
+
+      - name: 🎬 Render 4K Documentary & Auto-Publish to YouTube
+        run: |
+          python main.py --publish
+
+      - name: 🧹 Clean Up Ephemeral Secrets
+        if: always()
+        run: |
+          rm -f .env client_secret.json token.json
