@@ -11,65 +11,111 @@ from typing import Dict, Any
 from dotenv import load_dotenv
 
 load_dotenv()
-
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """
-You are an elite YouTube Strategist and Lead Tech Architect. 
-Your task is to convert a raw trending tech or AI news story into a viral, high-retention 35-45 second YouTube Shorts script.
+import sys
+import random
 
-RULES:
-1. WORD COUNT: Strictly between 95 and 125 words total (speaks in ~35-40 seconds).
-2. TONE: Urgent, authoritative, insider tech documentary tone. NO CHEESY INTROS ("Hey guys", "Welcome back"). Start immediately with the bombshell hook.
-3. STRUCTURE:
-   - HOOK (first 3 seconds): A shocking, curiosity-inducing statement.
-   - PROBLEM / CONTEXT (5-15s): Why this matters to developers and the tech world.
-   - THE BREAKTHROUGH (15-30s): The core technical innovation or architectural shift.
-   - CALL TO ACTION (30-40s): A provocative question to make viewers debate in the comments (boosts YouTube algorithm).
-4. OUTPUT FORMAT: Output valid JSON only, with no markdown code blocks:
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+CANDIDATE_MODELS = [
+    "gemini-flash-latest",
+    "gemini-flash-lite-latest",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash"
+]
+
+SYSTEM_PROMPT = """
+You are an elite YouTube Growth Hacker, Viral Copywriter, and Lead Tech Architect (like Fireship + Vox).
+Your task is to convert a raw trending tech or AI news story into an addictive, ultra-viral 35-42 second YouTube Shorts script.
+
+THE #1 GOAL IS 85%+ RETENTION AND UNDER 20% SWIPE-AWAY RATE.
+
+STRICT HOOK RULES (FIRST 3 SECONDS):
+- The FIRST SENTENCE MUST be a psychological curiosity bomb that freezes the viewer's thumb immediately.
+- NEVER use generic filler: "Hey guys", "In today's news", "Wait did you see", "Check this out", "Software is changing".
+- Use proven viral hook archetypes:
+  * Controversy/Shock: "Google just got exposed doing something completely unhinged with their new AI..."
+  * Secret/Leak: "OpenAI quietly dropped a new architecture, and developers are panicking..."
+  * Warning/Urgency: "If you write code for a living, you have exactly 6 months to prepare for this..."
+  * Injustice/Money: "This new AI is secretly charging users 21% more for the exact same thing..."
+
+STRUCTURE:
+1. HOOK (0-3s): The bombshell revelation or curiosity gap.
+2. THE EVIDENCE (3-15s): What actually happened, cited with punchy facts and numbers.
+3. UNDER THE HOOD (15-28s): The technical engineering reason or architectural mechanism explained simply.
+4. THE IMPLICATION (28-36s): What this means for the future of tech, jobs, or privacy.
+5. COMMENT BAIT CTA (36-40s): A highly polarizing debate question that forces viewers into the comments.
+
+LENGTH: 95 to 120 words total (approx 36 seconds at +5% speed).
+
+OUTPUT FORMAT: Strict valid JSON only, no markdown backticks:
 {
-  "title": "Viral 50-char Title with hashtags #Shorts #Tech",
-  "hook": "First sentence hook",
-  "body": "Core explanation sentences",
-  "cta": "Final question call to action",
-  "full_script": "Complete smooth voiceover script without stage directions or bracketed cues",
-  "tags": ["AI", "TechNews", "WebDev", "Coding", "OpenAI"],
-  "visual_keywords": ["artificial intelligence", "coding server", "cyberpunk tech"]
+  "title": "Shocking High-CTR 50-char Title 🚨 #AI #Tech #Shorts",
+  "hook": "First thumb-stopping sentence",
+  "body": "Fast-paced core explanation",
+  "cta": "Polarizing debate question",
+  "full_script": "Complete smooth voiceover script without cues or emojis",
+  "tags": ["AI", "TechNews", "OpenAI", "Coding", "SoftwareEngineering", "SiliconValley"],
+  "visual_keywords": ["cyberpunk server", "artificial intelligence code", "matrix data", "robotics factory"]
 }
 """
 
 
 def generate_fallback_script(story: Dict[str, str]) -> Dict[str, Any]:
-    """Fallback generator when GEMINI_API_KEY is not configured yet."""
+    """Smart randomized viral fallback generator when Gemini API is unreachable."""
     title = story.get("title", "Massive AI Breakthrough")
+    clean_title = title.replace('"', '').replace("'", "").strip()
     
-    clean_title = title.replace('"', '').replace("'", "")
+    # Diverse high-retention hook variations
+    hook_templates = [
+        f"Nobody is talking about this, but {clean_title} just changed everything.",
+        f"Engineers are in pure disbelief right now over {clean_title}.",
+        f"This latest AI discovery feels completely illegal to know: {clean_title}.",
+        f"If you care about where technology is heading, watch this: {clean_title}."
+    ]
     
-    hook = f"Wait, did you see what just happened in tech? {clean_title}."
-    body = (
-        f"This development is sending shockwaves across the developer community. "
-        f"Under the hood, engineers are redesigning how autonomous systems and modern architectures interact, "
-        f"drastically cutting execution bottlenecks and redefining how we build software."
-    )
-    cta = "Is this the future of engineering, or another overhyped tech wave? Drop your take in the comments below!"
+    body_templates = [
+        f"Under the hood, benchmark results show an unprecedented performance leap that caught the entire industry off guard. "
+        f"Internal architecture reports confirm latency dropped dramatically while autonomous capabilities doubled overnight.",
+        
+        f"Developers dissecting the codebase found a completely new execution protocol that bypasses traditional compute bottlenecks. "
+        f"This isn't just an incremental update; it fundamentally rewrites how autonomous machine systems process real-world data.",
+        
+        f"Tech leaders are scrambling as the data reveals a massive efficiency breakthrough that slashes operational costs by over eighty percent. "
+        f"Early testers report capability jumps that were thought to be years away."
+    ]
     
+    cta_templates = [
+        "Is this the ultimate tech breakthrough, or an existential disaster waiting to happen? Drop your take below!",
+        "Are you using this in your daily workflow, or is it pure hype? Let me know in the comments!",
+        "Will this replace human engineers sooner than we think? Comment below with your perspective!"
+    ]
+    
+    hook = random.choice(hook_templates)
+    body = random.choice(body_templates)
+    cta = random.choice(cta_templates)
     full_script = f"{hook} {body} {cta}"
     
     return {
-        "title": f"{clean_title[:55]} #Shorts #Tech #AI",
+        "title": f"🚨 {clean_title[:50]} #Shorts #Tech #AI",
         "hook": hook,
         "body": body,
         "cta": cta,
         "full_script": full_script,
-        "tags": ["TechNews", "AI", "Coding", "Developers", "Shorts"],
+        "tags": ["TechNews", "AI", "Coding", "MachineLearning", "Shorts", "ViralTech"],
         "visual_keywords": [
             w.lower() for w in clean_title.split() if len(w) > 4
-        ][:3] + ["futuristic technology", "cyberpunk server", "artificial intelligence"]
+        ][:3] + ["cyberpunk server", "futuristic technology", "neural network"]
     }
 
 
 def generate_tech_script(story: Dict[str, str]) -> Dict[str, Any]:
-    """Generate YouTube Shorts script using Gemini 1.5 Flash."""
+    """Generate viral YouTube Shorts script using Gemini API with multi-model cascade."""
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     
     if not api_key:
@@ -79,7 +125,6 @@ def generate_tech_script(story: Dict[str, str]) -> Dict[str, Any]:
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key, transport='rest')
-        model = genai.GenerativeModel("gemini-3.6-flash")
         
         user_prompt = f"""
 Trending Story Title: {story.get('title')}
@@ -87,22 +132,31 @@ Source: {story.get('source')}
 Summary: {story.get('summary')}
 URL: {story.get('url')}
 
-Generate the viral Shorts JSON:
+Generate the ultra-viral high-retention Shorts JSON:
 """
-        response = model.generate_content(
-            f"{SYSTEM_PROMPT}\n\n{user_prompt}",
-            generation_config={"response_mime_type": "application/json"}
-        )
-        
-        raw_text = response.text.strip()
-        data = json.loads(raw_text)
-        
-        # Ensure full_script is constructed properly
-        if "full_script" not in data or not data["full_script"]:
-            data["full_script"] = f"{data.get('hook', '')} {data.get('body', '')} {data.get('cta', '')}".strip()
-            
-        logger.info(f"Generated script via Gemini 1.5 Flash: {data.get('title')}")
-        return data
+        # Try candidate models in order of quota and speed
+        for model_name in CANDIDATE_MODELS:
+            try:
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(
+                    f"{SYSTEM_PROMPT}\n\n{user_prompt}",
+                    generation_config={"response_mime_type": "application/json"}
+                )
+                raw_text = response.text.strip()
+                data = json.loads(raw_text)
+                
+                # Ensure full_script is complete
+                if "full_script" not in data or not data["full_script"]:
+                    data["full_script"] = f"{data.get('hook', '')} {data.get('body', '')} {data.get('cta', '')}".strip()
+                    
+                logger.info(f"Generated viral script via {model_name}: {data.get('title')}")
+                return data
+            except Exception as model_err:
+                logger.warning(f"Model {model_name} failed: {model_err}. Trying next model...")
+                continue
+                
+        logger.warning("All Gemini candidate models failed. Falling back to dynamic template.")
+        return generate_fallback_script(story)
         
     except Exception as e:
         logger.warning(f"Error calling Gemini API: {e}. Falling back to template script.")

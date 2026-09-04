@@ -256,10 +256,14 @@ def build_shorts_video(
         except Exception as e:
             logger.warning(f"Could not load ambient audio: {e}")
 
-    # Whoosh Transition Sound Effects on every scene cut
+    # Whoosh Transition Sound Effects on every scene cut and at 0.0s hook
     whoosh_path = "assets/audio/whoosh.wav"
     if os.path.exists(whoosh_path):
         try:
+            # Opening audio impact to stop scroll immediately
+            intro_whoosh = AudioFileClip(whoosh_path).with_start(0.0).with_volume_scaled(0.35)
+            audio_layers.append(intro_whoosh)
+
             for cut_time in transition_cuts:
                 if cut_time < total_duration - 1.0:
                     w_clip = AudioFileClip(whoosh_path).with_start(cut_time).with_volume_scaled(0.28)
