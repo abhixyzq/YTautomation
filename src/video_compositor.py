@@ -30,7 +30,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.caption_engine import CaptionRenderer, group_words_into_phrases
 from src.broll_downloader import get_curated_broll_clips
-from src.meme_engine import pick_story_theme, get_story_meme_package, render_meme_punchline_frame
+from src.meme_engine import (
+    pick_story_theme, 
+    get_story_meme_package, 
+    prepare_meme_scene_data, 
+    render_cinematic_meme_scene
+)
 from src.script_generator import build_semantic_storyboard
 
 logger = logging.getLogger(__name__)
@@ -102,7 +107,7 @@ class CinematicDocumentaryEngine:
         # Load VideoFileClips for scenes that have broll paths
         for sc in self.scenes:
             path = sc.get("clip_path")
-            if path and os.path.exists(path):
+            if sc.get("visual_type") == "broll" and path and os.path.exists(path):
                 try:
                     sc["clip"] = VideoFileClip(path)
                 except Exception as e:
@@ -138,7 +143,7 @@ class CinematicDocumentaryEngine:
         return vig
 
     def get_scene_frame(self, t: float) -> Image.Image:
-        """Get scaled, non-repeating frame from real 4K footage based on active storyboard scene."""
+        """Get scaled, non-repeating frame from real 4K footage or cinematic meme scene."""
         if not self.scenes:
             # Fallback cyber canvas
             bg = Image.new("RGB", (self.width, self.height), (10, 15, 26))
@@ -156,14 +161,27 @@ class CinematicDocumentaryEngine:
         if t > self.scenes[-1]["end"]:
             active_scene = self.scenes[-1]
 
-        if active_scene.get("clip"):
+        # 1. Full-frame Fireship Meme Scene
+        if active_scene.get("visual_type") == "meme" and active_scene.get("meme_data"):
+            scene_duration = max(active_scene["end"] - active_scene["start"], 1.0)
+            local_t = min(max(t - active_scene["start"], 0.0), scene_duration)
+            return render_cinematic_meme_scene(
+                active_scene["meme_data"],
+                local_t,
+                scene_duration,
+                self.width,
+                self.height,
+                self.font_title
+            )
+
+        # 2. 4K Cinematic B-roll with continuous Ken Burns slow-zoom
+        elif active_scene.get("clip"):
             clip = active_scene["clip"]
             scene_duration = max(active_scene["end"] - active_scene["start"], 1.0)
             local_t = min(max(t - active_scene["start"], 0.0), clip.duration - 0.05)
             raw_frame = clip.get_frame(local_t)
             frame_img = Image.fromarray(raw_frame)
 
-            # Continuous Ken Burns slow-zoom across scene duration
             progress = (t - active_scene["start"]) / scene_duration
             zoom_factor = 1.0 + 0.06 * min(max(progress, 0.0), 1.0)
             target_w = int(self.width * zoom_factor)
@@ -201,10 +219,10 @@ class CinematicDocumentaryEngine:
         draw.rounded_rectangle([70, 130, 70 + badge_w, 185], radius=14, fill=bg_col, outline=border_col, width=2)
         draw.text((96, 142), badge_text, font=self.font_badge, fill=(255, 255, 255))
 
-        # 2. Glassmorphic Headline Box (Top)
+        # 2. Glassmorphic Headline Box (Top) - strictly printable ASCII to guarantee no glyph boxes
         import re
         clean_headline = re.sub(r'#\w+', '', story_title)
-        clean_headline = re.sub(r'[^\w\s\-\:\'\,\.\!\?]', '', clean_headline).strip()
+        clean_headline = re.sub(r'[^\x20-\x7E]', '', clean_headline).strip()
         headline = " ".join(clean_headline.split())
         words = headline.split()
         lines = []
@@ -236,52 +254,112 @@ class CinematicDocumentaryEngine:
         return overlay
 
 
+def align_storyboard_to_word_timings(
+    storyboard: List[Dict[str, Any]], 
+    word_timings: List[Dict[str, Any]], 
+    total_duration: float
+) -> List[Dict[str, Any]]:
+    """
+    Intelligently synchronizes each storyboard scene's start & end timestamp
+    to the exact spoken words from the voiceover.
+    """
+    if not word_timings or not storyboard:
+        dur = total_duration / max(len(storyboard), 1)
+        for i, sc in enumerate(storyboard):
+            sc["start"] = round(i * dur, 2)
+            sc["end"] = round((i + 1) * dur, 2)
+        return storyboard
+
+    num_scenes = len(storyboard)
+    word_idx = 0
+    total_words = len(word_timings)
+
+    for i, sc in enumerate(storyboard):
+        part_text = sc.get("narration_part", "")
+        part_words = [w for w in part_text.split() if w]
+        advance = max(len(part_words), 1)
+        target_idx = min(word_idx + advance - 1, total_words - 1)
+        
+        sc_start = word_timings[word_idx]["start"] if word_idx < total_words else (i * total_duration / num_scenes)
+        sc_end = word_timings[target_idx]["end"] if target_idx < total_words else ((i + 1) * total_duration / num_scenes)
+        word_idx = min(target_idx + 1, total_words - 1)
+
+        sc["start"] = round(sc_start, 2)
+        sc["end"] = round(sc_end, 2)
+
+    # Ensure contiguous boundaries across the timeline
+    for i in range(len(storyboard)):
+        if i == 0:
+            storyboard[i]["start"] = 0.0
+        else:
+            storyboard[i]["start"] = storyboard[i - 1]["end"]
+        if i == len(storyboard) - 1:
+            storyboard[i]["end"] = round(total_duration, 2)
+
+    return storyboard
+
+
 def build_shorts_video(
     story: Dict[str, Any],
     voice_data: Dict[str, Any],
     output_path: str = "output/tech_short.mp4",
     fps: int = FPS
 ) -> str:
-    """Build and export 1080x1920 YouTube Short with 100% real 4K documentary footage & zero repeat."""
+    """Build and export 1080x1920 YouTube Short with 100% real 4K documentary footage & synced Fireship meme cuts."""
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     audio_path = voice_data["audio_path"]
     total_duration = voice_data["duration"]
     word_timings = voice_data["word_timings"]
 
     # -----------------------------------------------------------------
-    # STORYBOARD SCENE SETUP: 1-to-1 Narrative Matching, Zero-Repeat 4K Footage
+    # STORYBOARD SCENE SETUP: Audio-Aligned Dialogue Cuts & Contextual Memes
     # -----------------------------------------------------------------
     storyboard = story.get("storyboard")
     if not storyboard or not isinstance(storyboard, list) or len(storyboard) < 4:
         storyboard = build_semantic_storyboard(story.get("title", ""), story.get("full_script", ""))
 
-    num_scenes = len(storyboard)
-    scene_dur = total_duration / num_scenes
-    
-    # Collect queries for all storyboard scenes (100% real filmed footage)
-    broll_queries = [sc.get("visual_query", "artificial intelligence technology") for sc in storyboard]
+    # Align each scene to spoken sentence timestamps
+    storyboard = align_storyboard_to_word_timings(storyboard, word_timings, total_duration)
+
+    # Only fetch B-roll for non-meme scenes (memes never query Pexels!)
+    broll_scenes = [sc for sc in storyboard if sc.get("visual_type") != "meme"]
+    broll_queries = [sc.get("visual_query", "artificial intelligence technology") for sc in broll_scenes]
     logger.info(f">>> Fetching {len(broll_queries)} unique 4K/HD documentary B-roll clips for storyboard...")
     unique_broll_paths = get_curated_broll_clips(broll_queries, count=len(broll_queries))
 
-    scenes_data = []
-    for i, sc in enumerate(storyboard):
-        sc_start = i * scene_dur
-        sc_end = (i + 1) * scene_dur
-        clip_path = unique_broll_paths[i % len(unique_broll_paths)] if unique_broll_paths else None
-
-        scenes_data.append({
-            "start": sc_start,
-            "end": sc_end,
-            "visual_type": "broll",
-            "clip_path": clip_path,
-            "visual_query": sc.get("visual_query", "")
-        })
-
-    logger.info(f"Compositing {num_scenes}-Scene 4K Documentary Short: {total_duration:.1f}s at {WIDTH}x{HEIGHT}...")
     theme_key, theme = pick_story_theme(story)
-    meme_pkg = get_story_meme_package(story, total_duration)
-    if meme_pkg:
-        logger.info(f"Loaded Fireship Meme Pop: {meme_pkg['punchline']} ({meme_pkg['start_time']}s - {meme_pkg['end_time']}s)")
+
+    scenes_data = []
+    broll_idx = 0
+    for sc in storyboard:
+        v_type = sc.get("visual_type", "broll")
+        if v_type == "meme":
+            meme_pkg = get_story_meme_package(story, sc, total_duration)
+            meme_data = prepare_meme_scene_data(meme_pkg, WIDTH, HEIGHT) if meme_pkg else None
+            scenes_data.append({
+                "start": sc["start"],
+                "end": sc["end"],
+                "visual_type": "meme",
+                "clip_path": None,
+                "meme_pkg": meme_pkg,
+                "meme_data": meme_data,
+                "visual_query": sc.get("visual_query", "")
+            })
+            if meme_pkg:
+                logger.info(f"Loaded Fireship Meme Scene: {meme_pkg['punchline']} ({sc['start']:.2f}s -> {sc['end']:.2f}s)")
+        else:
+            clip_path = unique_broll_paths[broll_idx % len(unique_broll_paths)] if unique_broll_paths else None
+            broll_idx += 1
+            scenes_data.append({
+                "start": sc["start"],
+                "end": sc["end"],
+                "visual_type": "broll",
+                "clip_path": clip_path,
+                "visual_query": sc.get("visual_query", "")
+            })
+
+    num_scenes = len(scenes_data)
+    logger.info(f"Compositing {num_scenes}-Scene 4K Documentary Short: {total_duration:.1f}s at {WIDTH}x{HEIGHT}...")
 
     doc_engine = CinematicDocumentaryEngine(scenes_data, WIDTH, HEIGHT)
     caption_renderer = CaptionRenderer(WIDTH, HEIGHT)
@@ -291,7 +369,7 @@ def build_shorts_video(
 
     # Frame generator function
     def make_frame(t):
-        # 1. Scaled, Ken-Burns animated 100% Real 4K B-roll background
+        # 1. Scaled, Ken-Burns animated 100% Real 4K B-roll or Full-Frame Meme background
         frame_base = doc_engine.get_scene_frame(t).convert("RGBA")
 
         # 2. Cinematic vignette and top/bottom gradient overlay
@@ -301,13 +379,7 @@ def build_shorts_video(
         ui_overlay = doc_engine.render_overlay_ui(t, story, total_duration)
         frame_base.alpha_composite(ui_overlay)
 
-        # 4. Fireship Contextual Meme Card Pop
-        if meme_pkg:
-            meme_overlay = render_meme_punchline_frame(meme_pkg, t, WIDTH, HEIGHT, doc_engine.font_title)
-            if meme_overlay:
-                frame_base.alpha_composite(meme_overlay)
-
-        # 5. High-retention active word-by-word subtitles
+        # 4. High-retention active word-by-word subtitles
         active_phrase = None
         for p in phrases:
             if p["start"] <= t <= p["end"]:
@@ -326,9 +398,9 @@ def build_shorts_video(
     video_clip = VideoClip(make_frame, duration=total_duration)
 
     # -----------------------------------------------------------------
-    # AUDIO MIXING: Neural Voice + Ambient Cyberpunk Music + Whoosh SFX
+    # AUDIO MIXING: Neural Voice + Ambient Cyberpunk Bed + Transition SFX + Meme Boom
     # -----------------------------------------------------------------
-    logger.info("Mixing audio track: Voiceover + Ambient Cyberpunk Bed + Transition SFX...")
+    logger.info("Mixing audio track: Voiceover + Ambient Cyberpunk Bed + Transition SFX + Meme Punch...")
     speech_audio = AudioFileClip(audio_path)
     audio_layers = [speech_audio]
 
@@ -357,10 +429,26 @@ def build_shorts_video(
             logger.warning(f"Could not load whoosh SFX: {e}")
 
     # -----------------------------------------------------------------
+    # FIRESHIP MEME COMEDIC PUNCH AUDIO TRIGGER (Vine Boom / Record Scratch)
+    # -----------------------------------------------------------------
+    vine_boom_path = "assets/audio/vine_boom.wav"
+    record_scratch_path = "assets/audio/record_scratch.wav"
+    pop_path = "assets/audio/pop_click.wav"
+    meme_sfx_path = vine_boom_path if os.path.exists(vine_boom_path) else (record_scratch_path if os.path.exists(record_scratch_path) else pop_path)
+
+    for sc in scenes_data:
+        if sc.get("visual_type") == "meme" and os.path.exists(meme_sfx_path):
+            try:
+                meme_sfx = AudioFileClip(meme_sfx_path).with_start(sc["start"]).with_volume_scaled(0.38)
+                audio_layers.append(meme_sfx)
+                logger.info(f"Attached punchy meme SFX ({os.path.basename(meme_sfx_path)}) at {sc['start']:.2f}s")
+            except Exception as e:
+                logger.warning(f"Could not load meme SFX: {e}")
+
+    # -----------------------------------------------------------------
     # CONTEXTUAL EAR-CANDY SFX: Digital Chimes on Numbers, UI Pops on Keywords
     # -----------------------------------------------------------------
     chirp_path = "assets/audio/digital_chirp.wav"
-    pop_path = "assets/audio/pop_click.wav"
     last_sfx_time = 0.6
     min_sfx_gap = 2.8
 
@@ -394,14 +482,6 @@ def build_shorts_video(
                 last_sfx_time = w_time
             except Exception as e:
                 logger.warning(f"Could not load pop SFX: {e}")
-
-    # 3. Fireship Meme Pop-in Audio Trigger
-    if meme_pkg and os.path.exists(pop_path):
-        try:
-            meme_sfx = AudioFileClip(pop_path).with_start(meme_pkg["start_time"]).with_volume_scaled(0.30)
-            audio_layers.append(meme_sfx)
-        except Exception:
-            pass
 
     final_audio = CompositeAudioClip(audio_layers)
     video_clip = video_clip.with_audio(final_audio)

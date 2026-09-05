@@ -173,9 +173,25 @@ def build_semantic_storyboard(title: str, full_script: str) -> list:
 
         # 5. Climax Meme Spot (~middle of script)
         if idx == max(1, len(sentences) // 2):
+            meme_key = "this_is_fine"
+            if any(w in s_upper for w in ["FIRE", "CHAOS", "CRASH", "OUTAGE", "BROKE", "DESTROY", "UNHINGED"]):
+                meme_key = "elmo_chaos"
+            elif any(w in s_upper for w in ["BUG", "FINE", "ERROR", "PROD", "COFFEE", "TEST"]):
+                meme_key = "this_is_fine"
+            elif any(w in s_upper for w in ["MONEY", "BILLION", "MILLION", "PRICE", "COST", "DOLLARS", "STONKS"]):
+                meme_key = "stonks_money"
+            elif any(w in s_upper for w in ["PUSH", "FORCE", "DEPLOY", "DELETE", "DISASTER"]):
+                meme_key = "disaster_girl"
+            elif any(w in s_upper for w in ["HACK", "BRAIN", "OPTIMIZE", "GENIUS", "TRICK"]):
+                meme_key = "smart_rollsafe"
+            elif any(w in s_upper for w in ["PROMISE", "CLAIM", "FAKE", "SPONGE", "OVERHYPED"]):
+                meme_key = "mocking_sponge"
+            elif any(w in s_upper for w in ["LEAK", "SECRET", "SUSPICIOUS", "ILLEGAL"]):
+                meme_key = "suspicious_fry"
+
             storyboard.append({
                 "narration_part": sentence,
-                "visual_query": "suspicious fry futurama meme",
+                "visual_query": meme_key,
                 "visual_type": "meme"
             })
             continue
