@@ -429,26 +429,39 @@ def build_shorts_video(
             logger.warning(f"Could not load whoosh SFX: {e}")
 
     # -----------------------------------------------------------------
-    # FIRESHIP MEME COMEDIC PUNCH AUDIO TRIGGER (Vine Boom / Record Scratch)
+    # FIRESHIP MEME COMEDIC PUNCH AUDIO TRIGGERS (Situational Remotion Sound Effects)
     # -----------------------------------------------------------------
-    vine_boom_path = "assets/audio/vine_boom.wav"
-    record_scratch_path = "assets/audio/record_scratch.wav"
-    pop_path = "assets/audio/pop_click.wav"
-    meme_sfx_path = vine_boom_path if os.path.exists(vine_boom_path) else (record_scratch_path if os.path.exists(record_scratch_path) else pop_path)
+    sfx_map = {
+        "windows_error": "assets/audio/windows_error.wav",
+        "bruh": "assets/audio/bruh.wav",
+        "vine_boom": "assets/audio/vine_boom.wav",
+        "record_scratch": "assets/audio/record_scratch.wav",
+        "whip": "assets/audio/whip.wav",
+        "pop": "assets/audio/pop_click.wav"
+    }
+    fallback_meme_sfx = "assets/audio/vine_boom.wav" if os.path.exists("assets/audio/vine_boom.wav") else "assets/audio/pop_click.wav"
 
     for sc in scenes_data:
-        if sc.get("visual_type") == "meme" and os.path.exists(meme_sfx_path):
-            try:
-                meme_sfx = AudioFileClip(meme_sfx_path).with_start(sc["start"]).with_volume_scaled(0.38)
-                audio_layers.append(meme_sfx)
-                logger.info(f"Attached punchy meme SFX ({os.path.basename(meme_sfx_path)}) at {sc['start']:.2f}s")
-            except Exception as e:
-                logger.warning(f"Could not load meme SFX: {e}")
+        if sc.get("visual_type") == "meme":
+            sfx_tag = sc.get("meme_pkg", {}).get("sfx", "") if isinstance(sc.get("meme_pkg"), dict) else sc.get("sfx", "")
+            target_sfx_path = sfx_map.get(sfx_tag, fallback_meme_sfx)
+            if not os.path.exists(target_sfx_path):
+                target_sfx_path = fallback_meme_sfx
+
+            if os.path.exists(target_sfx_path):
+                try:
+                    vol = 0.42 if "bruh" in target_sfx_path else (0.35 if "windows" in target_sfx_path else 0.38)
+                    meme_sfx = AudioFileClip(target_sfx_path).with_start(sc["start"]).with_volume_scaled(vol)
+                    audio_layers.append(meme_sfx)
+                    logger.info(f"Attached situational meme SFX [{sfx_tag} -> {os.path.basename(target_sfx_path)}] at {sc['start']:.2f}s")
+                except Exception as e:
+                    logger.warning(f"Could not load meme SFX {target_sfx_path}: {e}")
 
     # -----------------------------------------------------------------
     # CONTEXTUAL EAR-CANDY SFX: Digital Chimes on Numbers, UI Pops on Keywords
     # -----------------------------------------------------------------
     chirp_path = "assets/audio/digital_chirp.wav"
+    pop_path = "assets/audio/pop_click.wav"
     last_sfx_time = 0.6
     min_sfx_gap = 2.8
 
@@ -503,6 +516,12 @@ def build_shorts_video(
         if c:
             try:
                 c.close()
+            except Exception:
+                pass
+        m_clip = sc.get("meme_data", {}).get("clip") if isinstance(sc.get("meme_data"), dict) else None
+        if m_clip:
+            try:
+                m_clip.close()
             except Exception:
                 pass
 

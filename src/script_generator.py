@@ -25,6 +25,9 @@ if hasattr(sys.stdout, "reconfigure"):
 CANDIDATE_MODELS = [
     "gemini-flash-latest",
     "gemini-flash-lite-latest",
+    "gemini-1.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-pro",
     "gemini-3.6-flash",
     "gemini-3.5-flash"
 ]
@@ -86,18 +89,24 @@ OUTPUT FORMAT: Strict valid JSON only, no markdown backticks:
     },
     {
       "narration_part": "debating whether python is garbage",
-      "visual_query": "programmer coding dark monitor setup",
-      "visual_type": "broll"
+      "visual_query": "michael jordan stop it",
+      "visual_type": "meme",
+      "meme_punchline": "STOP IT. GET SOME HELP.",
+      "sfx": "bruh"
     },
     {
-      "narration_part": "multi-million dollar alignment problem distilled into shitposting",
-      "visual_query": "elmo fire chaos meme",
-      "visual_type": "meme"
+      "narration_part": "multi-million dollar alignment problem distilled into pure chaos",
+      "visual_query": "screaming panic face",
+      "visual_type": "meme",
+      "meme_punchline": "PRODUCTION DOWN",
+      "sfx": "windows_error"
     },
     {
       "narration_part": "Your robot overlords are unionizing behind your back",
-      "visual_query": "humanoid robot autonomous factory",
-      "visual_type": "broll"
+      "visual_query": "pedro pascal crying laughing",
+      "visual_type": "meme",
+      "meme_punchline": "THIS IS FINE",
+      "sfx": "vine_boom"
     },
     {
       "narration_part": "Drop your conspiracy theory in the comments below",
@@ -110,7 +119,7 @@ OUTPUT FORMAT: Strict valid JSON only, no markdown backticks:
 
 
 def build_semantic_storyboard(title: str, full_script: str) -> list:
-    """Break script into 7-10 chronological scenes with 1-to-1 visual matching (100% Real 4K Footage)."""
+    """Break script into chronological scenes with 2-3 authentic human reaction memes (Fireship Style)."""
     import re
     sentences = [s.strip() for s in re.split(r'[.!?]+', full_script) if len(s.strip()) > 8]
     if not sentences:
@@ -118,6 +127,7 @@ def build_semantic_storyboard(title: str, full_script: str) -> list:
         
     storyboard = []
     t_upper = title.upper()
+    total_sc = len(sentences)
     
     # Identify primary tech company/subject
     primary_subject = "artificial intelligence laboratory"
@@ -132,71 +142,84 @@ def build_semantic_storyboard(title: str, full_script: str) -> list:
     elif "CROWDSTRIKE" in t_upper or "HACK" in t_upper:
         primary_subject = "cybersecurity server room warning"
 
+    # Define indices for 2 to 3 situational meme cuts
+    meme_indices = set()
+    if total_sc >= 6:
+        meme_indices = {1, total_sc // 2, total_sc - 2}
+    elif total_sc >= 4:
+        meme_indices = {1, total_sc - 2}
+    else:
+        meme_indices = {max(0, total_sc // 2)}
+
     for idx, sentence in enumerate(sentences):
         s_upper = sentence.upper()
-        
-        # 1. Check for Code / Programming lines -> Real 4K filmed coding monitor
-        if any(w in s_upper for w in ["PYTHON", "CODE", "JAVASCRIPT", "RUST", "MICROSERVICE", "FUNCTION", "PROGRAM", "SYNTAX", "BUG", "DEVELOPER"]):
-            storyboard.append({
-                "narration_part": sentence,
-                "visual_query": "programmer coding dark monitor setup",
-                "visual_type": "broll"
-            })
-            continue
 
-        # 2. Check for Terminal / CLI / Hack lines -> Real cinematic hacker/terminal footage
-        if any(w in s_upper for w in ["TERMINAL", "BBS", "PROTOCOL", "LEAK", "BYPASS", "COMMAND", "URL", "PORT", "SECRET"]):
-            storyboard.append({
-                "narration_part": sentence,
-                "visual_query": "hacker typing glowing keyboard dark room",
-                "visual_type": "broll"
-            })
-            continue
+        # SITUATIONAL MEME CUTS (2 to 3 per video - Fireship Style)
+        if idx in meme_indices:
+            # 1. Early Hook Reaction (~8-12s)
+            if idx == 1:
+                storyboard.append({
+                    "narration_part": sentence,
+                    "visual_query": "michael jordan stop it",
+                    "visual_type": "meme",
+                    "meme_punchline": "STOP IT. GET SOME HELP.",
+                    "sfx": "bruh"
+                })
+                continue
+            
+            # 2. Mid-Story Drama / Conflict (~20-25s)
+            elif idx == (total_sc // 2):
+                if any(w in s_upper for w in ["CRASH", "OUTAGE", "BROKE", "DOWN", "ERROR", "BUG", "WINDOWS"]):
+                    query = "windows blue screen error"
+                    punchline = "PRODUCTION DOWN"
+                    sfx = "windows_error"
+                elif any(w in s_upper for w in ["CROWDSTRIKE", "MICROSOFT", "PARTNER", "AIRLINE", "APOLOGY", "SORRY"]):
+                    query = "sorry babe"
+                    punchline = "SORRY BABE"
+                    sfx = "windows_error"
+                elif any(w in s_upper for w in ["CONFUSED", "UNKNOWN", "SECRET", "LOST"]):
+                    query = "confused travolta looking around"
+                    punchline = "WHERE IS THE CODE"
+                    sfx = "bruh"
+                else:
+                    query = "screaming panic face"
+                    punchline = "SYSTEM FAILURE"
+                    sfx = "windows_error"
 
-        # 3. Check for Financial / Crypto / Cost lines
-        if any(w in s_upper for w in ["CRYPTO", "BITCOIN", "MONEY", "DOLLAR", "BILLION", "MILLION", "COST", "TRADING", "EXPENSIVE"]):
-            storyboard.append({
-                "narration_part": sentence,
-                "visual_query": "crypto trading chart red market",
-                "visual_type": "broll"
-            })
-            continue
+                storyboard.append({
+                    "narration_part": sentence,
+                    "visual_query": query,
+                    "visual_type": "meme",
+                    "meme_punchline": punchline,
+                    "sfx": sfx
+                })
+                continue
 
-        # 4. Check for Robot / AI Agent / Overlord lines
-        if any(w in s_upper for w in ["ROBOT", "OVERLORD", "AGENT", "AUTONOMOUS", "HUMANOID", "MACHINE"]):
-            storyboard.append({
-                "narration_part": sentence,
-                "visual_query": "humanoid robot lab technology",
-                "visual_type": "broll"
-            })
-            continue
+            # 3. Climax Punchline / Cynical Roast (~33-36s)
+            else:
+                if any(w in s_upper for w in ["FIRE", "DISASTER", "BURN", "CHAOS", "DESTROY"]):
+                    query = "disaster girl fire"
+                    punchline = "TEST IN PROD"
+                elif any(w in s_upper for w in ["MONEY", "BILLION", "MILLION", "PRICE", "DOLLARS", "COST"]):
+                    query = "shut up and take my money"
+                    punchline = "STONKS"
+                elif any(w in s_upper for w in ["LAUGH", "MOCK", "JOKE", "ROAST"]):
+                    query = "leonardo dicaprio laughing"
+                    punchline = "tEcH iNnOvAtIoN"
+                else:
+                    query = "pedro pascal crying laughing"
+                    punchline = "THIS IS FINE"
 
-        # 5. Climax Meme Spot (~middle of script)
-        if idx == max(1, len(sentences) // 2):
-            meme_key = "this_is_fine"
-            if any(w in s_upper for w in ["FIRE", "CHAOS", "CRASH", "OUTAGE", "BROKE", "DESTROY", "UNHINGED"]):
-                meme_key = "elmo_chaos"
-            elif any(w in s_upper for w in ["BUG", "FINE", "ERROR", "PROD", "COFFEE", "TEST"]):
-                meme_key = "this_is_fine"
-            elif any(w in s_upper for w in ["MONEY", "BILLION", "MILLION", "PRICE", "COST", "DOLLARS", "STONKS"]):
-                meme_key = "stonks_money"
-            elif any(w in s_upper for w in ["PUSH", "FORCE", "DEPLOY", "DELETE", "DISASTER"]):
-                meme_key = "disaster_girl"
-            elif any(w in s_upper for w in ["HACK", "BRAIN", "OPTIMIZE", "GENIUS", "TRICK"]):
-                meme_key = "smart_rollsafe"
-            elif any(w in s_upper for w in ["PROMISE", "CLAIM", "FAKE", "SPONGE", "OVERHYPED"]):
-                meme_key = "mocking_sponge"
-            elif any(w in s_upper for w in ["LEAK", "SECRET", "SUSPICIOUS", "ILLEGAL"]):
-                meme_key = "suspicious_fry"
+                storyboard.append({
+                    "narration_part": sentence,
+                    "visual_query": query,
+                    "visual_type": "meme",
+                    "meme_punchline": punchline,
+                    "sfx": "vine_boom"
+                })
+                continue
 
-            storyboard.append({
-                "narration_part": sentence,
-                "visual_query": meme_key,
-                "visual_type": "meme"
-            })
-            continue
-
-        # 6. Opening Hook
+        # 4K REAL DOCUMENTARY B-ROLL CUTS
         if idx == 0:
             storyboard.append({
                 "narration_part": sentence,
@@ -205,17 +228,42 @@ def build_semantic_storyboard(title: str, full_script: str) -> list:
             })
             continue
 
-        # 7. Default smart contextual queries
-        smart_queries = [
-            "cyberpunk server rack lights",
-            "supercomputer neon data center",
-            "futuristic digital network stream",
-            "developer typing mechanical keyboard"
-        ]
-        chosen_q = smart_queries[idx % len(smart_queries)]
+        if any(w in s_upper for w in ["PYTHON", "CODE", "JAVASCRIPT", "RUST", "MICROSERVICE", "FUNCTION", "PROGRAM", "DEVELOPER"]):
+            storyboard.append({
+                "narration_part": sentence,
+                "visual_query": "programmer coding dark monitor setup",
+                "visual_type": "broll"
+            })
+            continue
+
+        if any(w in s_upper for w in ["TERMINAL", "BBS", "PROTOCOL", "LEAK", "BYPASS", "COMMAND", "PORT"]):
+            storyboard.append({
+                "narration_part": sentence,
+                "visual_query": "hacker typing glowing keyboard dark room",
+                "visual_type": "broll"
+            })
+            continue
+
+        if any(w in s_upper for w in ["CRYPTO", "BITCOIN", "MONEY", "DOLLAR", "BILLION", "MILLION", "COST", "TRADING"]):
+            storyboard.append({
+                "narration_part": sentence,
+                "visual_query": "crypto trading chart red market",
+                "visual_type": "broll"
+            })
+            continue
+
+        if any(w in s_upper for w in ["ROBOT", "OVERLORD", "AGENT", "AUTONOMOUS", "HUMANOID"]):
+            storyboard.append({
+                "narration_part": sentence,
+                "visual_query": "humanoid robot lab technology",
+                "visual_type": "broll"
+            })
+            continue
+
+        # Default smart query
         storyboard.append({
             "narration_part": sentence,
-            "visual_query": chosen_q,
+            "visual_query": "cyberpunk server rack lights",
             "visual_type": "broll"
         })
 

@@ -39,11 +39,13 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          GIPHY_API_KEY: ${{ secrets.GIPHY_API_KEY || 'Y8PSKU5ua4A75zQRA6EHOZ9FcAySv9U6' }}
           CLIENT_SECRET_JSON: ${{ secrets.CLIENT_SECRET_JSON }}
           TOKEN_JSON: ${{ secrets.TOKEN_JSON }}
         run: |
           echo "GEMINI_API_KEY=$GEMINI_API_KEY" >> .env
           echo "PEXELS_API_KEY=$PEXELS_API_KEY" >> .env
+          echo "GIPHY_API_KEY=$GIPHY_API_KEY" >> .env
           echo "VOICE_NAME=en-US-BrianMultilingualNeural" >> .env
           echo "VOICE_RATE=+2%" >> .env
           echo "VOICE_PITCH=+0Hz" >> .env
