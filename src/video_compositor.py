@@ -530,11 +530,13 @@ def build_shorts_video(
     )
 
     # Close clips to free resources
-    for c in doc_engine.broll_clips:
-        try:
-            c.close()
-        except Exception:
-            pass
+    for sc in doc_engine.scenes:
+        c = sc.get("clip")
+        if c:
+            try:
+                c.close()
+            except Exception:
+                pass
 
     logger.info(f"OUTSTANDING Short generated successfully at: {output_path}")
     return output_path
