@@ -4,10 +4,14 @@ Fetches real-time trending tech, AI, and developer news from Hacker News, Reddit
 100% Free - No API keys required.
 """
 
+import os
+import re
+import json
+import datetime
 import requests
 import feedparser
 import logging
-from typing import List, Dict
+from typing import List, Dict, Any
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -135,7 +139,119 @@ def get_trending_tech_stories() -> List[Dict[str, str]]:
     return cleaned
 
 
+# =========================================================================
+# DUPLICATE STORY PREVENTION (48h - 7d Fuzzy Keyword & URL Deduplication)
+# =========================================================================
+HISTORY_FILE = "assets/published_history.json"
+
+
+def _normalize_title_tokens(text: str) -> set:
+    """Extract significant keywords (> 3 chars) for fuzzy duplicate matching."""
+    words = re.findall(r'[a-z0-9]+', text.lower())
+    stop_words = {
+        "this", "that", "with", "from", "have", "been", "were", "what", 
+        "just", "after", "into", "over", "more", "their", "will", "about", 
+        "there", "which", "could", "would"
+    }
+    return {w for w in words if len(w) > 3 and w not in stop_words}
+
+
+def load_published_history(history_file: str = HISTORY_FILE) -> List[Dict[str, Any]]:
+    """Loads previously published stories from local tracking file."""
+    if not os.path.exists(history_file):
+        return []
+    try:
+        with open(history_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, list) else []
+    except Exception as e:
+        logger.warning(f"Could not read published history: {e}")
+        return []
+
+
+def filter_previously_published_stories(
+    candidate_stories: List[Dict[str, Any]], 
+    history_file: str = HISTORY_FILE
+) -> List[Dict[str, Any]]:
+    """
+    Intelligently filters out any candidate story that was already covered in recent runs.
+    Uses exact URL matching, exact title matching, and fuzzy keyword token overlap (>= 60%).
+    """
+    history = load_published_history(history_file)
+    if not history:
+        logger.info("No prior story history found. All candidates are fresh.")
+        return candidate_stories
+
+    fresh_stories = []
+    for cand in candidate_stories:
+        cand_title = cand.get("title", "").strip()
+        cand_url = cand.get("url", "").strip().lower()
+        cand_tokens = _normalize_title_tokens(cand_title)
+        
+        is_duplicate = False
+        matched_prev = ""
+        for entry in history:
+            prev_title = entry.get("title", "").strip()
+            prev_url = entry.get("url", "").strip().lower()
+            
+            # 1. Exact URL match
+            if cand_url and prev_url and cand_url == prev_url:
+                is_duplicate = True
+                matched_prev = prev_title
+                break
+                
+            # 2. Exact Title match
+            if cand_title.lower() == prev_title.lower():
+                is_duplicate = True
+                matched_prev = prev_title
+                break
+                
+            # 3. High keyword overlap (Fuzzy overlap >= 60%)
+            prev_tokens = _normalize_title_tokens(prev_title)
+            if cand_tokens and prev_tokens:
+                intersection = cand_tokens.intersection(prev_tokens)
+                overlap_ratio = len(intersection) / min(len(cand_tokens), len(prev_tokens))
+                if overlap_ratio >= 0.60:
+                    is_duplicate = True
+                    matched_prev = prev_title
+                    break
+        
+        if is_duplicate:
+            logger.info(f"Duplicate Story Prevention: Skipping already covered topic -> '{cand_title}' (matches: '{matched_prev}')")
+        else:
+            fresh_stories.append(cand)
+
+    logger.info(f"Duplicate Story Prevention: {len(fresh_stories)} fresh stories available (filtered out {len(candidate_stories) - len(fresh_stories)} duplicates).")
+    return fresh_stories
+
+
+def mark_story_as_published(story: Dict[str, Any], history_file: str = HISTORY_FILE):
+    """Appends story to published history and prunes old entries beyond 100 items."""
+    try:
+        os.makedirs(os.path.dirname(history_file), exist_ok=True)
+        history = load_published_history(history_file)
+        
+        entry = {
+            "title": story.get("title", ""),
+            "url": story.get("url", ""),
+            "source": story.get("source", ""),
+            "published_at": datetime.datetime.now().isoformat()
+        }
+        history.append(entry)
+        
+        # Keep last 100 stories (clean, small JSON payload)
+        history = history[-100:]
+        
+        with open(history_file, "w", encoding="utf-8") as f:
+            json.dump(history, f, indent=2, ensure_ascii=False)
+            
+        logger.info(f"Recorded published story in history: '{story.get('title')}'")
+    except Exception as e:
+        logger.warning(f"Could not update published history: {e}")
+
+
 if __name__ == "__main__":
     stories = get_trending_tech_stories()
-    for i, story in enumerate(stories[:3], 1):
+    fresh = filter_previously_published_stories(stories)
+    for i, story in enumerate(fresh[:3], 1):
         print(f"{i}. [{story['source']}] {story['title']}")

@@ -25,7 +25,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger("ShortsOrchestrator")
 
-from src.news_fetcher import get_trending_tech_stories
+from src.news_fetcher import (
+    get_trending_tech_stories,
+    filter_previously_published_stories,
+    mark_story_as_published
+)
 from src.script_generator import generate_tech_script
 from src.voice_generator import generate_voiceover
 from src.video_compositor import build_shorts_video
@@ -47,7 +51,7 @@ def run_pipeline(dry_run: bool = True, custom_topic: str = None):
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # ---------------------------------------------------------
-    # STEP 1: Trending Tech News Discovery
+    # STEP 1: Trending Tech News Discovery & Duplicate Prevention
     # ---------------------------------------------------------
     logger.info(">>> STEP 1: Scanning Hacker News, Reddit, and RSS for Trending Tech...")
     if custom_topic:
@@ -62,11 +66,18 @@ def run_pipeline(dry_run: bool = True, custom_topic: str = None):
         if not stories:
             logger.error("No tech stories available. Exiting.")
             return None
+
+        # Filter out stories covered in previous runs (48h - 7d duplicate prevention)
+        fresh_stories = filter_previously_published_stories(stories)
+        if not fresh_stories:
+            logger.warning("All top trending stories have been recently published! Falling back to full pool.")
+            fresh_stories = stories
+
         import random
-        # Pick from top trending stories to ensure 3 unique drops each day
-        story = random.choice(stories[:min(5, len(stories))])
+        # Pick from top fresh trending stories to guarantee variety across daily drops
+        story = random.choice(fresh_stories[:min(5, len(fresh_stories))])
         
-    logger.info(f"Selected Story: [{story['source']}] {story['title']}")
+    logger.info(f"Selected Fresh Story: [{story['source']}] {story['title']}")
 
     # ---------------------------------------------------------
     # STEP 2: Script Generation (Gemini 1.5 Flash Free Tier)
@@ -122,6 +133,9 @@ def run_pipeline(dry_run: bool = True, custom_topic: str = None):
             logger.info(f"Video saved locally at {final_video_path}. Add client_secret.json to enable auto-upload.")
     else:
         logger.info("DRY RUN MODE: Video generated and verified. YouTube upload skipped.")
+
+    # Record story to history to prevent repeat uploads across daily drops
+    mark_story_as_published(story)
 
     print("\n" + "="*72)
     print(f"  OUTPUT VIDEO: {os.path.abspath(final_video_path)}")
