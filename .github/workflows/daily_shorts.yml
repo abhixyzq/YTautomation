@@ -44,8 +44,8 @@ jobs:
         run: |
           echo "GEMINI_API_KEY=$GEMINI_API_KEY" >> .env
           echo "PEXELS_API_KEY=$PEXELS_API_KEY" >> .env
-          echo "VOICE_NAME=en-US-ChristopherNeural" >> .env
-          echo "VOICE_RATE=+5%" >> .env
+          echo "VOICE_NAME=en-US-BrianMultilingualNeural" >> .env
+          echo "VOICE_RATE=+2%" >> .env
           echo "VOICE_PITCH=+0Hz" >> .env
           echo "LANGUAGE=ENG" >> .env
           echo "PUBLISH_MODE=PUBLIC" >> .env

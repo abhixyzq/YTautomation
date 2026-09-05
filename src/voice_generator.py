@@ -15,9 +15,40 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_VOICE = os.getenv("VOICE_NAME", "en-US-ChristopherNeural")
-DEFAULT_RATE = os.getenv("VOICE_RATE", "+5%")
+DEFAULT_VOICE = os.getenv("VOICE_NAME", "en-US-BrianMultilingualNeural")
+DEFAULT_RATE = os.getenv("VOICE_RATE", "+2%")
 DEFAULT_PITCH = os.getenv("VOICE_PITCH", "+0Hz")
+
+
+def enhance_speech_text(text: str) -> str:
+    """
+    Inject natural human prosody into the text for Edge-TTS.
+    Adds natural micro-pauses at key transitions and replaces rushed punctuation
+    so the neural voice breathes and sounds 100% human-like.
+    """
+    import re
+    # Clean excessive whitespace
+    cleaned = re.sub(r'\s+', ' ', text).strip()
+    
+    # Ensure natural breath pauses after transitional phrases
+    transitions = [
+        ("Under the hood", "Under the hood,"),
+        ("In fact", "In fact,"),
+        ("Right now", "Right now,"),
+        ("Overnight", "Overnight,"),
+        ("Meanwhile", "Meanwhile,"),
+        ("However", "However,"),
+        ("Essentially", "Essentially,"),
+        ("Believe it or not", "Believe it or not,"),
+        ("Here is the catch", "Here's the catch,"),
+    ]
+    for orig, repl in transitions:
+        pattern = re.compile(rf'\b{re.escape(orig)}\b(?!\s*,)', re.IGNORECASE)
+        cleaned = pattern.sub(repl, cleaned)
+        
+    # Replace em-dashes and double hyphens with comma for natural breath
+    cleaned = cleaned.replace("—", ", ").replace("--", ", ")
+    return cleaned
 
 
 def _calculate_word_timings(sentence_boundaries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -102,8 +133,9 @@ def generate_voiceover(
     rate: str = DEFAULT_RATE,
     pitch: str = DEFAULT_PITCH
 ) -> Dict[str, Any]:
-    """Synchronous entry point for generating voiceover audio and timestamps."""
-    return asyncio.run(_generate_audio_async(text, output_path, voice, rate, pitch))
+    """Synchronous entry point for generating voiceover audio and timestamps with prosody."""
+    enhanced = enhance_speech_text(text)
+    return asyncio.run(_generate_audio_async(enhanced, output_path, voice, rate, pitch))
 
 
 if __name__ == "__main__":
