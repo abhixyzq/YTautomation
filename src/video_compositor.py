@@ -30,6 +30,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.caption_engine import CaptionRenderer, group_words_into_phrases
 from src.broll_downloader import get_curated_broll_clips
+from src.meme_engine import pick_story_theme, get_story_meme_package, render_meme_punchline_frame
 
 logger = logging.getLogger(__name__)
 
@@ -238,6 +239,11 @@ def build_shorts_video(
     broll_clips = get_curated_broll_clips(keywords, count=4)
 
     logger.info(f"Compositing Documentary-Grade Short: {total_duration:.1f}s at {WIDTH}x{HEIGHT}...")
+    theme_key, theme = pick_story_theme(story)
+    meme_pkg = get_story_meme_package(story, total_duration)
+    if meme_pkg:
+        logger.info(f"Loaded Fireship Meme Pop: {meme_pkg['punchline']} ({meme_pkg['start_time']}s - {meme_pkg['end_time']}s)")
+
     doc_engine = CinematicDocumentaryEngine(broll_clips, WIDTH, HEIGHT)
     caption_renderer = CaptionRenderer(WIDTH, HEIGHT)
     phrases = group_words_into_phrases(word_timings)
@@ -257,7 +263,13 @@ def build_shorts_video(
         ui_overlay = doc_engine.render_overlay_ui(t, story, total_duration)
         frame_base.alpha_composite(ui_overlay)
 
-        # 4. High-retention active word-by-word subtitles
+        # 4. Fireship Contextual Meme Card Pop
+        if meme_pkg:
+            meme_overlay = render_meme_punchline_frame(meme_pkg, t, WIDTH, HEIGHT, doc_engine.font_title)
+            if meme_overlay:
+                frame_base.alpha_composite(meme_overlay)
+
+        # 5. High-retention active word-by-word subtitles
         active_phrase = None
         for p in phrases:
             if p["start"] <= t <= p["end"]:
@@ -344,6 +356,14 @@ def build_shorts_video(
                 last_sfx_time = w_time
             except Exception as e:
                 logger.warning(f"Could not load pop SFX: {e}")
+
+    # 3. Fireship Meme Pop-in Audio Trigger
+    if meme_pkg and os.path.exists(pop_path):
+        try:
+            meme_sfx = AudioFileClip(pop_path).with_start(meme_pkg["start_time"]).with_volume_scaled(0.30)
+            audio_layers.append(meme_sfx)
+        except Exception:
+            pass
 
     final_audio = CompositeAudioClip(audio_layers)
     video_clip = video_clip.with_audio(final_audio)
