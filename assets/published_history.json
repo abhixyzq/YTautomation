@@ -4,5 +4,11 @@
     "url": "https://techcrunch.com",
     "source": "TechCrunch AI",
     "published_at": "2026-09-05T15:07:29"
+  },
+  {
+    "title": "Actively exploited sandbox RCE in all Chromium versions",
+    "url": "https://nvd.nist.gov/vuln/detail/cve-2026-85046",
+    "source": "Hacker News",
+    "published_at": "2026-09-05T11:17:27.932989"
   }
 ]
