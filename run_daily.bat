@@ -10,4 +10,4 @@ python main.py --publish
 echo =======================================================
 echo RUN FINISHED AT %TIME%
 echo =======================================================
-pause
+exit /b 0

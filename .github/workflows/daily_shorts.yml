@@ -3,12 +3,12 @@ name: 🚀 Autonomous Daily Tech Shorts
 on:
   schedule:
     # 3 times daily (UTC to IST):
-    # 03:30 UTC = 09:00 AM IST (Morning Tech Drop)
-    # 09:30 UTC = 03:00 PM IST (Afternoon Global Push)
-    # 15:00 UTC = 08:30 PM IST (Evening US/EU Peak Drop)
-    - cron: '30 3 * * *'
-    - cron: '30 9 * * *'
-    - cron: '0 15 * * *'
+    # 03:35 UTC = 09:05 AM IST (Morning Tech Drop)
+    # 09:35 UTC = 03:05 PM IST (Afternoon Global Push)
+    # 15:05 UTC = 08:35 PM IST (Evening US/EU Peak Drop)
+    - cron: '35 3 * * *'
+    - cron: '35 9 * * *'
+    - cron: '5 15 * * *'
   workflow_dispatch: # Allows manual 1-click trigger from GitHub Actions UI
 
 jobs:
