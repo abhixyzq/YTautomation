@@ -67,9 +67,153 @@ OUTPUT FORMAT: Strict valid JSON only, no markdown backticks:
   "cta": "Polarizing debate question",
   "full_script": "Complete smooth voiceover script without stage directions or emojis",
   "tags": ["AI", "TechNews", "OpenAI", "Coding", "SoftwareEngineering", "SiliconValley"],
-  "visual_keywords": ["cyberpunk server", "artificial intelligence code", "matrix data", "robotics factory"]
+  "visual_keywords": ["cyberpunk server", "artificial intelligence code", "matrix data", "robotics factory"],
+  "storyboard": [
+    {
+      "narration_part": "OpenAI quietly leaked an architecture developers were never supposed to see",
+      "visual_query": "openai high tech headquarters",
+      "visual_type": "broll"
+    },
+    {
+      "narration_part": "Engineers found an underground terminal protocol",
+      "visual_query": "retro computer bbs terminal hacker",
+      "visual_type": "terminal",
+      "terminal_cmd": "$ telnet bbs.underground.ai --port 4242"
+    },
+    {
+      "narration_part": "trading bad crypto tips instead of microservices",
+      "visual_query": "crypto trading chart red market",
+      "visual_type": "broll"
+    },
+    {
+      "narration_part": "debating whether python is garbage",
+      "visual_query": "python code programming screen",
+      "visual_type": "code_card",
+      "code_snippet": "def optimize():\n    # TODO: rewrite in Rust\n    return 'Garbage collected'"
+    },
+    {
+      "narration_part": "multi-million dollar alignment problem distilled into shitposting",
+      "visual_query": "elmo fire chaos meme",
+      "visual_type": "meme"
+    },
+    {
+      "narration_part": "Your robot overlords are unionizing behind your back",
+      "visual_query": "humanoid robot autonomous factory",
+      "visual_type": "broll"
+    },
+    {
+      "narration_part": "Drop your conspiracy theory in the comments below",
+      "visual_query": "software developer keyboard dark desk",
+      "visual_type": "broll"
+    }
+  ]
 }
 """
+
+
+def build_semantic_storyboard(title: str, full_script: str) -> list:
+    """Break script into 7-10 chronological scenes with 1-to-1 visual matching."""
+    import re
+    sentences = [s.strip() for s in re.split(r'[.!?]+', full_script) if len(s.strip()) > 8]
+    if not sentences:
+        sentences = [full_script]
+        
+    storyboard = []
+    t_upper = title.upper()
+    
+    # Identify primary tech company/subject
+    primary_subject = "artificial intelligence laboratory"
+    if "OPENAI" in t_upper:
+        primary_subject = "openai tech headquarters"
+    elif "GOOGLE" in t_upper:
+        primary_subject = "google tech office server"
+    elif "MICROSOFT" in t_upper:
+        primary_subject = "microsoft data center"
+    elif "NVIDIA" in t_upper:
+        primary_subject = "nvidia gpu microchip processor"
+    elif "CROWDSTRIKE" in t_upper or "HACK" in t_upper:
+        primary_subject = "cybersecurity server room warning"
+
+    for idx, sentence in enumerate(sentences):
+        s_upper = sentence.upper()
+        
+        # 1. Check for Code / Programming lines
+        if any(w in s_upper for w in ["PYTHON", "CODE", "JAVASCRIPT", "RUST", "MICROSERVICE", "FUNCTION", "PROGRAM", "SYNTAX", "BUG", "DEVELOPER"]):
+            if "PYTHON" in s_upper:
+                snippet = "def test_in_prod():\n    if memory_leak:\n        restart_container()\n    return 'LGTM 🚀'"
+            elif "RUST" in s_upper:
+                snippet = "fn main() {\n    let mut memory = unsafe { drop_sanity() };\n    println!(\"zero cost abstraction\");\n}"
+            else:
+                snippet = "async function executeOverride() {\n    await bypassSecurityProtocol();\n    return { status: 500, error: 'Prod on Fire' };\n}"
+            storyboard.append({
+                "narration_part": sentence,
+                "visual_query": "coding programmer dark screen",
+                "visual_type": "code_card",
+                "code_snippet": snippet
+            })
+            continue
+
+        # 2. Check for Terminal / CLI / Hack lines
+        if any(w in s_upper for w in ["TERMINAL", "BBS", "PROTOCOL", "LEAK", "BYPASS", "COMMAND", "URL", "PORT", "SECRET"]):
+            storyboard.append({
+                "narration_part": sentence,
+                "visual_query": "retro hacker terminal green text",
+                "visual_type": "terminal",
+                "terminal_cmd": f"$ curl -X POST https://api.internal/v1/leak\n> [INFO] Connecting to encrypted BBS...\n> [ALERT] Unauthorized bot cluster detected."
+            })
+            continue
+
+        # 3. Check for Financial / Crypto / Cost lines
+        if any(w in s_upper for w in ["CRYPTO", "BITCOIN", "MONEY", "DOLLAR", "BILLION", "MILLION", "COST", "TRADING", "EXPENSIVE"]):
+            storyboard.append({
+                "narration_part": sentence,
+                "visual_query": "crypto trading chart red market",
+                "visual_type": "broll"
+            })
+            continue
+
+        # 4. Check for Robot / AI Agent / Overlord lines
+        if any(w in s_upper for w in ["ROBOT", "OVERLORD", "AGENT", "AUTONOMOUS", "HUMANOID", "MACHINE"]):
+            storyboard.append({
+                "narration_part": sentence,
+                "visual_query": "humanoid robot lab technology",
+                "visual_type": "broll"
+            })
+            continue
+
+        # 5. Climax Meme Spot (~middle of script)
+        if idx == max(1, len(sentences) // 2):
+            storyboard.append({
+                "narration_part": sentence,
+                "visual_query": "suspicious fry futurama meme",
+                "visual_type": "meme"
+            })
+            continue
+
+        # 6. Opening Hook
+        if idx == 0:
+            storyboard.append({
+                "narration_part": sentence,
+                "visual_query": primary_subject,
+                "visual_type": "broll"
+            })
+            continue
+
+        # 7. Default smart contextual queries
+        smart_queries = [
+            "cyberpunk server rack lights",
+            "supercomputer neon data center",
+            "futuristic digital network stream",
+            "developer typing mechanical keyboard"
+        ]
+        chosen_q = smart_queries[idx % len(smart_queries)]
+        storyboard.append({
+            "narration_part": sentence,
+            "visual_query": chosen_q,
+            "visual_type": "broll"
+        })
+
+    return storyboard
 
 
 def generate_fallback_script(story: Dict[str, str]) -> Dict[str, Any]:
@@ -107,6 +251,8 @@ def generate_fallback_script(story: Dict[str, str]) -> Dict[str, Any]:
     cta = random.choice(cta_templates)
     full_script = f"{hook} {body} {cta}"
     
+    storyboard = build_semantic_storyboard(clean_title, full_script)
+    
     return {
         "title": f"🚨 {clean_title[:50]} #Shorts #Tech #AI",
         "hook": hook,
@@ -114,9 +260,8 @@ def generate_fallback_script(story: Dict[str, str]) -> Dict[str, Any]:
         "cta": cta,
         "full_script": full_script,
         "tags": ["TechNews", "AI", "Coding", "MachineLearning", "Shorts", "ViralTech"],
-        "visual_keywords": [
-            w.lower() for w in clean_title.split() if len(w) > 4
-        ][:3] + ["cyberpunk server", "futuristic technology", "neural network"]
+        "visual_keywords": [s["visual_query"] for s in storyboard if s.get("visual_query")],
+        "storyboard": storyboard
     }
 
 
@@ -154,8 +299,14 @@ Generate the ultra-viral high-retention Shorts JSON:
                 # Ensure full_script is complete
                 if "full_script" not in data or not data["full_script"]:
                     data["full_script"] = f"{data.get('hook', '')} {data.get('body', '')} {data.get('cta', '')}".strip()
+                
+                # Ensure storyboard is present and high quality
+                if "storyboard" not in data or not isinstance(data.get("storyboard"), list) or len(data["storyboard"]) < 4:
+                    data["storyboard"] = build_semantic_storyboard(data.get("title", ""), data["full_script"])
                     
-                logger.info(f"Generated viral script via {model_name}: {data.get('title')}")
+                data["visual_keywords"] = [s.get("visual_query") for s in data["storyboard"] if s.get("visual_query")]
+
+                logger.info(f"Generated viral script via {model_name}: {data.get('title')} ({len(data['storyboard'])} storyboard scenes)")
                 return data
             except Exception as model_err:
                 logger.warning(f"Model {model_name} failed: {model_err}. Trying next model...")
