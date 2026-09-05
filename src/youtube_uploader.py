@@ -194,5 +194,115 @@ Drop your perspective in the comments below! 👇
     return video_url
 
 
+def upload_long_video_to_youtube(
+    video_path: str,
+    title: str,
+    description: str,
+    chapters: list = None,
+    tags: list = None,
+    privacy_status: str = "public",
+    comment_text: str = None
+) -> Optional[str]:
+    """
+    Upload a 16:9 horizontal long video to YouTube with clickable chapters / timestamps in description.
+    Returns the uploaded YouTube Video URL.
+    """
+    if not os.path.exists(video_path):
+        logger.error(f"Video file not found: {video_path}")
+        return None
+
+    youtube = get_youtube_service()
+    if not youtube:
+        logger.warning(f"Skipping upload. Video rendered and ready locally at: {video_path}")
+        return None
+
+    # 1. Clean Title (No #Shorts tag for long videos)
+    clean_title = title.replace("#Shorts", "").replace("#shorts", "").strip()
+    final_title = f"{clean_title[:95]}"
+
+    # 2. Comprehensive High-Volume Tags Matrix
+    default_push_tags = [
+        "TechNews", "Software Engineering", "Coding", "Silicon Valley",
+        "System Architecture", "Programming", "AI", "Cloud Computing",
+        "Tech Satire", "Developer Comedy", "Computer Science", "Tech 2026"
+    ]
+    if tags:
+        combined_tags = list(dict.fromkeys(tags + default_push_tags))[:25]
+    else:
+        combined_tags = default_push_tags
+
+    pinned_prompt = comment_text or "What was the worst outage you ever witnessed in production? Drop your take below! 👇"
+
+    # 3. Format Clickable YouTube Chapter Markers
+    chapters_text = ""
+    if chapters:
+        chapter_lines = []
+        for ch in chapters:
+            timestamp = ch.get("timestamp", "00:00")
+            ch_title = ch.get("title", f"Chapter {ch.get('chapter_id', '')}")
+            chapter_lines.append(f"{timestamp} - {ch_title}")
+        chapters_text = "\n📌 CHAPTERS & TIMESTAMPS:\n" + "\n".join(chapter_lines) + "\n"
+
+    # 4. Rich SEO Description
+    seo_description = f"""💬 QUESTION OF THE DAY:
+{pinned_prompt}
+Drop your perspective in the comments below! 👇
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{clean_title}
+
+{description.strip()}
+{chapters_text}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔔 Subscribe for weekly deep dives, tech investigations, and developer satire.
+
+#TechNews #SoftwareEngineering #SiliconValley #Coding #SystemArchitecture #AI #CloudComputing #Programming
+"""
+
+    body = {
+        "snippet": {
+            "title": final_title[:100],
+            "description": seo_description.strip(),
+            "tags": combined_tags,
+            "categoryId": "28"  # 28 = Science & Technology
+        },
+        "status": {
+            "privacyStatus": privacy_status.lower(),  # "public", "private", "unlisted"
+            "selfDeclaredMadeForKids": False
+        }
+    }
+
+    media = MediaFileUpload(
+        video_path,
+        chunksize=-1,
+        resumable=True,
+        mimetype="video/mp4"
+    )
+
+    logger.info(f"Uploading '{final_title}' (Long Video) to YouTube as [{privacy_status.upper()}]...")
+    request = youtube.videos().insert(
+        part="snippet,status",
+        body=body,
+        media_body=media
+    )
+
+    response = None
+    while response is None:
+        status, response = request.next_chunk()
+        if status:
+            logger.info(f"Upload progress: {int(status.progress() * 100)}%")
+
+    video_id = response.get("id")
+    video_url = f"https://youtu.be/{video_id}"
+    logger.info(f"SUCCESS! Long-form video live at: {video_url}")
+
+    # 5. Post first pinned engagement comment
+    first_comment = f"👇 QUESTION OF THE DAY:\n{pinned_prompt}"
+    post_first_comment(youtube, video_id, first_comment)
+
+    return video_url
+
+
 if __name__ == "__main__":
     print("YouTube uploader module loaded successfully.")
+

@@ -23,7 +23,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%H:%M:%S"
 )
-logger = logging.getLogger("ShortsOrchestrator")
+logger = logging.getLogger("Orchestrator")
 
 from src.news_fetcher import (
     get_trending_tech_stories,
@@ -31,14 +31,24 @@ from src.news_fetcher import (
     mark_story_as_published
 )
 from src.script_generator import generate_tech_script
+from src.long_script_generator import generate_long_form_script
 from src.voice_generator import generate_voiceover
 from src.video_compositor import build_shorts_video
-from src.youtube_uploader import upload_short_to_youtube
+from src.long_compositor import build_long_video
+from src.youtube_uploader import upload_short_to_youtube, upload_long_video_to_youtube
 from src.instagram_uploader import upload_reel_to_instagram
 
 
-def print_banner():
-    banner = """
+def print_banner(mode: str = "short"):
+    if mode == "long":
+        banner = """
+========================================================================
+   LATE-NIGHT TECH SATIRE & DEEP-DIVE SHOW (16:9 BROADCAST 1080P)
+   Architecture: John Oliver + Fireship + Vox (5 Episodic Chapters)
+========================================================================
+"""
+    else:
+        banner = """
 ========================================================================
    CINEMATIC TECH DOCUMENTARY SHORTS PIPELINE (100% REAL 4K FOOTAGE)
    Architecture: Fireship / Vox Style (Zero Cheap Avatars, Broadcast Grade)
@@ -48,7 +58,7 @@ def print_banner():
 
 
 def run_pipeline(dry_run: bool = True, custom_topic: str = None):
-    print_banner()
+    print_banner(mode="short")
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # ---------------------------------------------------------
@@ -161,8 +171,108 @@ def run_pipeline(dry_run: bool = True, custom_topic: str = None):
     return final_video_path
 
 
+def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: str = None):
+    """
+    Episodic 16:9 Landscape Long-Form Satire & Deep Dive Pipeline (1920x1080).
+    5 Dynamic Chapters, Multi-Track Audio Scoring, Clickable YouTube Timestamps.
+    """
+    print_banner(mode="long")
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # ---------------------------------------------------------
+    # STEP 1: Story Selection & Duplicate Check
+    # ---------------------------------------------------------
+    logger.info(">>> STEP 1: Sourcing Deep-Dive Story for 16:9 Landscape Episode...")
+    if custom_topic:
+        story = {
+            "title": custom_topic,
+            "source": "Custom Topic",
+            "summary": custom_topic,
+            "url": "https://news.ycombinator.com"
+        }
+    else:
+        stories = get_trending_tech_stories()
+        if not stories:
+            logger.error("No tech stories found.")
+            return None
+        fresh = filter_previously_published_stories(stories) or stories
+        story = fresh[0]
+
+    logger.info(f"Lead Topic: [{story.get('source')}] {story.get('title')}")
+
+    # ---------------------------------------------------------
+    # STEP 2: 5-Chapter Episodic Script Generation
+    # ---------------------------------------------------------
+    logger.info(f">>> STEP 2: Generating {duration}-Minute 5-Chapter Satire Script via Gemini...")
+    script_data = generate_long_form_script(story, duration_minutes=duration)
+    logger.info(f"Episode Title: {script_data['title']}")
+    logger.info(f"Total Chapters: {len(script_data.get('chapters', []))}")
+
+    # ---------------------------------------------------------
+    # STEP 3: Studio Neural Voice Synthesis
+    # ---------------------------------------------------------
+    logger.info(">>> STEP 3: Synthesizing Full Narration Audio via edge-tts...")
+    audio_temp_path = f"temp/long_speech_{timestamp}.mp3"
+    voice_data = generate_voiceover(
+        text=script_data["full_script"],
+        output_path=audio_temp_path
+    )
+    logger.info(f"Audio Synthesized: {voice_data['duration']:.1f}s | Words: {len(voice_data['word_timings'])}")
+
+    # ---------------------------------------------------------
+    # STEP 4: 1920x1080 Landscape Video Compositing
+    # ---------------------------------------------------------
+    logger.info(">>> STEP 4: Compositing 16:9 Landscape Video (5 Dynamic Layouts)...")
+    output_filename = f"output/Episode_{timestamp}.mp4"
+    final_video_path, chapters_meta = build_long_video(
+        script_data=script_data,
+        voice_data=voice_data,
+        output_path=output_filename,
+        width=1920,
+        height=1080
+    )
+
+    file_size_mb = os.path.getsize(final_video_path) / (1024 * 1024)
+    logger.info(f"Long-Form Render Complete! Path: {final_video_path} ({file_size_mb:.2f} MB)")
+
+    # ---------------------------------------------------------
+    # STEP 5: YouTube Long Video Publishing with Timestamps
+    # ---------------------------------------------------------
+    if not dry_run:
+        logger.info(">>> STEP 5: Publishing 16:9 Episode to YouTube with Clickable Chapters...")
+        publish_mode = os.getenv("PUBLISH_MODE", "PUBLIC")
+        video_url = upload_long_video_to_youtube(
+            video_path=final_video_path,
+            title=script_data["title"],
+            description=script_data.get("summary", script_data["title"]),
+            chapters=chapters_meta,
+            tags=script_data.get("tags", ["TechNews", "Coding", "SoftwareEngineering"]),
+            privacy_status=publish_mode,
+            comment_text=script_data.get("cta_question")
+        )
+        if video_url:
+            logger.info(f"BROADCAST LIVE ON YOUTUBE: {video_url}")
+        else:
+            logger.info(f"Video saved locally at {final_video_path}.")
+    else:
+        logger.info("DRY RUN MODE: Episode generated locally. YouTube upload skipped.")
+
+    mark_story_as_published(story)
+
+    print("\n" + "="*72)
+    print(f"  OUTPUT EPISODE: {os.path.abspath(final_video_path)}")
+    print(f"  RESOLUTION:     1920x1080 (16:9 Landscape)")
+    print(f"  DURATION:       {voice_data['duration']:.1f}s")
+    print(f"  FILE SIZE:      {file_size_mb:.2f} MB")
+    print(f"  CHAPTERS:       {len(chapters_meta)} Timestamps Created")
+    print("="*72 + "\n")
+    return final_video_path
+
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Autonomous AI Avatar Tech Shorts Pipeline")
+    parser = argparse.ArgumentParser(description="Autonomous Tech Video Pipeline (Shorts & Long Shows)")
+    parser.add_argument("--mode", choices=["short", "long"], default="short", help="Video mode: 'short' (9:16 vertical) or 'long' (16:9 horizontal)")
+    parser.add_argument("--duration", type=int, default=12, help="Target duration in minutes for long mode (default: 12)")
     parser.add_argument("--dry-run", action="store_true", default=False, help="Run generation without uploading to YouTube")
     parser.add_argument("--publish", action="store_true", default=False, help="Run generation and auto-publish to YouTube")
     parser.add_argument("--topic", type=str, default=None, help="Custom tech topic or headline override")
@@ -171,5 +281,8 @@ if __name__ == "__main__":
     
     # Default to dry-run if publish flag is not explicitly passed
     is_dry_run = not args.publish
-    
-    run_pipeline(dry_run=is_dry_run, custom_topic=args.topic)
+
+    if args.mode == "long":
+        run_long_pipeline(duration=args.duration, dry_run=is_dry_run, custom_topic=args.topic)
+    else:
+        run_pipeline(dry_run=is_dry_run, custom_topic=args.topic)
