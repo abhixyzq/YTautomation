@@ -62,7 +62,9 @@ def run_pipeline(dry_run: bool = True, custom_topic: str = None):
         if not stories:
             logger.error("No tech stories available. Exiting.")
             return None
-        story = stories[0]
+        import random
+        # Pick from top trending stories to ensure 3 unique drops each day
+        story = random.choice(stories[:min(5, len(stories))])
         
     logger.info(f"Selected Story: [{story['source']}] {story['title']}")
 
