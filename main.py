@@ -34,6 +34,7 @@ from src.script_generator import generate_tech_script
 from src.voice_generator import generate_voiceover
 from src.video_compositor import build_shorts_video
 from src.youtube_uploader import upload_short_to_youtube
+from src.instagram_uploader import upload_reel_to_instagram
 
 
 def print_banner():
@@ -117,7 +118,7 @@ def run_pipeline(dry_run: bool = True, custom_topic: str = None):
     # STEP 5: YouTube Publishing
     # ---------------------------------------------------------
     if not dry_run:
-        logger.info(">>> STEP 5: Publishing Video Directly to YouTube...")
+        logger.info(">>> STEP 5A: Publishing Video Directly to YouTube...")
         publish_mode = os.getenv("PUBLISH_MODE", "PUBLIC")
         video_url = upload_short_to_youtube(
             video_path=final_video_path,
@@ -131,8 +132,22 @@ def run_pipeline(dry_run: bool = True, custom_topic: str = None):
             logger.info(f"MISSION ACCOMPLISHED! YouTube Video URL: {video_url}")
         else:
             logger.info(f"Video saved locally at {final_video_path}. Add client_secret.json to enable auto-upload.")
+
+        # ---------------------------------------------------------
+        # STEP 5B: Instagram Reels Publishing (Optional, Auto-Detected)
+        # ---------------------------------------------------------
+        logger.info(">>> STEP 5B: Checking Instagram Reels Publishing...")
+        ig_url = upload_reel_to_instagram(
+            video_path=final_video_path,
+            title=script_data["title"],
+            description=f"{script_data.get('hook', '')}\n\n{script_data.get('body', '')}\n\n{script_data.get('cta', '')}",
+            tags=script_data.get("tags", ["Shorts", "Tech", "AI"]),
+            comment_text=script_data.get("cta")
+        )
+        if ig_url:
+            logger.info(f"MISSION ACCOMPLISHED! Instagram Reel Live: {ig_url}")
     else:
-        logger.info("DRY RUN MODE: Video generated and verified. YouTube upload skipped.")
+        logger.info("DRY RUN MODE: Video generated and verified. YouTube and Instagram uploads skipped.")
 
     # Record story to history to prevent repeat uploads across daily drops
     mark_story_as_published(story)

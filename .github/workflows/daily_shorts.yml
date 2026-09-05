@@ -44,6 +44,8 @@ jobs:
           GIPHY_API_KEY: ${{ secrets.GIPHY_API_KEY || 'Y8PSKU5ua4A75zQRA6EHOZ9FcAySv9U6' }}
           CLIENT_SECRET_JSON: ${{ secrets.CLIENT_SECRET_JSON }}
           TOKEN_JSON: ${{ secrets.TOKEN_JSON }}
+          INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
         run: |
           echo "GEMINI_API_KEY=$GEMINI_API_KEY" >> .env
           echo "PEXELS_API_KEY=$PEXELS_API_KEY" >> .env
@@ -54,6 +56,8 @@ jobs:
           echo "LANGUAGE=ENG" >> .env
           echo "PUBLISH_MODE=PUBLIC" >> .env
           echo "YOUTUBE_CLIENT_SECRET_FILE=client_secret.json" >> .env
+          echo "INSTAGRAM_ACCOUNT_ID=$INSTAGRAM_ACCOUNT_ID" >> .env
+          echo "INSTAGRAM_ACCESS_TOKEN=$INSTAGRAM_ACCESS_TOKEN" >> .env
 
           echo "$CLIENT_SECRET_JSON" > client_secret.json
           echo "$TOKEN_JSON" > token.json
