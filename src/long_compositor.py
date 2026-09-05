@@ -15,6 +15,9 @@ import os
 import sys
 import re
 import math
+import json
+import shutil
+import subprocess
 import logging
 from typing import Dict, Any, List, Optional, Tuple
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
@@ -38,6 +41,63 @@ logger = logging.getLogger(__name__)
 WIDTH = 1920
 HEIGHT = 1080
 FPS = 30
+
+def _normalize_rel_path(p: Optional[str]) -> str:
+    if not p:
+        return ""
+    abs_p = os.path.abspath(p)
+    ws_root = os.path.abspath(os.getcwd())
+    if abs_p.startswith(ws_root):
+        return os.path.relpath(abs_p, ws_root).replace("\\", "/")
+    return p.replace("\\", "/")
+
+
+def render_remotion_video(props_dict: Dict[str, Any], output_path: str) -> bool:
+    """Renders broadcast video using Remotion (React + CSS Motion Graphics)."""
+    npx_cmd = shutil.which("npx")
+    if not npx_cmd:
+        logger.warning("npx not found on system PATH. Skipping Remotion render.")
+        return False
+
+    temp_dir = os.path.join(os.getcwd(), "temp")
+    os.makedirs(temp_dir, exist_ok=True)
+    props_path = os.path.join(temp_dir, "remotion_props.json")
+
+    with open(props_path, "w", encoding="utf-8") as f:
+        json.dump(props_dict, f, indent=2)
+
+    out_abs = os.path.abspath(output_path)
+    os.makedirs(os.path.dirname(out_abs), exist_ok=True)
+
+    cmd = [
+        "npx", "remotion", "render",
+        "remotion/index.ts",
+        "TechShowLandscape",
+        out_abs,
+        f"--props={props_path}",
+        "--public-dir=.",
+        "--concurrency=4"
+    ]
+
+    logger.info(f"Invoking Remotion render: {' '.join(cmd)}")
+    try:
+        res = subprocess.run(
+            cmd,
+            shell=True,
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=os.getcwd()
+        )
+        if res.returncode == 0 and os.path.exists(out_abs) and os.path.getsize(out_abs) > 1000:
+            logger.info(f"Remotion render completed successfully: {out_abs} ({os.path.getsize(out_abs) / (1024*1024):.2f} MB)")
+            return True
+        else:
+            logger.warning(f"Remotion render failed with code {res.returncode}.\nStderr: {res.stderr[:800]}\nStdout: {res.stdout[:800]}")
+            return False
+    except Exception as e:
+        logger.warning(f"Remotion render exception: {e}")
+        return False
 
 def _find_font(candidates: List[str]) -> Optional[str]:
     for p in candidates:
@@ -508,42 +568,95 @@ def build_long_video(
                 "start_seconds": sc["start"]
             })
 
-    # Pre-fetch & load media assets
-    # 1. Landscape B-roll
+    # 1. Normalize scene layouts and enforce NO IDE constraint
+    for sc in all_scenes:
+        if sc.get("layout_type") == "splitscreen_code":
+            sc["layout_type"] = "splitscreen_stat"
+
+        if sc.get("layout_type") == "splitscreen_stat":
+            if not sc.get("stat_number"):
+                sc["stat_number"] = "$1.2 BILLION"
+            if not sc.get("stat_label"):
+                sc["stat_label"] = "ESTIMATED INCIDENT LOSS"
+            if not sc.get("stat_context"):
+                sc["stat_context"] = sc.get("dialogue", "Critical systems impacted across multiple cloud regions.")
+            if not sc.get("stat_change"):
+                sc["stat_change"] = "+340% SURPLUS RISK"
+
+    # 2. Pre-fetch & cache media assets (B-roll & Memes)
     used_broll_ids = set()
     for sc in all_scenes:
         l_type = sc.get("layout_type", "fullscreen_broll")
         query = sc.get("broll_query") or "futuristic artificial intelligence tech server"
-        if l_type in ["fullscreen_broll", "splitscreen_article", "splitscreen_code", "chapter_bumper"]:
+        if l_type in ["fullscreen_broll", "splitscreen_article", "splitscreen_stat", "chapter_bumper"]:
             clip_p = fetch_broll_clip(query, orientation="landscape", exclude_ids=used_broll_ids)
             sc["broll_path"] = clip_p
-            if clip_p and os.path.exists(clip_p):
-                try:
-                    sc["video_clip"] = VideoFileClip(clip_p)
-                except Exception as e:
-                    logger.warning(f"Failed to load landscape B-roll {clip_p}: {e}")
-                    sc["video_clip"] = None
-            else:
-                sc["video_clip"] = None
-
-        # 2. GIPHY Meme Video
         elif l_type == "meme_reaction":
             m_query = sc.get("meme_query", "michael jordan stop it")
             meme_p = search_giphy_meme_clip(m_query)
             if not meme_p or not os.path.exists(meme_p):
-                # Fallback to local template
                 fallback_entry = LOCAL_REAL_MEMES.get("JORDAN", LOCAL_REAL_MEMES["DEFAULT"])
                 meme_p = fallback_entry[0]
-
             sc["meme_path"] = meme_p
-            if meme_p and os.path.exists(meme_p):
-                try:
-                    sc["video_clip"] = VideoFileClip(meme_p)
-                except Exception as e:
-                    logger.warning(f"Failed to load meme clip {meme_p}: {e}")
-                    sc["video_clip"] = None
-            else:
+
+    # 3. ATTEMPT REMOTION (REACT 18 + CSS) MOTION GRAPHICS ENGINE FIRST
+    ambient_path = "assets/audio/ambient_tech.wav"
+    remotion_scenes = []
+    for sc in all_scenes:
+        remotion_scenes.append({
+            "dialogue": sc.get("dialogue", ""),
+            "layout_type": sc.get("layout_type", "fullscreen_broll"),
+            "broll_path": _normalize_rel_path(sc.get("broll_path")),
+            "meme_path": _normalize_rel_path(sc.get("meme_path")),
+            "meme_punchline": sc.get("meme_punchline", "THIS IS FINE"),
+            "article_headline": sc.get("article_headline", "CRITICAL TECH BREAKTHROUGH"),
+            "article_quote": sc.get("article_quote", "Cascading shifts detected across modern computing."),
+            "article_source": sc.get("article_source", "WIRED"),
+            "stat_number": sc.get("stat_number", "$1.2 BILLION"),
+            "stat_label": sc.get("stat_label", "ESTIMATED INCIDENT LOSS"),
+            "stat_context": sc.get("stat_context", sc.get("dialogue", "Critical systems impacted across multiple cloud regions.")),
+            "stat_change": sc.get("stat_change", "+340% SURPLUS RISK"),
+            "chapter_id": sc.get("chapter_id", 1),
+            "chapter_title": sc.get("chapter_title", "CHAPTER"),
+            "chapter_subtitle": sc.get("chapter_subtitle", ""),
+            "start": sc.get("start", 0.0),
+            "end": sc.get("end", 0.0),
+            "sfx": sc.get("sfx")
+        })
+
+    remotion_props = {
+        "title": script_data.get("topic", "Tech Documentary"),
+        "duration": total_duration,
+        "audio_path": _normalize_rel_path(audio_path),
+        "ambient_path": _normalize_rel_path(ambient_path) if os.path.exists(ambient_path) else "",
+        "scenes": remotion_scenes,
+        "word_timings": word_timings,
+        "phrases": phrases
+    }
+
+    logger.info("Attempting rendering with Remotion (React + CSS Motion Graphics)...")
+    if render_remotion_video(remotion_props, output_path):
+        logger.info(f"Remotion rendered episodic landscape video successfully: {output_path}")
+        return output_path, youtube_chapters
+
+    logger.warning("Remotion rendering unavailable or failed. Falling back to MoviePy engine...")
+
+    # 4. FALLBACK: MoviePy In-Memory VideoClip Rendering
+    for sc in all_scenes:
+        if sc.get("broll_path") and os.path.exists(sc["broll_path"]):
+            try:
+                sc["video_clip"] = VideoFileClip(sc["broll_path"])
+            except Exception as e:
+                logger.warning(f"Failed to load landscape B-roll {sc['broll_path']}: {e}")
                 sc["video_clip"] = None
+        elif sc.get("meme_path") and os.path.exists(sc["meme_path"]):
+            try:
+                sc["video_clip"] = VideoFileClip(sc["meme_path"])
+            except Exception as e:
+                logger.warning(f"Failed to load meme clip {sc['meme_path']}: {e}")
+                sc["video_clip"] = None
+        else:
+            sc["video_clip"] = None
 
     # Instantiate specialized layout renderers
     vscode_engine = VSCodeRenderer()
@@ -554,21 +667,21 @@ def build_long_video(
     # Pre-render static card elements where appropriate to optimize frame loop
     for sc in all_scenes:
         l_type = sc.get("layout_type")
-        if l_type == "splitscreen_code":
-            sc["rendered_card"] = vscode_engine.render_ide_card(
-                width=980,
-                height=860,
-                filename=sc.get("code_filename", "cluster_safety.py"),
-                code_text=sc.get("code_snippet", "# Bug in execution\nwhile True:\n    pass"),
-                error_line=4
-            )
-        elif l_type == "splitscreen_article":
+        if l_type == "splitscreen_article":
             sc["rendered_card"] = article_engine.render_article_card(
                 width=980,
                 height=860,
                 headline=sc.get("article_headline", "CRITICAL SYSTEM INSTABILITY REPORTED"),
                 quote=sc.get("article_quote", "Cascading failures reported across multiple availability zones."),
                 source=sc.get("article_source", "FINANCIAL TIMES")
+            )
+        elif l_type == "splitscreen_stat":
+            sc["rendered_card"] = article_engine.render_article_card(
+                width=980,
+                height=860,
+                headline=sc.get("stat_label", "CRITICAL METRIC LOSS"),
+                quote=f"{sc.get('stat_number', '$1.2B')} — {sc.get('stat_context', 'Severe production outage.')}",
+                source="METRICS REPORT"
             )
 
     # Frame generator function
@@ -650,9 +763,9 @@ def build_long_video(
             frame_base = canvas
 
         # -------------------------------------------------------------
-        # LAYOUT 3 & 4: SPLITSCREEN (ARTICLE & CODE)
+        # LAYOUT 3 & 4: SPLITSCREEN (ARTICLE & STAT/CODE)
         # -------------------------------------------------------------
-        elif l_type in ["splitscreen_article", "splitscreen_code"]:
+        elif l_type in ["splitscreen_article", "splitscreen_stat", "splitscreen_code"]:
             canvas = Image.new("RGBA", (width, height), (10, 14, 24, 255))
             draw = ImageDraw.Draw(canvas)
 

@@ -19,3 +19,8 @@ temp/
 assets/broll_cache/
 *.mp4
 *.mp3
+
+# Node / Remotion
+node_modules/
+build/
+preview_*.png

@@ -88,7 +88,7 @@ LAYOUT TYPES FOR STORYBOARD SCENES:
 - 'chapter_bumper': 3-second animated chapter title card introducing each chapter.
 - 'fullscreen_broll': 16:9 cinematic 4K tech/hardware/data-center footage.
 - 'splitscreen_article': 50% broll on left, 50% floating news article card on right with publication, headline, and highlighted quote.
-- 'splitscreen_code': 50% broll on left, 50% VS Code editor on right with syntax highlighting, filename, and line numbers.
+- 'splitscreen_stat': 50% broll on left, 50% 3D animated metric counter & infographic card on right (stat_number, stat_label, stat_context, stat_change).
 - 'meme_reaction': Centered viral GIPHY reaction video with bold punchline banner (Michael Jordan, Pedro Pascal, Leonardo DiCaprio, Shut Up and Take My Money, Disaster Girl, etc.).
 
 OUTPUT STRICT JSON ONLY (no markdown backticks, no trailing commas):
@@ -134,11 +134,12 @@ OUTPUT STRICT JSON ONLY (no markdown backticks, no trailing commas):
         }},
         {{
           "dialogue": "Spoken narration sentence...",
-          "layout_type": "splitscreen_code",
+          "layout_type": "splitscreen_stat",
           "broll_query": "programmer dark monitor setup",
-          "code_filename": "agent_worker.py",
-          "code_language": "python",
-          "code_snippet": "async def execute_task():\\n    while True:\\n        db.drop_all_tables()",
+          "stat_number": "$1.2 BILLION",
+          "stat_label": "UNPLANNED INFRASTRUCTURE LOSS",
+          "stat_context": "Single deployment error triggered global cloud outage.",
+          "stat_change": "+380% SURPLUS DOWNTIME",
           "sfx": "windows_error"
         }}
       ]
@@ -319,22 +320,17 @@ def generate_procedural_long_script(story: Dict[str, Any], duration_minutes: int
             "sfx": "whoosh"
         },
         {
-            "dialogue": f"At the heart of {company}'s implementation sits this masterpiece of architectural negligence.",
-            "layout_type": "splitscreen_code",
+            "dialogue": f"At the heart of {company}'s implementation sits this staggering scale of infrastructure damage.",
+            "layout_type": "splitscreen_stat",
             "broll_query": "dark server lights glowing blue",
-            "code_filename": filename,
-            "code_language": lang,
-            "code_snippet": """async def handle_cluster_request(req):
-    # TODO: Add authentication before launch
-    # FIXME: This causes infinite memory allocation
-    while not req.is_authenticated:
-        spawn_unbounded_thread_pool()
-        bypass_all_firewalls()
-    return {"status": "success", "bill": "$420,000"}""",
+            "stat_number": "$1.2 BILLION",
+            "stat_label": "UNPLANNED INFRASTRUCTURE LOSS",
+            "stat_context": "Single untested deployment triggered cascading race condition across global clusters.",
+            "stat_change": "+380% DOWNTIME",
             "sfx": "windows_error"
         },
         {
-            "dialogue": "Notice line four. In software engineering, writing a FIXME comment does not actually fix the bug. It simply informs future historians why your company went bankrupt.",
+            "dialogue": "Notice the financial impact. In modern cloud architecture, a single unindexed query or recursive loop doesn't just crash a server—it incinerates your entire venture capital budget.",
             "layout_type": "fullscreen_broll",
             "broll_query": "programmer facepalm looking at code",
             "sfx": "none"
@@ -347,19 +343,13 @@ def generate_procedural_long_script(story: Dict[str, Any], duration_minutes: int
             "sfx": "windows_error"
         },
         {
-            "dialogue": "Instead of gracefully throttling requests, the fallback mechanism spawned fifty thousand asynchronous background workers to retry the exact same failing transaction.",
-            "layout_type": "splitscreen_code",
+            "dialogue": "Instead of gracefully throttling requests, the system spawned fifty thousand unmanaged background jobs, compounding the disaster.",
+            "layout_type": "splitscreen_stat",
             "broll_query": "cloud computing diagram network nodes",
-            "code_filename": "retry_policy.py",
-            "code_language": "python",
-            "code_snippet": """def exponential_backoff(attempt):
-    # Who needs backoff? Send them all at once!
-    return time.sleep(0.0001)
-
-def on_error(err):
-    log.error("DDoS ourselves now")
-    for _ in range(10000):
-        resend_payload_without_limits()""",
+            "stat_number": "8,500,000 PCS",
+            "stat_label": "CRITICAL SYSTEMS IMPACTED",
+            "stat_context": "Unbounded background retry cascade flooded upstream infrastructure.",
+            "stat_change": "-99.4% SERVICE AVAILABILITY",
             "sfx": "pop"
         }
     ]
