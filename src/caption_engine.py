@@ -79,6 +79,79 @@ def group_words_into_phrases(
     return phrases
 
 
+import re
+
+EMOJI_FONT_CANDIDATES = [
+    "C:/Windows/Fonts/seguiemj.ttf",
+    "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf",
+    "/usr/share/fonts/truetype/freefont/FreeSerif.ttf"
+]
+
+EMOJI_FONT_PATH = None
+for candidate in EMOJI_FONT_CANDIDATES:
+    if os.path.exists(candidate):
+        EMOJI_FONT_PATH = candidate
+        break
+
+EMOJI_KEYWORDS = {
+    # AI & Robotics
+    "AI": "🤖",
+    "ROBOT": "🤖",
+    "ROBOTS": "🤖",
+    "AGENT": "🤖",
+    "AGENTS": "🤖",
+    "SWARM": "🐝",
+    "NETWORK": "🌐",
+    # News & Leaks
+    "LEAK": "🚨",
+    "LEAKS": "🚨",
+    "LEAKED": "🚨",
+    "EXPOSED": "🚨",
+    "SECRET": "🕵️",
+    "BREAKING": "🚨",
+    "ALERT": "🚨",
+    "WARNING": "⚠️",
+    # Code & Tech
+    "CODE": "💻",
+    "CODING": "💻",
+    "SOFTWARE": "💻",
+    "PROGRAMMING": "💻",
+    "DEVELOPER": "💻",
+    "DEVELOPERS": "💻",
+    "ENGINEER": "💻",
+    "ENGINEERS": "💻",
+    # Finance & Money
+    "MONEY": "💸",
+    "DOLLAR": "💵",
+    "DOLLARS": "💵",
+    "BILLION": "💰",
+    "MILLION": "💰",
+    "PRICE": "💸",
+    "PRICES": "💸",
+    "PRICING": "💸",
+    "EXPENSIVE": "💸",
+    "COST": "💸",
+    # Speed & Performance
+    "SPEED": "⚡",
+    "FAST": "⚡",
+    "LATENCY": "⚡",
+    "BRAIN": "🧠",
+    "NEURAL": "🧠",
+    "HACK": "👾",
+    "HACKER": "👾",
+    "FIRE": "🔥",
+    "HOT": "🔥",
+    "FUTURE": "🚀",
+    "SHOCK": "⚡",
+    "SHOCKED": "⚡",
+    "INSANE": "🤯",
+    "CRAZY": "🤯",
+    "KILL": "💥",
+    "KILLED": "💥",
+    "DISASTER": "💥",
+}
+
+
 class CaptionRenderer:
     def __init__(self, width: int = 1080, height: int = 1920, base_font_size: int = 68):
         self.width = width
@@ -91,39 +164,71 @@ class CaptionRenderer:
             return ImageFont.truetype(FONT_PATH, size)
         return ImageFont.load_default()
 
+    def _get_emoji_font(self, size: int):
+        if EMOJI_FONT_PATH:
+            try:
+                return ImageFont.truetype(EMOJI_FONT_PATH, size)
+            except Exception:
+                pass
+        return self._get_font(size)
+
     def render_caption_frame(self, current_phrase: Dict[str, Any], current_time: float) -> Image.Image:
-        """Render a single transparent RGBA subtitle overlay with guaranteed screen-safe bounds."""
+        """Render a single transparent RGBA subtitle overlay with screen-safe bounds and dynamic emoji injection."""
         overlay = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
         draw = ImageDraw.Draw(overlay)
 
         words = current_phrase["words"]
         word_items = [(w["word"].upper(), w["start"], w["end"]) for w in words]
 
+        # Check if any word in this phrase matches an emoji keyword
+        phrase_emoji = None
+        for w in words:
+            clean_w = re.sub(r'[^A-Z]', '', w["word"].upper())
+            if clean_w in EMOJI_KEYWORDS:
+                phrase_emoji = EMOJI_KEYWORDS[clean_w]
+                break
+
         # 1. Start with base font and autoscale down if words are too wide
         curr_font_size = self.base_font_size
         font = self._get_font(curr_font_size)
+        emoji_font = self._get_emoji_font(int(curr_font_size * 0.85))
 
         space_w = draw.textbbox((0, 0), " ", font=font)[2]
         word_widths = [draw.textbbox((0, 0), text, font=font)[2] - draw.textbbox((0, 0), text, font=font)[0] for text, _, _ in word_items]
-        total_w = sum(word_widths) + max(0, len(words) - 1) * space_w
+
+        emoji_w = 0
+        if phrase_emoji:
+            try:
+                em_box = draw.textbbox((0, 0), phrase_emoji, font=emoji_font)
+                emoji_w = (em_box[2] - em_box[0]) + 14
+            except Exception:
+                emoji_w = 40
+
+        total_w = sum(word_widths) + max(0, len(words) - 1) * space_w + emoji_w
 
         # If it exceeds screen-safe width, scale down font dynamically
         if total_w > self.max_allowed_width:
             scale = self.max_allowed_width / total_w
-            curr_font_size = max(int(self.base_font_size * scale), 44)
+            curr_font_size = max(int(self.base_font_size * scale), 42)
             font = self._get_font(curr_font_size)
+            emoji_font = self._get_emoji_font(int(curr_font_size * 0.85))
             space_w = draw.textbbox((0, 0), " ", font=font)[2]
             word_widths = [draw.textbbox((0, 0), text, font=font)[2] - draw.textbbox((0, 0), text, font=font)[0] for text, _, _ in word_items]
-            total_w = sum(word_widths) + max(0, len(words) - 1) * space_w
+            if phrase_emoji:
+                try:
+                    em_box = draw.textbbox((0, 0), phrase_emoji, font=emoji_font)
+                    emoji_w = (em_box[2] - em_box[0]) + 14
+                except Exception:
+                    emoji_w = 34
+            total_w = sum(word_widths) + max(0, len(words) - 1) * space_w + emoji_w
 
         # 2. Guaranteed centered position with strict boundary clamping
         start_x = max(80, (self.width - total_w) // 2)
-        # Position at ~63% height (golden eye level for vertical Shorts)
         y_pos = int(self.height * 0.63)
 
         # 3. Dynamic contrast backing badge (pill)
-        pad_x = 28
-        pad_y = 16
+        pad_x = 30
+        pad_y = 18
         text_sample_bbox = draw.textbbox((0, 0), "AG", font=font)
         line_height = text_sample_bbox[3] - text_sample_bbox[1]
 
@@ -146,7 +251,6 @@ class CaptionRenderer:
         for (text, w_start, w_end), w_w in zip(word_items, word_widths):
             is_active = (w_start <= current_time <= w_end + 0.08)
 
-            # Colors: Active = Electric Neon Yellow (#FFE600), Inactive = Pure Crisp White
             text_color = (255, 230, 0, 255) if is_active else (255, 255, 255, 255)
             stroke_color = (0, 0, 0, 255)
             stroke_w = 4 if is_active else 3
@@ -159,8 +263,25 @@ class CaptionRenderer:
                 stroke_fill=stroke_color,
                 stroke_width=stroke_w
             )
-
             curr_x += w_w + space_w
+
+        # 5. Render dynamic 3D emoji if present
+        if phrase_emoji:
+            try:
+                draw.text(
+                    (curr_x + 4, y_pos + 4),
+                    phrase_emoji,
+                    font=emoji_font,
+                    fill=(255, 255, 255, 255),
+                    embedded_color=True
+                )
+            except Exception:
+                draw.text(
+                    (curr_x + 4, y_pos + 4),
+                    phrase_emoji,
+                    font=emoji_font,
+                    fill=(255, 255, 255, 255)
+                )
 
         return overlay
 

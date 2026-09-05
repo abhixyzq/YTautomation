@@ -113,7 +113,8 @@ def run_pipeline(dry_run: bool = True, custom_topic: str = None):
             title=script_data["title"],
             description=f"{script_data.get('hook', '')}\n\n{script_data.get('body', '')}\n\n{script_data.get('cta', '')}",
             tags=script_data.get("tags", ["Shorts", "Tech", "AI"]),
-            privacy_status=publish_mode
+            privacy_status=publish_mode,
+            comment_text=script_data.get("cta")
         )
         if video_url:
             logger.info(f"MISSION ACCOMPLISHED! YouTube Video URL: {video_url}")

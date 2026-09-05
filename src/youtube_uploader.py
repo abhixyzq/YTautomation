@@ -67,15 +67,45 @@ def get_youtube_service():
     return build("youtube", "v3", credentials=creds)
 
 
+def post_first_comment(youtube, video_id: str, comment_text: str) -> bool:
+    """
+    Attempt to post the first engagement discussion comment via YouTube API.
+    Handles scopes gracefully if token doesn't have youtube.force-ssl.
+    """
+    if not comment_text:
+        return False
+    try:
+        body = {
+            "snippet": {
+                "videoId": video_id,
+                "topLevelComment": {
+                    "snippet": {
+                        "textOriginal": comment_text
+                    }
+                }
+            }
+        }
+        logger.info(f"Posting engagement question on video {video_id}...")
+        youtube.commentThreads().insert(part="snippet", body=body).execute()
+        logger.info("Successfully posted first engagement comment!")
+        return True
+    except Exception as e:
+        logger.info(
+            f"Comment note: {e}. (Engagement question is placed prominently at top of video description)."
+        )
+        return False
+
+
 def upload_short_to_youtube(
     video_path: str,
     title: str,
     description: str,
     tags: list = None,
-    privacy_status: str = "public"
+    privacy_status: str = "public",
+    comment_text: str = None
 ) -> Optional[str]:
     """
-    Upload a video file as a YouTube Short.
+    Upload a video file as a YouTube Short and post the initial engagement question.
     Returns the uploaded YouTube Video URL.
     """
     if not os.path.exists(video_path):
@@ -102,13 +132,19 @@ def upload_short_to_youtube(
     else:
         combined_tags = default_push_tags
 
-    # 3. Rich SEO Description with Call-To-Action for Algorithm Boost
-    seo_description = f"""{clean_title}
+    pinned_prompt = comment_text or "What's your perspective on this? Drop your take below! 👇"
+
+    # 3. Rich SEO Description with Call-To-Action & Pinned Question for Algorithm Boost
+    seo_description = f"""💬 QUESTION OF THE DAY:
+{pinned_prompt}
+Drop your perspective in the comments below! 👇
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{clean_title}
 
 {description.strip()}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💬 What's your take on this? Let us know in the comments below!
 🔔 Subscribe for daily cutting-edge tech and AI insights.
 
 #Shorts #Tech #AI #ArtificialIntelligence #Coding #SoftwareEngineering #TechNews #WebDevelopment #Programming #TechTrends
@@ -150,6 +186,11 @@ def upload_short_to_youtube(
     video_id = response.get("id")
     video_url = f"https://youtu.be/{video_id}"
     logger.info(f"SUCCESS! Video live at: {video_url}")
+
+    # 4. Attempt to post first engagement comment
+    first_comment = f"👇 QUESTION OF THE DAY:\n{pinned_prompt}"
+    post_first_comment(youtube, video_id, first_comment)
+
     return video_url
 
 
