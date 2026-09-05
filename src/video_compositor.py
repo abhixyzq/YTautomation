@@ -12,6 +12,7 @@ Cinematic Tech Documentary Shorts Compositor (Fireship / Vox Style)
 
 import os
 import sys
+import re
 import math
 import logging
 from typing import Dict, Any, List, Optional
@@ -59,6 +60,35 @@ FONT_PATH_CODE = _find_font([
     "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
     "/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf"
 ])
+
+
+def get_dynamic_badge_meta(story: Any) -> tuple:
+    """
+    Returns (badge_text, bg_color, border_color) tailored to the breaking story topic.
+    """
+    if isinstance(story, dict):
+        title_upper = story.get("title", "").upper()
+        source_upper = story.get("source", "").upper()
+    else:
+        title_upper = str(story).upper()
+        source_upper = ""
+
+    if "OPENAI" in title_upper or "GPT" in title_upper:
+        return ("● OPENAI CONFIDENTIAL", (16, 185, 129, 235), (110, 231, 183))  # Emerald Green
+    elif "GOOGLE" in title_upper or "GEMINI" in title_upper or "DEEPMIND" in title_upper:
+        return ("● GOOGLE AI RADAR", (37, 99, 235, 235), (147, 197, 253))      # Google Royal Blue
+    elif "NVIDIA" in title_upper or "GPU" in title_upper or "CHIP" in title_upper:
+        return ("● HARDWARE WAR", (101, 163, 13, 235), (190, 242, 100))        # Nvidia Lime
+    elif "META" in title_upper or "LLAMA" in title_upper or "ZUCK" in title_upper:
+        return ("● OPEN SOURCE LEAK", (124, 58, 237, 235), (196, 181, 253))    # Meta Purple
+    elif any(k in title_upper for k in ["LEAK", "EXPOSED", "SECRET", "SCANDAL", "SHOCK", "DISASTER"]):
+        return ("● BREAKING INTEL", (225, 29, 72, 235), (255, 120, 150))       # Crimson Warning
+    elif "HACKER NEWS" in source_upper:
+        return ("● SILICON VALLEY RADAR", (234, 88, 12, 235), (253, 186, 116)) # HN Orange
+    elif "REDDIT" in source_upper:
+        return ("● DEV COMMUNITY TREND", (220, 38, 38, 235), (254, 202, 202))  # Reddit Red
+    else:
+        return ("● BREAKING TECH RADAR", (225, 29, 72, 235), (255, 120, 150))   # Tech Crimson
 
 
 class CinematicDocumentaryEngine:
@@ -140,14 +170,19 @@ class CinematicDocumentaryEngine:
         
         return cropped
 
-    def render_overlay_ui(self, t: float, story_title: str, total_duration: float) -> Image.Image:
-        """Render floating glassmorphic news card and optional floating code snippet."""
+    def render_overlay_ui(self, t: float, story: Any, total_duration: float) -> Image.Image:
+        """Render floating glassmorphic news card with dynamic story-specific category badge."""
         overlay = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
         draw = ImageDraw.Draw(overlay)
 
-        # 1. Top Live Category Pill
-        draw.rounded_rectangle([70, 130, 490, 185], radius=14, fill=(225, 29, 72, 235), outline=(255, 120, 150), width=2)
-        draw.text((95, 142), "● BREAKING TECH RADAR", font=self.font_badge, fill=(255, 255, 255))
+        story_title = story.get("title", "BREAKING TECH") if isinstance(story, dict) else str(story)
+
+        # 1. Top Live Dynamic Category Pill (Customized by Story Topic)
+        badge_text, bg_col, border_col = get_dynamic_badge_meta(story)
+        badge_bbox = draw.textbbox((0, 0), badge_text, font=self.font_badge)
+        badge_w = (badge_bbox[2] - badge_bbox[0]) + 52
+        draw.rounded_rectangle([70, 130, 70 + badge_w, 185], radius=14, fill=bg_col, outline=border_col, width=2)
+        draw.text((96, 142), badge_text, font=self.font_badge, fill=(255, 255, 255))
 
         # 2. Glassmorphic Headline Box (Top)
         headline = story_title.replace("#Shorts", "").replace("#Tech", "").replace("#AI", "").strip()
@@ -218,8 +253,8 @@ def build_shorts_video(
         # 2. Cinematic vignette and top/bottom gradient overlay
         frame_base.alpha_composite(doc_engine.vignette)
 
-        # 3. Glassmorphic Breaking Tech Headline Card & Floating Code IDE
-        ui_overlay = doc_engine.render_overlay_ui(t, story.get("title", "BREAKING TECH"), total_duration)
+        # 3. Glassmorphic Breaking Tech Headline Card & Dynamic Story Badge
+        ui_overlay = doc_engine.render_overlay_ui(t, story, total_duration)
         frame_base.alpha_composite(ui_overlay)
 
         # 4. High-retention active word-by-word subtitles
@@ -270,6 +305,45 @@ def build_shorts_video(
                     audio_layers.append(w_clip)
         except Exception as e:
             logger.warning(f"Could not load whoosh SFX: {e}")
+
+    # -----------------------------------------------------------------
+    # CONTEXTUAL EAR-CANDY SFX: Digital Chimes on Numbers, UI Pops on Leaks
+    # -----------------------------------------------------------------
+    chirp_path = "assets/audio/digital_chirp.wav"
+    pop_path = "assets/audio/pop_click.wav"
+    last_sfx_time = 0.6
+    min_sfx_gap = 3.2
+
+    NUMERIC_KEYWORDS = {"BILLION", "MILLION", "PERCENT", "DOLLARS", "COST", "PRICING", "HUNDRED", "THOUSAND"}
+    SHOCK_KEYWORDS = {"LEAKED", "SECRET", "EXPOSED", "SHOCK", "DISASTER", "HACKED", "CRAZY", "INSANE"}
+
+    for item in word_timings:
+        w_raw = item["word"].upper()
+        w_clean = re.sub(r'[^A-Z0-9%]', '', w_raw)
+        w_time = item["start"]
+
+        if w_time - last_sfx_time < min_sfx_gap or w_time >= total_duration - 1.0:
+            continue
+
+        # 1. Numbers / Percentages / Stats -> High-tech digital chime
+        has_digit = any(char.isdigit() for char in w_clean) or "%" in w_clean or w_clean in NUMERIC_KEYWORDS
+        if has_digit and os.path.exists(chirp_path):
+            try:
+                ch_clip = AudioFileClip(chirp_path).with_start(w_time).with_volume_scaled(0.18)
+                audio_layers.append(ch_clip)
+                last_sfx_time = w_time
+                continue
+            except Exception as e:
+                logger.warning(f"Could not load chirp SFX: {e}")
+
+        # 2. Shock / Leak Words -> UI Pop Click
+        if (w_clean in SHOCK_KEYWORDS or "LEAK" in w_clean) and os.path.exists(pop_path):
+            try:
+                pop_clip = AudioFileClip(pop_path).with_start(w_time).with_volume_scaled(0.22)
+                audio_layers.append(pop_clip)
+                last_sfx_time = w_time
+            except Exception as e:
+                logger.warning(f"Could not load pop SFX: {e}")
 
     final_audio = CompositeAudioClip(audio_layers)
     video_clip = video_clip.with_audio(final_audio)
