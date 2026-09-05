@@ -76,9 +76,8 @@ OUTPUT FORMAT: Strict valid JSON only, no markdown backticks:
     },
     {
       "narration_part": "Engineers found an underground terminal protocol",
-      "visual_query": "retro computer bbs terminal hacker",
-      "visual_type": "terminal",
-      "terminal_cmd": "$ telnet bbs.underground.ai --port 4242"
+      "visual_query": "hacker typing glowing keyboard dark room",
+      "visual_type": "broll"
     },
     {
       "narration_part": "trading bad crypto tips instead of microservices",
@@ -87,9 +86,8 @@ OUTPUT FORMAT: Strict valid JSON only, no markdown backticks:
     },
     {
       "narration_part": "debating whether python is garbage",
-      "visual_query": "python code programming screen",
-      "visual_type": "code_card",
-      "code_snippet": "def optimize():\n    # TODO: rewrite in Rust\n    return 'Garbage collected'"
+      "visual_query": "programmer coding dark monitor setup",
+      "visual_type": "broll"
     },
     {
       "narration_part": "multi-million dollar alignment problem distilled into shitposting",
@@ -112,7 +110,7 @@ OUTPUT FORMAT: Strict valid JSON only, no markdown backticks:
 
 
 def build_semantic_storyboard(title: str, full_script: str) -> list:
-    """Break script into 7-10 chronological scenes with 1-to-1 visual matching."""
+    """Break script into 7-10 chronological scenes with 1-to-1 visual matching (100% Real 4K Footage)."""
     import re
     sentences = [s.strip() for s in re.split(r'[.!?]+', full_script) if len(s.strip()) > 8]
     if not sentences:
@@ -137,29 +135,21 @@ def build_semantic_storyboard(title: str, full_script: str) -> list:
     for idx, sentence in enumerate(sentences):
         s_upper = sentence.upper()
         
-        # 1. Check for Code / Programming lines
+        # 1. Check for Code / Programming lines -> Real 4K filmed coding monitor
         if any(w in s_upper for w in ["PYTHON", "CODE", "JAVASCRIPT", "RUST", "MICROSERVICE", "FUNCTION", "PROGRAM", "SYNTAX", "BUG", "DEVELOPER"]):
-            if "PYTHON" in s_upper:
-                snippet = "def test_in_prod():\n    if memory_leak:\n        restart_container()\n    return 'LGTM 🚀'"
-            elif "RUST" in s_upper:
-                snippet = "fn main() {\n    let mut memory = unsafe { drop_sanity() };\n    println!(\"zero cost abstraction\");\n}"
-            else:
-                snippet = "async function executeOverride() {\n    await bypassSecurityProtocol();\n    return { status: 500, error: 'Prod on Fire' };\n}"
             storyboard.append({
                 "narration_part": sentence,
-                "visual_query": "coding programmer dark screen",
-                "visual_type": "code_card",
-                "code_snippet": snippet
+                "visual_query": "programmer coding dark monitor setup",
+                "visual_type": "broll"
             })
             continue
 
-        # 2. Check for Terminal / CLI / Hack lines
+        # 2. Check for Terminal / CLI / Hack lines -> Real cinematic hacker/terminal footage
         if any(w in s_upper for w in ["TERMINAL", "BBS", "PROTOCOL", "LEAK", "BYPASS", "COMMAND", "URL", "PORT", "SECRET"]):
             storyboard.append({
                 "narration_part": sentence,
-                "visual_query": "retro hacker terminal green text",
-                "visual_type": "terminal",
-                "terminal_cmd": f"$ curl -X POST https://api.internal/v1/leak\n> [INFO] Connecting to encrypted BBS...\n> [ALERT] Unauthorized bot cluster detected."
+                "visual_query": "hacker typing glowing keyboard dark room",
+                "visual_type": "broll"
             })
             continue
 

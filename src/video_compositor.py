@@ -137,98 +137,8 @@ class CinematicDocumentaryEngine:
             
         return vig
 
-    def render_code_card_frame(self, scene: Dict[str, Any], t: float) -> Image.Image:
-        """Render a sleek Fireship-style VS Code editor scene with syntax highlighting."""
-        bg = Image.new("RGB", (self.width, self.height), (12, 16, 24))
-        draw = ImageDraw.Draw(bg)
-        
-        # Subtle dark cyber grid
-        for y in range(0, self.height, 60):
-            draw.line([(0, y), (self.width, y)], fill=(20, 26, 38), width=1)
-
-        # VS Code Window
-        win_x0, win_y0, win_x1, win_y1 = 50, 480, 1030, 1260
-        glow_col = (86, 156, 214)  # VS Code Blue
-        draw.rounded_rectangle([win_x0 - 2, win_y0 - 2, win_x1 + 2, win_y1 + 2], radius=18, fill=None, outline=glow_col, width=2)
-        draw.rounded_rectangle([win_x0, win_y0, win_x1, win_y1], radius=16, fill=(28, 32, 42))
-
-        # Window Header
-        header_h = 60
-        draw.rounded_rectangle([win_x0, win_y0, win_x1, win_y0 + header_h], radius=16, fill=(20, 24, 32))
-        draw.ellipse([win_x0 + 25, win_y0 + 22, win_x0 + 41, win_y0 + 38], fill=(255, 95, 87))
-        draw.ellipse([win_x0 + 52, win_y0 + 22, win_x0 + 68, win_y0 + 38], fill=(254, 188, 46))
-        draw.ellipse([win_x0 + 79, win_y0 + 22, win_x0 + 95, win_y0 + 38], fill=(40, 200, 64))
-        draw.text((win_x0 + 130, win_y0 + 16), "production_hotfix.py", font=self.font_code_small, fill=(210, 220, 235))
-
-        # Gutter Divider
-        gutter_w = 75
-        draw.line([(win_x0 + gutter_w, win_y0 + header_h), (win_x0 + gutter_w, win_y1)], fill=(42, 48, 62), width=1)
-
-        snippet = scene.get("code_snippet", "def test_in_prod():\n    return 'LGTM 🚀'")
-        lines = snippet.split("\n")
-        code_y = win_y0 + header_h + 30
-        for l_num, line in enumerate(lines, 1):
-            draw.text((win_x0 + 18, code_y), f"{l_num:2d}", font=self.font_code, fill=(90, 100, 120))
-            x_pos = win_x0 + gutter_w + 25
-            for tok in line.split(" "):
-                tok_clean = tok.strip("():,[]{}")
-                col = (220, 220, 220)
-                if tok_clean in ["def", "import", "from", "return", "class", "async", "await", "if", "else", "for", "in", "fn", "let", "mut"]:
-                    col = (86, 156, 214)  # Keyword blue
-                elif tok.startswith("#") or tok.startswith("//"):
-                    col = (106, 153, 85)  # Comment green
-                elif "'" in tok or '"' in tok:
-                    col = (206, 145, 120) # String coral
-                elif any(c.isdigit() for c in tok):
-                    col = (181, 206, 168) # Number lime
-                elif "(" in tok:
-                    col = (220, 220, 170) # Func gold
-                draw.text((x_pos, code_y), tok + " ", font=self.font_code, fill=col)
-                tok_bbox = draw.textbbox((0, 0), tok + " ", font=self.font_code)
-                x_pos += (tok_bbox[2] - tok_bbox[0])
-            code_y += 50
-
-        # Blinking Cursor
-        if int(t * 2) % 2 == 0:
-            draw.rectangle([win_x0 + gutter_w + 28, code_y, win_x0 + gutter_w + 42, code_y + 34], fill=(86, 156, 214))
-
-        return bg
-
-    def render_terminal_card_frame(self, scene: Dict[str, Any], t: float) -> Image.Image:
-        """Render a retro/cyber hacker terminal CLI window."""
-        bg = Image.new("RGB", (self.width, self.height), (10, 14, 18))
-        draw = ImageDraw.Draw(bg)
-
-        for y in range(0, self.height, 60):
-            draw.line([(0, y), (self.width, y)], fill=(16, 24, 30), width=1)
-
-        win_x0, win_y0, win_x1, win_y1 = 50, 480, 1030, 1260
-        neon_green = (0, 255, 136)
-        draw.rounded_rectangle([win_x0 - 2, win_y0 - 2, win_x1 + 2, win_y1 + 2], radius=18, fill=None, outline=neon_green, width=2)
-        draw.rounded_rectangle([win_x0, win_y0, win_x1, win_y1], radius=16, fill=(12, 18, 22))
-
-        header_h = 60
-        draw.rounded_rectangle([win_x0, win_y0, win_x1, win_y0 + header_h], radius=16, fill=(18, 26, 32))
-        draw.ellipse([win_x0 + 25, win_y0 + 22, win_x0 + 41, win_y0 + 38], fill=(255, 95, 87))
-        draw.ellipse([win_x0 + 52, win_y0 + 22, win_x0 + 68, win_y0 + 38], fill=(254, 188, 46))
-        draw.ellipse([win_x0 + 79, win_y0 + 22, win_x0 + 95, win_y0 + 38], fill=(40, 200, 64))
-        draw.text((win_x0 + 130, win_y0 + 16), "bash — 80x24 — ⚡ SSH ROOT", font=self.font_code_small, fill=(0, 235, 255))
-
-        cmd_text = scene.get("terminal_cmd", "$ ./execute_override.sh\n> [OK] Connected to agent network...")
-        lines = cmd_text.split("\n")
-        term_y = win_y0 + header_h + 35
-        for line in lines:
-            col = neon_green if line.startswith("$") else (0, 230, 255) if line.startswith(">") else (220, 235, 245)
-            draw.text((win_x0 + 35, term_y), line, font=self.font_code, fill=col)
-            term_y += 50
-
-        if int(t * 3) % 2 == 0:
-            draw.rectangle([win_x0 + 35, term_y, win_x0 + 52, term_y + 32], fill=neon_green)
-
-        return bg
-
     def get_scene_frame(self, t: float) -> Image.Image:
-        """Get scaled, non-repeating frame based on the active storyboard scene."""
+        """Get scaled, non-repeating frame from real 4K footage based on active storyboard scene."""
         if not self.scenes:
             # Fallback cyber canvas
             bg = Image.new("RGB", (self.width, self.height), (10, 15, 26))
@@ -246,13 +156,7 @@ class CinematicDocumentaryEngine:
         if t > self.scenes[-1]["end"]:
             active_scene = self.scenes[-1]
 
-        v_type = active_scene.get("visual_type", "broll")
-
-        if v_type == "code_card":
-            return self.render_code_card_frame(active_scene, t)
-        elif v_type == "terminal":
-            return self.render_terminal_card_frame(active_scene, t)
-        elif v_type == "broll" and active_scene.get("clip"):
+        if active_scene.get("clip"):
             clip = active_scene["clip"]
             scene_duration = max(active_scene["end"] - active_scene["start"], 1.0)
             local_t = min(max(t - active_scene["start"], 0.0), clip.duration - 0.05)
@@ -276,8 +180,12 @@ class CinematicDocumentaryEngine:
             top = (new_h - self.height) // 2
             return resized.crop((left, top, left + self.width, top + self.height))
         else:
-            # Fallback to code card
-            return self.render_code_card_frame(active_scene, t)
+            # Fallback sleek obsidian cyber canvas
+            bg = Image.new("RGB", (self.width, self.height), (10, 15, 26))
+            d = ImageDraw.Draw(bg)
+            for y in range(0, self.height, 60):
+                d.line([(0, y), (self.width, y)], fill=(20, 30, 50), width=1)
+            return bg
 
     def render_overlay_ui(self, t: float, story: Any, total_duration: float) -> Image.Image:
         """Render floating glassmorphic news card with dynamic story-specific category badge."""
@@ -294,7 +202,10 @@ class CinematicDocumentaryEngine:
         draw.text((96, 142), badge_text, font=self.font_badge, fill=(255, 255, 255))
 
         # 2. Glassmorphic Headline Box (Top)
-        headline = story_title.replace("#Shorts", "").replace("#Tech", "").replace("#AI", "").strip()
+        import re
+        clean_headline = re.sub(r'#\w+', '', story_title)
+        clean_headline = re.sub(r'[^\w\s\-\:\'\,\.\!\?]', '', clean_headline).strip()
+        headline = " ".join(clean_headline.split())
         words = headline.split()
         lines = []
         curr_line = []
@@ -331,14 +242,14 @@ def build_shorts_video(
     output_path: str = "output/tech_short.mp4",
     fps: int = FPS
 ) -> str:
-    """Build and export the final 1080x1920 YouTube Shorts MP4 with multi-clip B-roll and SFX."""
+    """Build and export 1080x1920 YouTube Short with 100% real 4K documentary footage & zero repeat."""
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     audio_path = voice_data["audio_path"]
     total_duration = voice_data["duration"]
     word_timings = voice_data["word_timings"]
 
     # -----------------------------------------------------------------
-    # STORYBOARD SCENE SETUP: 1-to-1 Narrative Matching, Zero-Repeat B-Roll
+    # STORYBOARD SCENE SETUP: 1-to-1 Narrative Matching, Zero-Repeat 4K Footage
     # -----------------------------------------------------------------
     storyboard = story.get("storyboard")
     if not storyboard or not isinstance(storyboard, list) or len(storyboard) < 4:
@@ -347,37 +258,26 @@ def build_shorts_video(
     num_scenes = len(storyboard)
     scene_dur = total_duration / num_scenes
     
-    # Collect queries for broll scenes
-    broll_queries = [sc.get("visual_query", "artificial intelligence technology") for sc in storyboard if sc.get("visual_type") == "broll"]
-    logger.info(f">>> Fetching {len(broll_queries)} unique non-repeating B-roll clips for storyboard...")
+    # Collect queries for all storyboard scenes (100% real filmed footage)
+    broll_queries = [sc.get("visual_query", "artificial intelligence technology") for sc in storyboard]
+    logger.info(f">>> Fetching {len(broll_queries)} unique 4K/HD documentary B-roll clips for storyboard...")
     unique_broll_paths = get_curated_broll_clips(broll_queries, count=len(broll_queries))
 
     scenes_data = []
-    broll_idx = 0
     for i, sc in enumerate(storyboard):
         sc_start = i * scene_dur
         sc_end = (i + 1) * scene_dur
-        v_type = sc.get("visual_type", "broll")
-        clip_path = None
-        if v_type == "broll":
-            if broll_idx < len(unique_broll_paths):
-                clip_path = unique_broll_paths[broll_idx]
-                broll_idx += 1
-            else:
-                # If no more unique broll clips, convert to code card or terminal so we NEVER repeat a video!
-                v_type = "code_card" if i % 2 == 0 else "terminal"
+        clip_path = unique_broll_paths[i % len(unique_broll_paths)] if unique_broll_paths else None
 
         scenes_data.append({
             "start": sc_start,
             "end": sc_end,
-            "visual_type": v_type,
+            "visual_type": "broll",
             "clip_path": clip_path,
-            "code_snippet": sc.get("code_snippet", "def optimize():\n    return 'Testing in Prod 🚀'"),
-            "terminal_cmd": sc.get("terminal_cmd", "$ curl -X POST https://api.internal/v1/leak\n> [INFO] Connection established."),
             "visual_query": sc.get("visual_query", "")
         })
 
-    logger.info(f"Compositing {num_scenes}-Scene Fireship Video: {total_duration:.1f}s at {WIDTH}x{HEIGHT} (Zero Video Loop)...")
+    logger.info(f"Compositing {num_scenes}-Scene 4K Documentary Short: {total_duration:.1f}s at {WIDTH}x{HEIGHT}...")
     theme_key, theme = pick_story_theme(story)
     meme_pkg = get_story_meme_package(story, total_duration)
     if meme_pkg:
@@ -391,7 +291,7 @@ def build_shorts_video(
 
     # Frame generator function
     def make_frame(t):
-        # 1. Scaled, Ken-Burns animated 4K B-roll background or Code/Terminal Scene
+        # 1. Scaled, Ken-Burns animated 100% Real 4K B-roll background
         frame_base = doc_engine.get_scene_frame(t).convert("RGBA")
 
         # 2. Cinematic vignette and top/bottom gradient overlay
@@ -457,24 +357,12 @@ def build_shorts_video(
             logger.warning(f"Could not load whoosh SFX: {e}")
 
     # -----------------------------------------------------------------
-    # CONTEXTUAL EAR-CANDY SFX: Digital Chimes on Numbers, UI Pops on Leaks / Code Cards
+    # CONTEXTUAL EAR-CANDY SFX: Digital Chimes on Numbers, UI Pops on Keywords
     # -----------------------------------------------------------------
     chirp_path = "assets/audio/digital_chirp.wav"
     pop_path = "assets/audio/pop_click.wav"
     last_sfx_time = 0.6
     min_sfx_gap = 2.8
-
-    # Trigger audio chime when a code card or terminal scene begins!
-    for sc in scenes_data:
-        sc_t = sc["start"]
-        if sc["visual_type"] in ["code_card", "terminal"] and sc_t > 1.0:
-            if os.path.exists(chirp_path) and sc_t - last_sfx_time >= min_sfx_gap:
-                try:
-                    sc_sfx = AudioFileClip(chirp_path).with_start(sc_t).with_volume_scaled(0.22)
-                    audio_layers.append(sc_sfx)
-                    last_sfx_time = sc_t
-                except Exception:
-                    pass
 
     NUMERIC_KEYWORDS = {"BILLION", "MILLION", "PERCENT", "DOLLARS", "COST", "PRICING", "HUNDRED", "THOUSAND"}
     SHOCK_KEYWORDS = {"LEAKED", "SECRET", "EXPOSED", "SHOCK", "DISASTER", "HACKED", "CRAZY", "INSANE"}
