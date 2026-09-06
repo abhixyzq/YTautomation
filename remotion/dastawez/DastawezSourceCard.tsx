@@ -135,7 +135,7 @@ export const DastawezSourceCard: React.FC<DastawezSourceCardProps> = ({
             }}
           />
           <span style={{ fontSize: 16, fontWeight: 800, color: "#93c5fd", letterSpacing: 0.8 }}>
-            आधिकारिक स्रोत सत्यापन | VERIFIED SOURCE CITATION
+            आधिकारिक स्रोत एवं राजपत्र संदर्भ
           </span>
         </div>
 
@@ -213,7 +213,7 @@ export const DastawezSourceCard: React.FC<DastawezSourceCardProps> = ({
                   color: "#4ade80",
                 }}
               >
-                सत्यापित: {verifiedDate}
+                निर्देश दिनांक: {verifiedDate}
               </div>
             </div>
 
@@ -275,7 +275,7 @@ export const DastawezSourceCard: React.FC<DastawezSourceCardProps> = ({
                     {domain}
                   </div>
                   <div style={{ fontSize: 13, color: "#60a5fa", fontWeight: 600 }}>
-                    100% सुरक्षित राष्ट्रीय पोर्टल (.gov.in)
+                    आधिकारिक राष्ट्रीय पोर्टल (.gov.in)
                   </div>
                 </div>
               </div>

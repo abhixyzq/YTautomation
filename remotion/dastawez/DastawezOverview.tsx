@@ -175,24 +175,6 @@ export const DastawezOverview: React.FC<DastawezOverviewProps> = ({
                 {benefitHighlight || "सीधा लाभ बैंक खाते में (DBT)"}
               </div>
             </div>
-
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                background: "rgba(15, 23, 42, 0.7)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                borderRadius: 10,
-                padding: "8px 14px",
-                width: "fit-content",
-              }}
-            >
-              <span style={{ fontSize: 16 }}>🛡️</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#cbd5e1" }}>
-                100% आधिकारिक नियम अनुसार सुनिश्चित
-              </span>
-            </div>
           </div>
 
           {/* Beat 3: Latest Official Directive & Portal Anchor */}

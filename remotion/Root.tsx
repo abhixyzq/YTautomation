@@ -108,7 +108,7 @@ const defaultDastawezThumbProps: DastawezThumbnailProps = {
   urgency_badge: "70+ बुजुर्गों के लिए नया नियम",
   portal_name: "beneficiary.nha.gov.in",
   helpline: "14555",
-  rule_change_badge: "100% आधिकारिक फैसला",
+  rule_change_badge: "आधिकारिक कैबिनेट फैसला",
 };
 
 export const Root: React.FC = () => {

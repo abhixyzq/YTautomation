@@ -123,10 +123,10 @@ def build_daily_dastawez_video(
         thumb_props = {
             "scheme_name": selected_scheme["scheme_name_hi"],
             "big_benefit": selected_scheme["benefit_amount"],
-            "urgency_badge": selected_scheme.get("urgency_badge", "100% आधिकारिक नियम"),
+            "urgency_badge": selected_scheme.get("urgency_badge", "आधिकारिक सरकारी नियम"),
             "portal_name": selected_scheme["portal_url"].replace("https://", "").replace("http://", "").split("/")[0],
             "helpline": selected_scheme["helpline"],
-            "rule_change_badge": "100% सरकारी फैसला"
+            "rule_change_badge": "आधिकारिक सरकारी घोषणा"
         }
         thumb_props_path = os.path.join(episode_dir, "thumb_props.json")
         with open(thumb_props_path, "w", encoding="utf-8") as f:

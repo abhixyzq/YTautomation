@@ -15,7 +15,7 @@ export const DastawezThumbnail: React.FC<DastawezThumbnailProps> = ({
   urgency_badge = "70+ वरिष्ठ नागरिक नया नियम",
   portal_name = "beneficiary.nha.gov.in",
   helpline = "14555",
-  rule_change_badge = "100% आधिकारिक घोषणा",
+  rule_change_badge = "आधिकारिक घोषणा",
 }) => {
   return (
     <div
@@ -154,19 +154,6 @@ export const DastawezThumbnail: React.FC<DastawezThumbnailProps> = ({
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 16, color: "#94a3b8", fontWeight: 600 }}>हेल्पलाइन:</span>
           <span style={{ fontSize: 22, color: "#34d399", fontWeight: 900 }}>📞 {helpline}</span>
-        </div>
-
-        <div
-          style={{
-            background: "#10b981",
-            color: "#ffffff",
-            fontSize: 16,
-            fontWeight: 800,
-            padding: "6px 16px",
-            borderRadius: 8,
-          }}
-        >
-          ✓ 100% सही व प्रमाणित
         </div>
       </div>
     </div>
