@@ -26,8 +26,17 @@ def main():
     parser.add_argument("--render", action="store_true", help="Render full 1080p MP4 video")
     parser.add_argument("--dry-run", action="store_true", help="Generate script, voiceover and thumbnail only")
     parser.add_argument("--list", "-l", action="store_true", help="List all schemes ranked by real-time priority")
+    parser.add_argument("--connect-youtube", action="store_true", help="Authenticate and connect @iDastawez YouTube channel")
+    parser.add_argument("--upload", action="store_true", help="Upload the rendered video directly to YouTube")
+    parser.add_argument("--privacy", type=str, default="public", choices=["public", "unlisted", "private"], help="YouTube privacy status")
 
     args = parser.parse_args()
+
+    if args.connect_youtube:
+        from dastawez.youtube_uploader import verify_connected_channel
+        print("\n[iDastawez] Verifying YouTube Connection for @iDastawez...")
+        verify_connected_channel()
+        return
 
     if args.list:
         print("\n" + "="*75)
@@ -45,13 +54,17 @@ def main():
         print("\n" + "="*75)
         return
 
-    # If neither --render nor --dry-run is passed, default to dry-run (safe mode)
-    render_video = args.render and not args.dry_run
+    # If --upload is requested, we must render the video
+    render_video = args.render or args.upload
+    if args.dry_run:
+        render_video = False
 
     build_daily_dastawez_video(
         target_scheme_id=args.scheme,
         render_video=render_video,
-        render_thumbnail=True
+        render_thumbnail=True,
+        auto_upload=args.upload,
+        privacy_status=args.privacy
     )
 
 

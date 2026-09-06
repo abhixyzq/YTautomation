@@ -32,6 +32,8 @@ def build_daily_dastawez_video(
     output_base_dir: str = "./output/dastawez_episodes",
     render_video: bool = True,
     render_thumbnail: bool = True,
+    auto_upload: bool = False,
+    privacy_status: str = "public",
 ) -> Dict[str, Any]:
     """
     Executes the complete daily episode pipeline:
@@ -153,6 +155,27 @@ def build_daily_dastawez_video(
     }
     with open(yt_meta_path, "w", encoding="utf-8") as f:
         json.dump(yt_bundle, f, ensure_ascii=False, indent=2)
+
+    # 7. Optional Automatic Upload to @iDastawez
+    if auto_upload and os.path.exists(video_output_path):
+        from dastawez.youtube_uploader import upload_dastawez_long_video
+        print("\n[Step 6] Uploading directly to @iDastawez on YouTube...")
+        first_comment = (
+            f"📌 आधिकारिक पोर्टल: {selected_scheme['portal_url']}\n"
+            f"📞 राष्ट्रीय हेल्पलाइन: {selected_scheme['helpline']}\n"
+            f"⚠️ किसी भी दलाल को शुल्क न दें, यह योजना 100% निःशुल्क है।"
+        )
+        url = upload_dastawez_long_video(
+            video_path=video_output_path,
+            title=script_data["title"],
+            description=script_data["description"],
+            tags=yt_bundle["tags"],
+            thumbnail_path=thumb_output_path if os.path.exists(thumb_output_path) else None,
+            privacy_status=privacy_status,
+            first_comment=first_comment
+        )
+        if url:
+            yt_bundle["uploaded_url"] = url
 
     print("\n" + "="*70)
     print("🎉 iDastawez Episode Pipeline Completed Successfully!")
