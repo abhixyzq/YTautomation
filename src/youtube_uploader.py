@@ -201,10 +201,12 @@ def upload_long_video_to_youtube(
     chapters: list = None,
     tags: list = None,
     privacy_status: str = "public",
-    comment_text: str = None
+    comment_text: str = None,
+    thumbnail_path: str = None
 ) -> Optional[str]:
     """
-    Upload a 16:9 horizontal long video to YouTube with clickable chapters / timestamps in description.
+    Upload a 16:9 horizontal long video to YouTube with clickable chapters / timestamps in description
+    and high-CTR custom thumbnail.
     Returns the uploaded YouTube Video URL.
     """
     if not os.path.exists(video_path):
@@ -296,7 +298,22 @@ Drop your perspective in the comments below! 👇
     video_url = f"https://youtu.be/{video_id}"
     logger.info(f"SUCCESS! Long-form video live at: {video_url}")
 
-    # 5. Post first pinned engagement comment
+    # 5. Set Custom High-CTR Thumbnail
+    if thumbnail_path and os.path.exists(thumbnail_path):
+        try:
+            logger.info(f"Setting custom 1280x720 thumbnail for video {video_id}...")
+            thumb_media = MediaFileUpload(thumbnail_path, mimetype="image/jpeg")
+            youtube.thumbnails().set(
+                videoId=video_id,
+                media_body=thumb_media
+            ).execute()
+            logger.info("Custom high-CTR thumbnail uploaded successfully!")
+        except Exception as e:
+            logger.warning(
+                f"Could not set custom thumbnail (check channel phone verification on YouTube Studio): {e}"
+            )
+
+    # 6. Post first pinned engagement comment
     first_comment = f"👇 QUESTION OF THE DAY:\n{pinned_prompt}"
     post_first_comment(youtube, video_id, first_comment)
 

@@ -1,7 +1,8 @@
 import React from "react";
-import { Composition } from "remotion";
+import { Composition, Still } from "remotion";
 import { TechShow } from "./TechShow";
 import { TechShowProps } from "./types";
+import { Thumbnail, ThumbnailProps } from "./Thumbnail";
 
 const defaultProps: TechShowProps = {
   title: "Silicon Valley Satire Show",
@@ -67,6 +68,15 @@ const defaultProps: TechShowProps = {
   phrases: [],
 };
 
+const defaultThumbProps: ThumbnailProps = {
+  category: "AEROSPACE FORENSICS",
+  hookTitle: "THE 64-BIT",
+  hookHighlight: "GLITCH",
+  subtitle: "How a single 10-line software shortcut destroyed a $500,000,000 rocket in 37 seconds.",
+  badge: "⚠️ MISSION STATUS: CRITICAL DETONATION",
+  accentColor: "#00f0ff",
+};
+
 export const Root: React.FC = () => {
   return (
     <>
@@ -85,6 +95,13 @@ export const Root: React.FC = () => {
           };
         }}
         defaultProps={defaultProps}
+      />
+      <Still
+        id="ThumbnailLandscape"
+        component={Thumbnail}
+        width={1280}
+        height={720}
+        defaultProps={defaultThumbProps}
       />
     </>
   );

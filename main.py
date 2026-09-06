@@ -243,10 +243,24 @@ def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: st
     logger.info(f"Long-Form Render Complete! Path: {final_video_path} ({file_size_mb:.2f} MB)")
 
     # ---------------------------------------------------------
-    # STEP 5: YouTube Long Video Publishing with Timestamps
+    # STEP 4B: Automated High-CTR Thumbnail Generation (1280x720)
+    # ---------------------------------------------------------
+    logger.info(">>> STEP 4B: Generating 1280x720 High-CTR Thumbnail via Remotion...")
+    from src.thumbnail_generator import generate_episode_thumbnail
+    thumbnail_filename = f"output/Thumbnail_{timestamp}.jpg"
+    final_thumbnail_path = generate_episode_thumbnail(story, thumbnail_filename)
+    if final_thumbnail_path and os.path.exists(final_thumbnail_path):
+        thumb_size_kb = os.path.getsize(final_thumbnail_path) / 1024
+        logger.info(f"High-CTR Thumbnail Ready: {final_thumbnail_path} ({thumb_size_kb:.1f} KB)")
+    else:
+        final_thumbnail_path = None
+        logger.warning("Could not generate custom thumbnail; YouTube default will be used.")
+
+    # ---------------------------------------------------------
+    # STEP 5: YouTube Long Video Publishing with Timestamps & Thumbnail
     # ---------------------------------------------------------
     if not dry_run:
-        logger.info(">>> STEP 5: Publishing 16:9 Episode to YouTube with Clickable Chapters...")
+        logger.info(">>> STEP 5: Publishing 16:9 Episode to YouTube with Clickable Chapters & Thumbnail...")
         publish_mode = os.getenv("PUBLISH_MODE", "PUBLIC")
         video_url = upload_long_video_to_youtube(
             video_path=final_video_path,
@@ -255,7 +269,8 @@ def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: st
             chapters=chapters_meta,
             tags=script_data.get("tags", ["TechNews", "Coding", "SoftwareEngineering"]),
             privacy_status=publish_mode,
-            comment_text=script_data.get("cta_question")
+            comment_text=script_data.get("cta_question"),
+            thumbnail_path=final_thumbnail_path
         )
         if video_url:
             logger.info(f"BROADCAST LIVE ON YOUTUBE: {video_url}")
@@ -267,11 +282,13 @@ def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: st
     mark_story_as_published(story)
 
     print("\n" + "="*72)
-    print(f"  OUTPUT EPISODE: {os.path.abspath(final_video_path)}")
-    print(f"  RESOLUTION:     1920x1080 (16:9 Landscape)")
-    print(f"  DURATION:       {voice_data['duration']:.1f}s")
-    print(f"  FILE SIZE:      {file_size_mb:.2f} MB")
-    print(f"  CHAPTERS:       {len(chapters_meta)} Timestamps Created")
+    print(f"  OUTPUT EPISODE:   {os.path.abspath(final_video_path)}")
+    if final_thumbnail_path:
+        print(f"  OUTPUT THUMBNAIL: {os.path.abspath(final_thumbnail_path)}")
+    print(f"  RESOLUTION:       1920x1080 (16:9 Landscape)")
+    print(f"  DURATION:         {voice_data['duration']:.1f}s")
+    print(f"  FILE SIZE:        {file_size_mb:.2f} MB")
+    print(f"  CHAPTERS:         {len(chapters_meta)} Timestamps Created")
     print("="*72 + "\n")
     return final_video_path
 
