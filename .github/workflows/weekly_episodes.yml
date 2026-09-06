@@ -1,0 +1,114 @@
+name: 🎬 Bi-Weekly Tech Episodes (Wednesday & Sunday)
+
+on:
+  schedule:
+    # Every Wednesday (3) and Sunday (0) at 13:53 UTC = 07:23 PM IST (Prime Evening Peak)
+    - cron: '53 13 * * 0,3'
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Custom Topic / Angle (Leave empty for auto-trending deep dive)'
+        required: false
+        default: ''
+      duration:
+        description: 'Duration in minutes'
+        required: false
+        default: '12'
+      publish:
+        description: 'Publish directly to YouTube'
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  build-and-publish-episode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 📦 Install System Dependencies (FFmpeg & Fonts)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core fonts-liberation fonts-noto-color-emoji
+
+      - name: ⚙️ Set up Node.js 20 for Remotion Engine
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 📦 Install Remotion Node Dependencies
+        run: npm ci
+
+      - name: 🔐 Securely Inject Secrets & OAuth Credentials
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          GIPHY_API_KEY: ${{ secrets.GIPHY_API_KEY || 'Y8PSKU5ua4A75zQRA6EHOZ9FcAySv9U6' }}
+          CLIENT_SECRET_JSON: ${{ secrets.CLIENT_SECRET_JSON }}
+          TOKEN_JSON: ${{ secrets.TOKEN_JSON }}
+        run: |
+          echo "GEMINI_API_KEY=$GEMINI_API_KEY" >> .env
+          echo "PEXELS_API_KEY=$PEXELS_API_KEY" >> .env
+          echo "GIPHY_API_KEY=$GIPHY_API_KEY" >> .env
+          echo "VOICE_NAME=en-US-BrianMultilingualNeural" >> .env
+          echo "VOICE_RATE=+2%" >> .env
+          echo "VOICE_PITCH=+0Hz" >> .env
+          echo "LANGUAGE=ENG" >> .env
+          echo "PUBLISH_MODE=PUBLIC" >> .env
+          echo "YOUTUBE_CLIENT_SECRET_FILE=client_secret.json" >> .env
+
+          echo "$CLIENT_SECRET_JSON" > client_secret.json
+          echo "$TOKEN_JSON" > token.json
+
+      - name: 🎬 Render 16:9 Landscape Episode & Publish to YouTube Only
+        run: |
+          CMD="python main.py --mode long"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -n "${{ inputs.topic }}" ]; then
+              CMD="$CMD --topic \"${{ inputs.topic }}\""
+            fi
+            DURATION="${{ inputs.duration }}"
+            [ -z "$DURATION" ] && DURATION="12"
+            CMD="$CMD --duration $DURATION"
+            if [ "${{ inputs.publish }}" = "true" ] || [ "${{ inputs.publish }}" = "True" ]; then
+              CMD="$CMD --publish"
+            else
+              CMD="$CMD --dry-run"
+            fi
+          else
+            # Automated Wednesday/Sunday run
+            CMD="$CMD --duration 12 --publish"
+          fi
+          echo "🚀 Executing Episode Pipeline: $CMD"
+          eval $CMD
+
+      - name: 💾 Commit & Sync Published Story History
+        if: always()
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add assets/published_history.json || true
+          git commit -m "chore(history): update published episode log [skip ci]" || exit 0
+          git push || true
+
+      - name: 🧹 Clean Up Ephemeral Secrets
+        if: always()
+        run: |
+          rm -f .env client_secret.json token.json
