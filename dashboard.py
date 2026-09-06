@@ -260,6 +260,23 @@ def api_env():
     def mask(val):
         if not val: return "❌ Not set"
         return val[:8] + "..." + val[-4:] if len(val) > 12 else "✅ Set"
+
+    # Check Instagram health
+    ig_status = "❌ Not set"
+    try:
+        from src.instagram_uploader import check_instagram_token_health
+        health = check_instagram_token_health()
+        if health.get("ok"):
+            ig_status = f"✅ Active (@{health.get('username')})"
+        elif health.get("status") == "expired":
+            ig_status = "⚠️ Expired (Session ended)"
+        elif health.get("status") == "missing":
+            ig_status = "❌ Not set"
+        else:
+            ig_status = f"⚠️ Error ({health.get('error', 'invalid')[:20]})"
+    except Exception:
+        ig_status = mask(os.getenv("INSTAGRAM_ACCESS_TOKEN", ""))
+
     return jsonify({
         "GEMINI_API_KEY": mask(os.getenv("GEMINI_API_KEY", "")),
         "PEXELS_API_KEY": mask(os.getenv("PEXELS_API_KEY", "")),
@@ -268,7 +285,7 @@ def api_env():
         "PUBLISH_MODE": os.getenv("PUBLISH_MODE", "PUBLIC"),
         "LANGUAGE": os.getenv("LANGUAGE", "ENG"),
         "INSTAGRAM_ACCOUNT_ID": mask(os.getenv("INSTAGRAM_ACCOUNT_ID", "")),
-        "INSTAGRAM_ACCESS_TOKEN": mask(os.getenv("INSTAGRAM_ACCESS_TOKEN", "")),
+        "INSTAGRAM_ACCESS_TOKEN": ig_status,
     })
 
 

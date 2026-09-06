@@ -27,6 +27,35 @@ def is_instagram_configured() -> bool:
     return bool(INSTAGRAM_ACCOUNT_ID and INSTAGRAM_ACCESS_TOKEN)
 
 
+def check_instagram_token_health() -> Dict[str, Any]:
+    """
+    Validates the Instagram Graph API token against Meta endpoints.
+    Detects expired sessions (code 190, subcode 463) or missing scopes.
+    """
+    account_id = os.getenv("INSTAGRAM_ACCOUNT_ID", "").strip()
+    token = os.getenv("INSTAGRAM_ACCESS_TOKEN", "").strip()
+    if not (account_id and token):
+        return {"ok": False, "status": "missing", "error": "Instagram credentials not configured"}
+
+    try:
+        r = requests.get(
+            f"{GRAPH_API_BASE}/{account_id}",
+            params={"fields": "id,username,name", "access_token": token},
+            timeout=10
+        )
+        data = r.json()
+        if "error" in data:
+            err = data["error"]
+            msg = err.get("message", "Unknown error")
+            subcode = err.get("error_subcode")
+            if subcode == 463 or "expired" in msg.lower():
+                return {"ok": False, "status": "expired", "error": "Token expired (Short-lived 1-hr token)"}
+            return {"ok": False, "status": "error", "error": msg}
+        return {"ok": True, "status": "active", "username": data.get("username", account_id)}
+    except Exception as e:
+        return {"ok": False, "status": "network_error", "error": str(e)}
+
+
 def format_instagram_caption(
     title: str,
     description: str = "",
@@ -81,6 +110,17 @@ def upload_reel_to_instagram(
     if not is_instagram_configured():
         logger.info("Instagram credentials not configured. Skipping Instagram upload.")
         logger.info("(To enable 100% automated Instagram Reels: Add INSTAGRAM_ACCOUNT_ID and INSTAGRAM_ACCESS_TOKEN to .env)")
+        return None
+
+    # Verify token health before heavy video upload
+    health = check_instagram_token_health()
+    if not health.get("ok"):
+        if health.get("status") == "expired":
+            logger.error("❌ [INSTAGRAM] Access token has EXPIRED!")
+            logger.error("👉 Short-lived Meta Explorer tokens last only 1-2 hours. Please generate a Permanent / 60-day Page Access Token.")
+        else:
+            logger.error(f"❌ [INSTAGRAM] Token check failed: {health.get('error')}")
+        logger.warning("Skipping Instagram upload due to invalid/expired credentials.")
         return None
 
     if not os.path.exists(video_path):
