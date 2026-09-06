@@ -61,6 +61,31 @@ def render_remotion_video(props_dict: Dict[str, Any], output_path: str) -> bool:
 
     temp_dir = os.path.join(os.getcwd(), "temp")
     os.makedirs(temp_dir, exist_ok=True)
+    public_dir = os.path.join(os.getcwd(), "public")
+    os.makedirs(public_dir, exist_ok=True)
+
+    # 1. Sync narration audio into public/ directory for Remotion static server
+    audio_path = props_dict.get("audio_path")
+    if audio_path and os.path.exists(audio_path):
+        target_audio = os.path.join(public_dir, audio_path)
+        os.makedirs(os.path.dirname(target_audio), exist_ok=True)
+        try:
+            shutil.copy2(audio_path, target_audio)
+        except Exception as e:
+            logger.warning(f"Could not copy audio to public dir: {e}")
+
+    # 2. Sync only active B-roll / media clips for this episode into public/
+    for sc in props_dict.get("scenes", []):
+        bp = sc.get("broll_path")
+        if bp and os.path.exists(bp):
+            target_bp = os.path.join(public_dir, bp)
+            if not os.path.exists(target_bp):
+                os.makedirs(os.path.dirname(target_bp), exist_ok=True)
+                try:
+                    shutil.copy2(bp, target_bp)
+                except Exception:
+                    pass
+
     props_path = os.path.join(temp_dir, "remotion_props.json")
 
     with open(props_path, "w", encoding="utf-8") as f:
@@ -75,7 +100,7 @@ def render_remotion_video(props_dict: Dict[str, Any], output_path: str) -> bool:
         "TechShowLandscape",
         out_abs,
         f"--props={props_path}",
-        "--public-dir=.",
+        "--public-dir=public",
         "--concurrency=4"
     ]
 
@@ -568,27 +593,82 @@ def build_long_video(
                 "start_seconds": sc["start"]
             })
 
-    # 1. Normalize scene layouts and enforce NO IDE constraint
+    # 1. Normalize scene layouts and fill defaults for all high-IQ explainer layouts
     for sc in all_scenes:
-        if sc.get("layout_type") == "splitscreen_code":
-            sc["layout_type"] = "splitscreen_stat"
+        l_type = sc.get("layout_type", "fullscreen_broll")
+        if l_type == "splitscreen_code":
+            sc["layout_type"] = "blueprint_schematic"
+            l_type = "blueprint_schematic"
 
-        if sc.get("layout_type") == "splitscreen_stat":
+        if l_type == "splitscreen_stat":
             if not sc.get("stat_number"):
-                sc["stat_number"] = "$1.2 BILLION"
+                sc["stat_number"] = "99.999%"
             if not sc.get("stat_label"):
-                sc["stat_label"] = "ESTIMATED INCIDENT LOSS"
+                sc["stat_label"] = "THEORETICAL RELIABILITY"
             if not sc.get("stat_context"):
-                sc["stat_context"] = sc.get("dialogue", "Critical systems impacted across multiple cloud regions.")
+                sc["stat_context"] = sc.get("dialogue", "Systemic threshold breached under real-world conditions.")
             if not sc.get("stat_change"):
-                sc["stat_change"] = "+340% SURPLUS RISK"
+                sc["stat_change"] = "CASCADE THRESHOLD"
+
+        elif l_type == "blueprint_schematic":
+            if not sc.get("schematic_title"):
+                sc["schematic_title"] = sc.get("article_headline", "SYSTEM ARCHITECTURE & CONSTRAINTS")
+            if not sc.get("schematic_tag"):
+                sc["schematic_tag"] = "SPEC // CAD-RECONSTRUCTION"
+            if not sc.get("schematic_specs"):
+                sc["schematic_specs"] = [
+                    {"label": "CLOCK SPEED", "value": "4.85 GHz"},
+                    {"label": "QUANTUM TOLERANCE", "value": "±0.002 nm"},
+                    {"label": "DATA THROUGHPUT", "value": "1.24 TB/s"},
+                    {"label": "CRITICAL RISK", "value": "CRITICAL THRESHOLD"}
+                ]
+
+        elif l_type == "kinetic_flowchart":
+            if not sc.get("flowchart_title"):
+                sc["flowchart_title"] = "CAUSAL LOGIC CHAIN"
+            if not sc.get("flowchart_steps"):
+                sc["flowchart_steps"] = [
+                    {"step": 1, "label": "Initial Sensor Discrepancy", "detail": "Telemetry exceeds buffer allocation", "status": "normal"},
+                    {"step": 2, "label": "Uncaught Arithmetic Overflow", "detail": "64-bit float cast to 16-bit integer", "status": "active"},
+                    {"step": 3, "label": "Inertial Processor Shutdown", "detail": "Primary and backup CPUs enter dead halt", "status": "critical"},
+                    {"step": 4, "label": "Diagnostic Data into Thrusters", "detail": "Rocket swivels nozzles 90 degrees at Mach 2", "status": "critical"}
+                ]
+
+        elif l_type == "visual_analogy":
+            if not sc.get("analogy_title"):
+                sc["analogy_title"] = "THE PHYSICAL ANALOGY"
+            if not sc.get("concept_name"):
+                sc["concept_name"] = "THE ABSTRACT CODE"
+            if not sc.get("concept_desc"):
+                sc["concept_desc"] = "Complex mathematical algorithm running in isolated memory."
+            if not sc.get("analogy_name"):
+                sc["analogy_name"] = "REAL-WORLD METAPHOR"
+            if not sc.get("analogy_desc"):
+                sc["analogy_desc"] = "Pouring a gallon of water into a pint glass with no overflow sensor."
+            if not sc.get("takeaway"):
+                sc["takeaway"] = "When software ignores physical boundaries, failure is inevitable."
+
+        elif l_type == "data_timeline_matrix":
+            if not sc.get("timeline_title"):
+                sc["timeline_title"] = "CHRONOLOGICAL FORENSIC TIMELINE"
+            if not sc.get("timeline_events"):
+                sc["timeline_events"] = [
+                    {"time_label": "T - 00:00", "title": "System Launch", "desc": "All primary and secondary telemetry reporting green.", "severity": "info"},
+                    {"time_label": "T + 36.7s", "title": "Primary Unit Halt", "desc": "Arithmetic overflow in horizontal alignment CPU.", "severity": "warning"},
+                    {"time_label": "T + 37.2s", "title": "Backup Duplicate Crash", "desc": "Identical legacy routine causes identical shutdown.", "severity": "critical"},
+                    {"time_label": "T + 39.0s", "title": "Self-Destruct Sequence", "desc": "Aerodynamic shear triggers automatic mission termination.", "severity": "critical"}
+                ]
 
     # 2. Pre-fetch & cache media assets (B-roll & Memes)
     used_broll_ids = set()
     for sc in all_scenes:
         l_type = sc.get("layout_type", "fullscreen_broll")
-        query = sc.get("broll_query") or "futuristic artificial intelligence tech server"
-        if l_type in ["fullscreen_broll", "splitscreen_article", "splitscreen_stat", "chapter_bumper"]:
+        query = sc.get("broll_query") or "quantum physics artificial intelligence server technology"
+        if l_type in [
+            "fullscreen_broll", "splitscreen_article", "splitscreen_stat",
+            "chapter_bumper", "blueprint_schematic", "kinetic_flowchart",
+            "visual_analogy", "data_timeline_matrix"
+        ]:
             clip_p = fetch_broll_clip(query, orientation="landscape", exclude_ids=used_broll_ids)
             sc["broll_path"] = clip_p
         elif l_type == "meme_reaction":
@@ -612,10 +692,32 @@ def build_long_video(
             "article_headline": sc.get("article_headline", "CRITICAL TECH BREAKTHROUGH"),
             "article_quote": sc.get("article_quote", "Cascading shifts detected across modern computing."),
             "article_source": sc.get("article_source", "WIRED"),
-            "stat_number": sc.get("stat_number", "$1.2 BILLION"),
+            "stat_number": sc.get("stat_number", "99.999%"),
             "stat_label": sc.get("stat_label", "ESTIMATED INCIDENT LOSS"),
             "stat_context": sc.get("stat_context", sc.get("dialogue", "Critical systems impacted across multiple cloud regions.")),
             "stat_change": sc.get("stat_change", "+340% SURPLUS RISK"),
+
+            # 1. Blueprint Schematic
+            "schematic_title": sc.get("schematic_title"),
+            "schematic_tag": sc.get("schematic_tag"),
+            "schematic_specs": sc.get("schematic_specs"),
+
+            # 2. Kinetic Flowchart
+            "flowchart_title": sc.get("flowchart_title"),
+            "flowchart_steps": sc.get("flowchart_steps"),
+
+            # 3. Visual Analogy
+            "analogy_title": sc.get("analogy_title"),
+            "concept_name": sc.get("concept_name"),
+            "concept_desc": sc.get("concept_desc"),
+            "analogy_name": sc.get("analogy_name"),
+            "analogy_desc": sc.get("analogy_desc"),
+            "takeaway": sc.get("takeaway"),
+
+            # 4. Data Timeline Matrix
+            "timeline_title": sc.get("timeline_title"),
+            "timeline_events": sc.get("timeline_events"),
+
             "chapter_id": sc.get("chapter_id", 1),
             "chapter_title": sc.get("chapter_title", "CHAPTER"),
             "chapter_subtitle": sc.get("chapter_subtitle", ""),
@@ -625,7 +727,7 @@ def build_long_video(
         })
 
     remotion_props = {
-        "title": script_data.get("topic", "Tech Documentary"),
+        "title": script_data.get("title", script_data.get("topic", "Tech Documentary")),
         "duration": total_duration,
         "audio_path": _normalize_rel_path(audio_path),
         "ambient_path": _normalize_rel_path(ambient_path) if os.path.exists(ambient_path) else "",

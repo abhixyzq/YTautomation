@@ -180,34 +180,40 @@ def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: st
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # ---------------------------------------------------------
-    # STEP 1: Story Selection & Duplicate Check
+    # STEP 1: Deep-Dive Topic Selection & Mystery Sourcing
     # ---------------------------------------------------------
-    logger.info(">>> STEP 1: Sourcing Deep-Dive Story for 16:9 Landscape Episode...")
+    logger.info(">>> STEP 1: Sourcing Mind-Bending Deep-Dive Mystery for 16:9 Episode...")
+    from src.deep_dive_topics import get_deep_dive_topic, CURATED_MYSTERIES
     if custom_topic:
-        story = {
-            "title": custom_topic,
-            "source": "Custom Topic",
-            "summary": custom_topic,
-            "url": "https://news.ycombinator.com"
-        }
+        matched = next((m for m in CURATED_MYSTERIES if custom_topic.lower() in m["title"].lower()), None)
+        if matched:
+            story = matched
+        else:
+            story = {
+                "title": custom_topic,
+                "category": "Science & Deep Technology",
+                "core_paradox": f"The hidden engineering reality behind {custom_topic}.",
+                "real_world_analogy": "An everyday physical metaphor that makes this complex system instantly intuitive.",
+                "catastrophe_case_study": f"The critical breaking point of {custom_topic} when pushed to its limits.",
+                "paradigm_shift": f"How {custom_topic} fundamentally alters our understanding of technology.",
+                "url": "https://en.wikipedia.org",
+                "source": "Deep Dive Inquiry"
+            }
     else:
-        stories = get_trending_tech_stories()
-        if not stories:
-            logger.error("No tech stories found.")
-            return None
-        fresh = filter_previously_published_stories(stories) or stories
-        import random
-        story = random.choice(fresh[:min(3, len(fresh))])
+        from src.news_fetcher import load_published_history
+        history = load_published_history()
+        published_titles = [h.get("title", "") for h in history]
+        story = get_deep_dive_topic(previously_published=published_titles)
 
-    logger.info(f"Lead Topic: [{story.get('source')}] {story.get('title')}")
+    logger.info(f"Mind-Bending Topic: [{story.get('category', 'Engineering')}] {story.get('title')}")
 
     # ---------------------------------------------------------
-    # STEP 2: 5-Chapter Episodic Script Generation
+    # STEP 2: 4-Act High-IQ Explainer Script Generation
     # ---------------------------------------------------------
-    logger.info(f">>> STEP 2: Generating {duration}-Minute 5-Chapter Satire Script via Gemini...")
+    logger.info(f">>> STEP 2: Generating {duration}-Minute 4-Act Explainer Script via Gemini...")
     script_data = generate_long_form_script(story, duration_minutes=duration)
     logger.info(f"Episode Title: {script_data['title']}")
-    logger.info(f"Total Chapters: {len(script_data.get('chapters', []))}")
+    logger.info(f"Total Acts: {len(script_data.get('chapters', []))}")
 
     # ---------------------------------------------------------
     # STEP 3: Studio Neural Voice Synthesis
@@ -223,7 +229,7 @@ def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: st
     # ---------------------------------------------------------
     # STEP 4: 1920x1080 Landscape Video Compositing
     # ---------------------------------------------------------
-    logger.info(">>> STEP 4: Compositing 16:9 Landscape Video (5 Dynamic Layouts)...")
+    logger.info(">>> STEP 4: Compositing 16:9 Landscape Video (Mind-Bending Visual Explainer)...")
     output_filename = f"output/Episode_{timestamp}.mp4"
     final_video_path, chapters_meta = build_long_video(
         script_data=script_data,

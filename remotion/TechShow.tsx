@@ -7,6 +7,10 @@ import { StatMetricCard } from "./components/StatMetricCard";
 import { MemeReaction } from "./components/MemeReaction";
 import { CinematicBroll } from "./components/CinematicBroll";
 import { KineticCaptions } from "./components/KineticCaptions";
+import { BlueprintSchematic } from "./components/BlueprintSchematic";
+import { KineticFlowchart } from "./components/KineticFlowchart";
+import { VisualAnalogyCard } from "./components/VisualAnalogyCard";
+import { DataTimelineMatrix } from "./components/DataTimelineMatrix";
 
 const SFX_MAP: Record<string, string> = {
   bruh: "assets/audio/bruh.wav",
@@ -15,6 +19,8 @@ const SFX_MAP: Record<string, string> = {
   pop: "assets/audio/pop_click.wav",
   whoosh: "assets/audio/whoosh.wav",
   record_scratch: "assets/audio/record_scratch.wav",
+  digital_chirp: "assets/audio/digital_chirp.wav",
+  whip: "assets/audio/whip.wav",
 };
 
 export const resolveMediaSrc = (path?: string) => {
@@ -97,6 +103,40 @@ export const TechShow: React.FC<TechShowProps> = ({
           statLabel={activeScene?.stat_label}
           statContext={activeScene?.stat_context}
           statChange={activeScene?.stat_change}
+        />
+      )}
+
+      {layoutType === "blueprint_schematic" && (
+        <BlueprintSchematic
+          brollPath={resolvedBroll}
+          title={activeScene?.schematic_title || activeScene?.article_headline}
+          tag={activeScene?.schematic_tag}
+          specs={activeScene?.schematic_specs}
+        />
+      )}
+
+      {layoutType === "kinetic_flowchart" && (
+        <KineticFlowchart
+          title={activeScene?.flowchart_title || activeScene?.article_headline}
+          steps={activeScene?.flowchart_steps}
+        />
+      )}
+
+      {layoutType === "visual_analogy" && (
+        <VisualAnalogyCard
+          analogyTitle={activeScene?.analogy_title}
+          conceptName={activeScene?.concept_name}
+          conceptDesc={activeScene?.concept_desc}
+          analogyName={activeScene?.analogy_name}
+          analogyDesc={activeScene?.analogy_desc}
+          takeaway={activeScene?.takeaway}
+        />
+      )}
+
+      {layoutType === "data_timeline_matrix" && (
+        <DataTimelineMatrix
+          timelineTitle={activeScene?.timeline_title || activeScene?.article_headline}
+          events={activeScene?.timeline_events}
         />
       )}
 

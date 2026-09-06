@@ -24,4 +24,6 @@ assets/broll_cache/
 # Node / Remotion
 node_modules/
 build/
+out/
+public/
 preview_*.png

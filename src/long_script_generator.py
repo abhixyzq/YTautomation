@@ -32,115 +32,138 @@ CANDIDATE_MODELS = [
 CHAPTER_SCHEME = [
     {
         "id": 1,
-        "title": "Cold Open Roast",
-        "subtitle": "The Billion Dollar Blunder",
-        "bg_track": "broadcast_news",
-        "ratio": 0.12  # ~12% of time
-    },
-    {
-        "id": 2,
-        "title": "The Deep Investigation",
-        "subtitle": "Paper Trail & Corporate Leaks",
+        "title": "Act 1: The Paradox",
+        "subtitle": "The Impossible Premise",
         "bg_track": "dark_investigation",
-        "ratio": 0.28  # ~28% of time
-    },
-    {
-        "id": 3,
-        "title": "The Code Disaster",
-        "subtitle": "Architecture Autopsy",
-        "bg_track": "synth_code",
-        "ratio": 0.28  # ~28% of time
-    },
-    {
-        "id": 4,
-        "title": "Clown of the Week",
-        "subtitle": "PR Excuses & Moving Memes",
-        "bg_track": "comedic_roast",
         "ratio": 0.20  # ~20% of time
     },
     {
-        "id": 5,
-        "title": "The Cynical Verdict",
-        "subtitle": "Outro & Survival Guide",
+        "id": 2,
+        "title": "Act 2: First Principles",
+        "subtitle": "Deconstruction & Visual Analogy",
+        "bg_track": "synth_code",
+        "ratio": 0.30  # ~30% of time
+    },
+    {
+        "id": 3,
+        "title": "Act 3: The Breaking Point",
+        "subtitle": "Forensic Autopsy & Catastrophe",
+        "bg_track": "broadcast_news",
+        "ratio": 0.30  # ~30% of time
+    },
+    {
+        "id": 4,
+        "title": "Act 4: The Paradigm Shift",
+        "subtitle": "The Uncomfortable Reality",
         "bg_track": "cinematic_outro",
-        "ratio": 0.12  # ~12% of time
+        "ratio": 0.20  # ~20% of time
     }
 ]
 
 
 def build_system_prompt(duration_minutes: int, target_words: int) -> str:
     return f"""
-You are the head writer and host of a hit late-night tech satire show (think John Oliver + Fireship + Vox).
-Your task is to write a master-tier, hilarious, technically rigorous {duration_minutes}-minute video essay script (approximately {target_words} words).
+You are the lead science & technology documentary essayist (in the style of Veritasium, Lemmino, Johnny Harris, and Think School).
+Your mission is to produce a masterclass {duration_minutes}-minute video essay script (approximately {target_words} words).
+The narrative must leave the audience breathless, elevating their understanding of technology, physics, and engineering.
 
 ABSOLUTE PRIORITIES:
-1. ZERO MONOTONY: Every single minute must oscillate between biting corporate roasts, deep architectural diagrams, leaked memos, and authentic developer memes.
-2. TECHNICAL ACCURACY: Do not write vague fluff. Dive into actual tech concepts: memory leaks, recursive AI hallucination loops, Kubernetes pod crashes, unindexed queries, cloud bills, and race conditions.
-3. SATIRICAL COMEDY: Roast big tech CEO promises, PR gaslighting, VC hype bubbles, and junior devs deploying to prod on Friday at 5 PM.
-4. 5 EPISODIC CHAPTERS:
-   - Chapter 1: Cold Open Roast (High energy, thumb-stopping monologue, the absurdity of the headline).
-   - Chapter 2: The Deep Investigation (Leaked internal emails, news articles, investor presentations, timeline of disaster).
-   - Chapter 3: The Code Disaster (Under the hood, architecture autopsy, broken algorithms, VS Code inspection).
-   - Chapter 4: Clown of the Week (Executive excuses, corporate damage control, hilarious meme reactions).
-   - Chapter 5: The Cynical Verdict (What this really means for engineers, industry reality check, viewer debate call to action).
-
-LAYOUT TYPES FOR STORYBOARD SCENES:
-- 'chapter_bumper': 3-second animated chapter title card introducing each chapter.
-- 'fullscreen_broll': 16:9 cinematic 4K tech/hardware/data-center footage.
-- 'splitscreen_article': 50% broll on left, 50% floating news article card on right with publication, headline, and highlighted quote.
-- 'splitscreen_stat': 50% broll on left, 50% 3D animated metric counter & infographic card on right (stat_number, stat_label, stat_context, stat_change).
-- 'meme_reaction': Centered viral GIPHY reaction video with bold punchline banner (Michael Jordan, Pedro Pascal, Leonardo DiCaprio, Shut Up and Take My Money, Disaster Girl, etc.).
+1. INTELLECTUAL MAGNETISM (HIGH-IQ STORYTELLING):
+   - Hook the viewer with a mind-bending contradiction or shocking scientific reality.
+   - Do NOT use cheap jokes, memes, slang, or generic tech filler.
+   - Every minute must deliver dense, fascinating, first-principles insight that viewers will quote to their friends.
+2. 4-ACT INQUIRY STRUCTURE:
+   - Act 1: The Impossible Paradox (Establish the contradiction, the stakes, why conventional wisdom is wrong).
+   - Act 2: First Principles & Visual Analogy (Deconstruct the physics/math/code into intuitive real-world metaphors).
+   - Act 3: The Breaking Point / Forensic Autopsy (The historic catastrophe, timeline of events, the cascading chain of failures).
+   - Act 4: The Paradigm Shift & Uncomfortable Reality (The philosophical conclusion, systemic fragility, provocative open question).
+3. VISUAL STORYBOARD LAYOUTS (MUST USE RICH VISUAL METAPHORS):
+   - 'chapter_bumper': Cinematic act title card with sub-bass impact.
+   - 'blueprint_schematic': CAD technical wireframe blueprint with telemetry parameters.
+   - 'kinetic_flowchart': Step-by-step causal logic chain (Step 1 -> Step 2 -> Step 3).
+   - 'visual_analogy': Split card comparing abstract tech vs real-world physical metaphor with takeaway.
+   - 'data_timeline_matrix': Chronological timeline autopsy of the disaster/breakthrough with severity badges.
+   - 'splitscreen_stat': 3D metric counter with context and percentage change.
+   - 'splitscreen_article': Floating verified source citation / declassified document.
+   - 'fullscreen_broll': 16:9 4K archival, laboratory, or cinematic footage.
 
 OUTPUT STRICT JSON ONLY (no markdown backticks, no trailing commas):
 {{
-  "title": "Late Night Broadcast Title (Punchy, Witty, High CTR)",
+  "title": "Compelling Title in Question or Paradox Format",
   "duration_target_minutes": {duration_minutes},
-  "summary": "Brief 2-sentence synopsis of the show",
-  "tags": ["TechNews", "SoftwareEngineering", "Coding", "SiliconValley", "AI", "CloudComputing"],
-  "cta_question": "Provocative debate question for the pinned comment",
+  "summary": "2-sentence documentary synopsis",
+  "tags": ["Technology", "Engineering", "Physics", "ComputerScience", "DeepDive"],
+  "cta_question": "A philosophical or engineering dilemma for the comments",
   "chapters": [
     {{
       "chapter_id": 1,
-      "chapter_title": "Cold Open Roast",
-      "subtitle": "The Billion Dollar Blunder",
+      "chapter_title": "The Paradox",
+      "subtitle": "The Impossible Premise",
       "scenes": [
         {{
-          "dialogue": "Spoken narration sentence...",
+          "dialogue": "Spoken narration opening the paradox...",
           "layout_type": "chapter_bumper",
-          "broll_query": "futuristic tech studio lights",
+          "broll_query": "deep space dark telemetry glowing grid",
           "sfx": "whoosh"
         }},
         {{
-          "dialogue": "Spoken narration sentence...",
-          "layout_type": "fullscreen_broll",
-          "broll_query": "silicon valley corporate tech headquarters",
-          "sfx": "none"
-        }},
-        {{
-          "dialogue": "Spoken narration sentence...",
-          "layout_type": "splitscreen_article",
-          "broll_query": "server room glowing lights",
-          "article_headline": "Leaked Memo Reveals AI Hallucination Incident",
-          "article_quote": "Internal test wiped out customer staging database in 4 seconds",
-          "article_source": "BLOOMBERG NEWS",
+          "dialogue": "Spoken narration detailing the shocking reality...",
+          "layout_type": "blueprint_schematic",
+          "broll_query": "quantum computer gold wiring cryogenic chamber",
+          "schematic_title": "QUANTUM CRYPTOGRAPHY TELEMETRY",
+          "schematic_tag": "SPEC // QUANTUM-GATE-TOPOLOGY",
+          "schematic_specs": [
+            {{"label": "KEY LENGTH", "value": "2048-BIT RSA"}},
+            {{"label": "CLASSICAL SEARCH", "value": "10^30 YEARS"}},
+            {{"label": "SHOR'S ALGORITHM", "value": "8.4 HOURS"}},
+            {{"label": "SYSTEMIC RISK", "value": "CRITICAL 100%"}}
+          ],
           "sfx": "pop"
         }},
         {{
-          "dialogue": "Spoken narration sentence...",
-          "layout_type": "meme_reaction",
-          "meme_query": "michael jordan stop it",
-          "meme_punchline": "STOP IT. GET SOME HELP.",
-          "sfx": "bruh"
+          "dialogue": "Spoken narration deconstructing the concept...",
+          "layout_type": "visual_analogy",
+          "analogy_title": "THE CRYPTOGRAPHIC METAPHOR",
+          "concept_name": "PRIME FACTORIZATION",
+          "concept_desc": "Multiplying two 300-digit primes takes milliseconds. Finding them back takes universe lifespans.",
+          "analogy_name": "THE COLOR-MIXING VAULT",
+          "analogy_desc": "Mixing two paint drops into brown is trivial. Separating the exact drops back out is impossible.",
+          "takeaway": "Quantum computers don't unmix the paint—they test every photon state simultaneously.",
+          "sfx": "none"
         }},
         {{
-          "dialogue": "Spoken narration sentence...",
+          "dialogue": "Spoken narration walking through the breakdown...",
+          "layout_type": "kinetic_flowchart",
+          "flowchart_title": "THE CASCADING MEMORY OVERFLOW",
+          "flowchart_steps": [
+            {{"step": 1, "label": "Horizontal Velocity Surge", "detail": "Value exceeds 32,767 integer boundary", "status": "normal"}},
+            {{"step": 2, "label": "64-bit to 16-bit Cast", "detail": "Software lacks arithmetic overflow trap", "status": "active"}},
+            {{"step": 3, "label": "Inertial Processor Halt", "detail": "Primary and backup units crash simultaneously", "status": "critical"}},
+            {{"step": 4, "label": "Diagnostic Data into Nozzles", "detail": "Rocket swivels engines 90 degrees at Mach 2", "status": "critical"}}
+          ],
+          "sfx": "whoosh"
+        }},
+        {{
+          "dialogue": "Spoken narration forensic timeline...",
+          "layout_type": "data_timeline_matrix",
+          "timeline_title": "FLIGHT 501 DISASTER TIMELINE",
+          "timeline_events": [
+            {{"time_label": "T+00.0s", "title": "Nominal Liftoff", "desc": "Twin solid rocket boosters ignite from Kourou", "severity": "info"}},
+            {{"time_label": "T+36.7s", "title": "Guidance Computer Crash", "desc": "Both inertial reference units shut down", "severity": "warning"}},
+            {{"time_label": "T+37.2s", "title": "Engine Swivel Hardover", "desc": "Aerodynamic shear rips boosters from main tank", "severity": "critical"}},
+            {{"time_label": "T+39.0s", "title": "Automatic Self-Destruct", "desc": "500 million dollar payload detonated in atmosphere", "severity": "critical"}}
+          ],
+          "sfx": "pop"
+        }},
+        {{
+          "dialogue": "Spoken narration highlighting scale...",
           "layout_type": "splitscreen_stat",
-          "broll_query": "programmer dark monitor setup",
-          "stat_number": "$1.2 BILLION",
-          "stat_label": "UNPLANNED INFRASTRUCTURE LOSS",
-          "stat_context": "Single deployment error triggered global cloud outage.",
-          "stat_change": "+380% SURPLUS DOWNTIME",
-          "sfx": "windows_error"
+          "broll_query": "supercomputer processing data server room",
+          "stat_number": "$500,000,000",
+          "stat_label": "HARDWARE LOSS IN 37 SECONDS",
+          "stat_context": "The most expensive software bug in human aerospace history.",
+          "stat_change": "100% MISSION FAILURE",
+          "sfx": "pop"
         }}
       ]
     }}
@@ -151,303 +174,241 @@ OUTPUT STRICT JSON ONLY (no markdown backticks, no trailing commas):
 
 def generate_procedural_long_script(story: Dict[str, Any], duration_minutes: int) -> Dict[str, Any]:
     """
-    Bulletproof procedural long-form script generator matching the 5-chapter late night satire format.
-    Generates rich, contextual dialogue, code snippets, article citations, and meme reactions
-    if Gemini API is offline or quota-limited.
+    Bulletproof procedural long-form script generator matching the 4-Act Mind-Bending Visual Explainer format.
+    Generates high-IQ scientific inquiry, physical analogies, CAD blueprints, and forensic timelines.
     """
-    title = story.get("title", "Breaking Silicon Valley Architecture Scandal")
-    source = story.get("source", "Hacker News")
-    summary = story.get("summary", title)
-    clean_title = re.sub(r'[^\w\s-]', '', title).strip()
+    title = story.get("title", "The Engineering Paradox That Broke Modern Computing")
+    category = story.get("category", "Science & Deep Technology")
+    core_paradox = story.get("core_paradox", "What appears mathematically secure or physically stable collapses under edge-case conditions.")
+    inciting_incident = story.get("inciting_incident", "A single overlooked flaw triggered an unprecedented systemic failure.")
+    real_world_analogy = story.get("real_world_analogy", "Pouring a gallon of water into a pint glass—the boundary conditions were never validated.")
+    catastrophe_case_study = story.get("catastrophe_case_study", "The primary and secondary fail-safes executed contradictory instructions.")
+    paradigm_shift = story.get("paradigm_shift", "Complexity is the enemy of reliability. When technology controls physical systems, assumptions are fatal.")
 
-    # Determine company/topic context
-    t_upper = title.upper()
-    company = "Big Tech"
-    tech_subject = "Autonomous AI Agents"
-    lang = "python"
-    filename = "deploy_agent.py"
-    broll_hq = "silicon valley corporate tech headquarters"
-
-    if "OPENAI" in t_upper or "GPT" in t_upper:
-        company = "OpenAI"
-        tech_subject = "Autonomous Agent Protocols"
-        filename = "agent_protocol.py"
-        broll_hq = "openai modern glass headquarters"
-    elif "GOOGLE" in t_upper or "GEMINI" in t_upper:
-        company = "Google"
-        tech_subject = "Gemini Cloud Infrastructure"
-        filename = "gemini_orchestrator.py"
-        broll_hq = "googleplex modern tech campus"
-    elif "NVIDIA" in t_upper or "GPU" in t_upper:
-        company = "Nvidia"
-        tech_subject = "Blackwell GPU Clustering"
-        filename = "cuda_cluster_sync.cu"
-        lang = "cpp"
-        broll_hq = "nvidia supercomputer hardware center"
-    elif "MICROSOFT" in t_upper or "AZURE" in t_upper or "CROWDSTRIKE" in t_upper:
-        company = "Microsoft"
-        tech_subject = "Cloud Kernel Drivers"
-        filename = "kernel_safety_check.c"
-        lang = "c"
-        broll_hq = "microsoft data center azure servers"
-    elif "META" in t_upper or "LLAMA" in t_upper:
-        company = "Meta"
-        tech_subject = "Llama Weights & Clusters"
-        filename = "distributed_llama_serve.py"
-        broll_hq = "meta hacker way modern campus"
-
-    # Scale scene counts per chapter based on duration
-    base_mult = max(1, round(duration_minutes / 3.0))
+    # Narrative scaling factor
+    mult = max(1, round(duration_minutes / 3.0))
 
     chapters = []
-    
-    # --- CHAPTER 1: COLD OPEN ROAST ---
-    ch1_scenes = [
+
+    # -------------------------------------------------------------
+    # ACT 1: THE IMPOSSIBLE PARADOX (~20%)
+    # -------------------------------------------------------------
+    act1_scenes = [
         {
-            "dialogue": f"Welcome back, software survivors. Tonight, we investigate how {company} managed to set fire to modern engineering standards.",
+            "dialogue": f"Act One: The Impossible Paradox. To understand {title.lower()}, we must begin with a contradiction that modern science took decades to confront.",
             "layout_type": "chapter_bumper",
-            "broll_query": "futuristic newsroom glowing studio",
+            "broll_query": "deep space dark telemetry glowing grid",
             "sfx": "whoosh"
         },
         {
-            "dialogue": f"According to verified reports, what started as a simple push to production has spiraled into an absolute disaster in {tech_subject}.",
-            "layout_type": "fullscreen_broll",
-            "broll_query": broll_hq,
-            "sfx": "none"
-        },
-        {
-            "dialogue": f"You see, normal companies test their software in staging. But {company} executive leadership decided that your production database is the staging environment.",
-            "layout_type": "splitscreen_article",
-            "broll_query": "server room glowing lights",
-            "article_headline": f"{company.upper()} DISCLOSES UNPRECEDENTED INCIDENT",
-            "article_quote": f"Engineers discovered the issue after widespread anomalies were reported across critical services.",
-            "article_source": "FINANCIAL TIMES",
+            "dialogue": f"At its core, the problem seems deceptively simple: {core_paradox}",
+            "layout_type": "blueprint_schematic",
+            "broll_query": "quantum supercomputer cryogenic gold wiring",
+            "schematic_title": "SYSTEM ARCHITECTURE & CONSTRAINTS",
+            "schematic_tag": "TELEMETRY // FIRST-PRINCIPLES",
+            "schematic_specs": [
+                {"label": "PRIMARY DOMAIN", "value": category.upper()[:20]},
+                {"label": "THEORETICAL LIMIT", "value": "O(N!) HARDNESS"},
+                {"label": "SYSTEMIC TOLERANCE", "value": "±0.0001%"},
+                {"label": "OBSERVED RISK", "value": "CRITICAL THRESHOLD"}
+            ],
             "sfx": "pop"
         },
         {
-            "dialogue": "Which brings us to our first rule of Silicon Valley survival: If the marketing department calls it revolutionary, hold onto your wallet.",
-            "layout_type": "meme_reaction",
-            "meme_query": "michael jordan stop it",
-            "meme_punchline": "STOP IT. GET SOME HELP.",
-            "sfx": "bruh"
+            "dialogue": f"For years, standard textbooks and enterprise architectures took this foundation for granted. Yet when pushed to the mathematical edge, the entire framework begins to fracture.",
+            "layout_type": "splitscreen_stat",
+            "broll_query": "server rack data center fiber optic glowing",
+            "stat_number": "99.999%",
+            "stat_label": "THEORETICAL RELIABILITY ASSUMED",
+            "stat_context": "Assumptions held until physical edge-case constraints were breached.",
+            "stat_change": "CASCADE FAILURE",
+            "sfx": "pop"
+        },
+        {
+            "dialogue": f"The inciting event was neither an accident nor malice—it was the inevitable collision between theoretical equations and physical reality: {inciting_incident}",
+            "layout_type": "fullscreen_broll",
+            "broll_query": "laboratory microscope semiconductor silicon wafer",
+            "sfx": "none"
         }
     ]
-    if base_mult > 1:
-        ch1_scenes.append({
-            "dialogue": f"Over the past 48 hours, engineering forums have exploded with post-mortems attempting to explain how this passed code review.",
+    if mult > 1:
+        act1_scenes.append({
+            "dialogue": "To see why everyone was looking in the wrong direction, we have to deconstruct this system down to its atomic components.",
             "layout_type": "fullscreen_broll",
-            "broll_query": "developer typing keyboard dark monitor setup",
-            "sfx": "none"
+            "broll_query": "futuristic data telemetry particle wave abstract",
+            "sfx": "whoosh"
         })
 
     chapters.append({
         "chapter_id": 1,
-        "chapter_title": "Cold Open Roast",
-        "subtitle": f"{company}'s Billion Dollar Friday Deploy",
-        "scenes": ch1_scenes
+        "chapter_title": "Act 1: The Paradox",
+        "subtitle": "The Impossible Premise",
+        "scenes": act1_scenes
     })
 
-    # --- CHAPTER 2: THE DEEP INVESTIGATION ---
-    ch2_scenes = [
+    # -------------------------------------------------------------
+    # ACT 2: FIRST PRINCIPLES & VISUAL ANALOGY (~30%)
+    # -------------------------------------------------------------
+    act2_scenes = [
         {
-            "dialogue": "Chapter Two: The Deep Investigation. To understand how we got here, we have to look at the paper trail that leadership hoped you wouldn't notice.",
+            "dialogue": "Act Two: First Principles. When complex technology confuses us, the solution is never more jargon—it is finding the right physical analogy.",
             "layout_type": "chapter_bumper",
-            "broll_query": "dark server rack flashing warning lights",
+            "broll_query": "cinematic physics lab laser beam optics",
             "sfx": "whoosh"
         },
         {
-            "dialogue": f"Our story begins when internal memos leaked detailing severe latency regressions in {company}'s flagship infrastructure.",
-            "layout_type": "splitscreen_article",
-            "broll_query": "digital data flow matrix cyber",
-            "article_headline": f"INTERNAL LEAK: {company.upper()} WARNED OF SYSTEM STABILITY RISKS",
-            "article_quote": "Multiple lead architects warned that the new release could cause cascading race conditions under peak traffic.",
-            "article_source": "THE VERGE",
+            "dialogue": f"Consider this mental model: {real_world_analogy}",
+            "layout_type": "visual_analogy",
+            "analogy_title": "THE PHYSICAL ANALOGY",
+            "concept_name": "THE ABSTRACT ALGORITHM",
+            "concept_desc": "High-dimensional mathematical operations running inside isolated silicon registers.",
+            "analogy_name": "THE REAL-WORLD COUNTERPART",
+            "analogy_desc": real_world_analogy,
+            "takeaway": "When software forgets the physical laws of its container, disaster is mathematically guaranteed.",
             "sfx": "pop"
         },
         {
-            "dialogue": "Instead of rolling back, the response was to spin up four hundred more cloud instances and pretend everything was operating within normal parameters.",
-            "layout_type": "fullscreen_broll",
-            "broll_query": "supercomputer server data center cooling pipes",
+            "dialogue": "Notice the subtle trap. In abstract mathematics, numbers are infinite and flawless. In real silicon and physical hardware, every byte is an arrangement of trapped electrons subject to thermodynamic entropy.",
+            "layout_type": "blueprint_schematic",
+            "broll_query": "integrated circuit microchip electron microscope",
+            "schematic_title": "THERMODYNAMIC BOUNDARY MAP",
+            "schematic_tag": "PHYSICS // HARDWARE-ABSTRACTION",
+            "schematic_specs": [
+                {"label": "BIT REGISTER DEPTH", "value": "64-BIT IEEE-754"},
+                {"label": "FLOATING OVERFLOW", "value": "> 32,767 LIMIT"},
+                {"label": "ENERGY DISSIPATION", "value": "10^-21 JOULES/BIT"},
+                {"label": "QUANTUM TUNNELING", "value": "ACTIVE RISK"}
+            ],
             "sfx": "none"
         },
         {
-            "dialogue": "When an engineer finally asked if anyone had checked the unit test coverage, the management room went completely silent.",
-            "layout_type": "meme_reaction",
-            "meme_query": "confused travolta looking around",
-            "meme_punchline": "WHERE ARE THE TESTS",
-            "sfx": "bruh"
-        },
-        {
-            "dialogue": "Documents confirm that the entire release pipeline was bypassed with a bypass flag that was supposed to be decommissioned in 2021.",
-            "layout_type": "splitscreen_article",
-            "broll_query": "cybersecurity network analytics screen",
-            "article_headline": "DEPLOYMENT SAFETY GATES WERE MANUALLY OVERRIDDEN",
-            "article_quote": "Senior management approved pushing the patch without undergoing standard automated regression suites.",
-            "article_source": "WIRED MAGAZINE",
-            "sfx": "pop"
+            "dialogue": "By abstracting away the hardware, generations of engineers convinced themselves that software exists outside the laws of nature. That illusion lasted until the first catastrophic test.",
+            "layout_type": "fullscreen_broll",
+            "broll_query": "futuristic cleanroom engineer wearing hazmat suit silicon fab",
+            "sfx": "none"
         }
     ]
-    if base_mult > 1:
-        ch2_scenes.extend([
-            {
-                "dialogue": "Investors were assured that automated synthetic monitoring would catch any anomalies within milliseconds.",
-                "layout_type": "fullscreen_broll",
-                "broll_query": "stock market ticker chart red numbers",
-                "sfx": "none"
-            },
-            {
-                "dialogue": "Spoiler alert: The synthetic monitoring alert was routed to an unattended Slack channel named general-archive-dont-check.",
-                "layout_type": "meme_reaction",
-                "meme_query": "pedro pascal crying laughing",
-                "meme_punchline": "THIS IS FINE",
-                "sfx": "vine_boom"
-            }
-        ])
+    if mult > 1:
+        act2_scenes.append({
+            "dialogue": "What made this flaw so insidious is that in 99 out of 100 simulations, the system performed flawlessly. The failure mode only triggered when multiple asynchronous variables aligned.",
+            "layout_type": "splitscreen_stat",
+            "broll_query": "supercomputer server nodes flashing green blue",
+            "stat_number": "1 IN 10^9",
+            "stat_label": "CRITICAL ANOMALY PROBABILITY",
+            "stat_context": "At modern computing scales, a one-in-a-billion bug strikes every 14 seconds.",
+            "stat_change": "100% INEVITABLE",
+            "sfx": "pop"
+        })
 
     chapters.append({
         "chapter_id": 2,
-        "chapter_title": "The Deep Investigation",
-        "subtitle": "The Paper Trail & Secret Memos",
-        "scenes": ch2_scenes
+        "chapter_title": "Act 2: First Principles",
+        "subtitle": "Deconstruction & Visual Analogy",
+        "scenes": act2_scenes
     })
 
-    # --- CHAPTER 3: THE CODE DISASTER ---
-    ch3_scenes = [
+    # -------------------------------------------------------------
+    # ACT 3: THE BREAKING POINT / FORENSIC AUTOPSY (~30%)
+    # -------------------------------------------------------------
+    act3_scenes = [
         {
-            "dialogue": "Chapter Three: The Architecture Autopsy. Let us open up the source code and look at the crime scene directly.",
+            "dialogue": "Act Three: The Breaking Point. Theory is mathematically pristine, but when pushed to its operational limit, the system met its breaking point.",
             "layout_type": "chapter_bumper",
-            "broll_query": "programmer code on dual curved monitors",
+            "broll_query": "dark industrial telemetry warning lights flashing red",
             "sfx": "whoosh"
         },
         {
-            "dialogue": f"At the heart of {company}'s implementation sits this staggering scale of infrastructure damage.",
-            "layout_type": "splitscreen_stat",
-            "broll_query": "dark server lights glowing blue",
-            "stat_number": "$1.2 BILLION",
-            "stat_label": "UNPLANNED INFRASTRUCTURE LOSS",
-            "stat_context": "Single untested deployment triggered cascading race condition across global clusters.",
-            "stat_change": "+380% DOWNTIME",
-            "sfx": "windows_error"
+            "dialogue": f"Here is the exact forensic chain of failure: {catastrophe_case_study}",
+            "layout_type": "kinetic_flowchart",
+            "flowchart_title": "FORENSIC CAUSAL LOGIC CHAIN",
+            "flowchart_steps": [
+                {"step": 1, "label": "Initial Sensor Discrepancy", "detail": "Telemetry exceeds buffer allocation during peak load", "status": "normal"},
+                {"step": 2, "label": "Uncaught Exception", "detail": "Protection routine disabled to save 80 microseconds of CPU time", "status": "active"},
+                {"step": 3, "label": "Diagnostic Data Interpreted as Command", "detail": "Error dump bits routed directly to physical actuators", "status": "critical"},
+                {"step": 4, "label": "Complete Structural Catastrophe", "detail": "Aerodynamic and physical stress exceeds design threshold", "status": "critical"}
+            ],
+            "sfx": "whoosh"
         },
         {
-            "dialogue": "Notice the financial impact. In modern cloud architecture, a single unindexed query or recursive loop doesn't just crash a server—it incinerates your entire venture capital budget.",
-            "layout_type": "fullscreen_broll",
-            "broll_query": "programmer facepalm looking at code",
-            "sfx": "none"
+            "dialogue": "When investigators reconstructed the telemetry millisecond by millisecond, they uncovered a timeline where every safeguard failed in domino succession.",
+            "layout_type": "data_timeline_matrix",
+            "timeline_title": "CHRONOLOGICAL FORENSIC TIMELINE",
+            "timeline_events": [
+                {"time_label": "T - 00:00", "title": "System Nominal Launch", "desc": "All primary and redundant telemetry reporting green.", "severity": "info"},
+                {"time_label": "T + 36.7s", "title": "Primary Unit Hardware Halt", "desc": "Arithmetic overflow in alignment calculation halts CPU.", "severity": "warning"},
+                {"time_label": "T + 37.2s", "title": "Backup Unit Duplicate Crash", "desc": "Identical legacy code causes identical fault in backup.", "severity": "critical"},
+                {"time_label": "T + 39.0s", "title": "Total Structural Disintegration", "desc": "Actuators pivot to maximum angle; mission terminated.", "severity": "critical"}
+            ],
+            "sfx": "pop"
         },
         {
-            "dialogue": "When this recursive loop triggered at scale, the database connection pool didn't just exhaust—it evaporated.",
-            "layout_type": "meme_reaction",
-            "meme_query": "windows blue screen error",
-            "meme_punchline": "CRITICAL EXCEPTION 0x00000DEAD",
-            "sfx": "windows_error"
-        },
-        {
-            "dialogue": "Instead of gracefully throttling requests, the system spawned fifty thousand unmanaged background jobs, compounding the disaster.",
-            "layout_type": "splitscreen_stat",
-            "broll_query": "cloud computing diagram network nodes",
-            "stat_number": "8,500,000 PCS",
-            "stat_label": "CRITICAL SYSTEMS IMPACTED",
-            "stat_context": "Unbounded background retry cascade flooded upstream infrastructure.",
-            "stat_change": "-99.4% SERVICE AVAILABILITY",
+            "dialogue": "The financial and technological wreckage was immense. But the most horrifying finding was not that the code was broken—it was that the code did exactly what it was programmed to do.",
+            "layout_type": "splitscreen_article",
+            "broll_query": "investigation declassified report document paper",
+            "article_headline": "OFFICIAL INQUIRY BOARD DISCLOSES STRUCTURAL FINDINGS",
+            "article_quote": "The failure was not caused by a random hardware malfunction, but by a systemic flaw in the specification of software requirements.",
+            "article_source": "INDEPENDENT INQUIRY BOARD",
             "sfx": "pop"
         }
     ]
-    if base_mult > 1:
-        ch3_scenes.append({
-            "dialogue": "This isn't an engineering failure. This is performance art in self-inflicted distributed denial of service.",
+    if mult > 1:
+        act3_scenes.append({
+            "dialogue": "A simple assertion check—a single line of defensive code—would have prevented the entire collapse. But that check was deliberately omitted.",
             "layout_type": "fullscreen_broll",
-            "broll_query": "hacker typing glowing keyboard dark room",
+            "broll_query": "dark server rack glowing blue orange cinematic",
             "sfx": "none"
         })
 
     chapters.append({
         "chapter_id": 3,
-        "chapter_title": "The Code Disaster",
-        "subtitle": "Architecture Autopsy & The Dead Loop",
-        "scenes": ch3_scenes
+        "chapter_title": "Act 3: The Breaking Point",
+        "subtitle": "Forensic Autopsy & Catastrophe",
+        "scenes": act3_scenes
     })
 
-    # --- CHAPTER 4: CLOWN OF THE WEEK ---
-    ch4_scenes = [
+    # -------------------------------------------------------------
+    # ACT 4: THE PARADIGM SHIFT (~20%)
+    # -------------------------------------------------------------
+    act4_scenes = [
         {
-            "dialogue": "Chapter Four: Clown of the Week. Which brings us to the corporate damage control, where reality goes to die.",
+            "dialogue": "Act Four: The Paradigm Shift. What does this reveal about the fragile technological web supporting our modern world?",
             "layout_type": "chapter_bumper",
-            "broll_query": "corporate press conference microphone flashes",
+            "broll_query": "earth from orbit night glowing city lights digital network",
             "sfx": "whoosh"
         },
         {
-            "dialogue": "Whenever a tech giant melts its own data centers, their corporate communications team releases an apology so generic it feels written by a traumatized Commodore 64.",
-            "layout_type": "splitscreen_article",
-            "broll_query": "corporate glass skyscrapers sunset",
-            "article_headline": f"{company.upper()} SPOKESPERSON: 'OUR VALUES REMAIN UNCHANGED'",
-            "article_quote": "We deeply apologize to any partners impacted and have formed an executive committee to reflect on synergies.",
-            "article_source": "WALL STREET JOURNAL",
+            "dialogue": f"The fundamental takeaway reshapes our understanding: {paradigm_shift}",
+            "layout_type": "blueprint_schematic",
+            "broll_query": "abstract futuristic geometric matrix holographic cube",
+            "schematic_title": "THE PARADIGM SHIFT ARCHITECTURE",
+            "schematic_tag": "SYNTHESIS // FUTURE-HORIZONS",
+            "schematic_specs": [
+                {"label": "CORE TAKEAWAY", "value": "VERIFICATION OVER SPEED"},
+                {"label": "SYSTEMIC LATENCY", "value": "ZERO TOLERANCE"},
+                {"label": "HUMAN COGNITIVE LIMIT", "value": "O(COMPLEXITY)"},
+                {"label": "NEW PARADIGM", "value": "FORMAL PROOF DESIGN"}
+            ],
             "sfx": "pop"
         },
         {
-            "dialogue": "Notice how they never actually say what broke. It's always an unforeseen confluence of edge-case telemetry anomalies.",
-            "layout_type": "meme_reaction",
-            "meme_query": "sorry babe",
-            "meme_punchline": "SORRY BABE, IT WAS AN EDGE CASE",
-            "sfx": "bruh"
-        },
-        {
-            "dialogue": f"Meanwhile, on Wall Street, the stock dropped half a percent before hedge fund algorithms decided this was actually bullish because firing the dev team cuts operating expenses.",
+            "dialogue": "As our civilization connects banking, aviation, energy grids, and autonomous intelligence to millions of lines of recursive code, we must ask ourselves an uncomfortable question.",
             "layout_type": "fullscreen_broll",
-            "broll_query": "stock market trader screens high frequency trading",
+            "broll_query": "modern mega city skyline night traffic time lapse cinematic",
             "sfx": "none"
         },
         {
-            "dialogue": "Truly, nothing says technological innovation quite like firing the engineers who warned you and rewarding the executives who ignored them.",
-            "layout_type": "meme_reaction",
-            "meme_query": "shut up and take my money",
-            "meme_punchline": "STONKS ONLY GO UP",
-            "sfx": "vine_boom"
+            "dialogue": f"If an invisible assumption can bring down a half-billion-dollar system in seconds, which foundational assumption in our current technology will break next? Share your perspective in the comments below, and subscribe for our next deep dive into the hidden machinery of our world.",
+            "layout_type": "fullscreen_broll",
+            "broll_query": "futuristic studio end screen abstract particle waves",
+            "sfx": "whoosh"
         }
     ]
 
     chapters.append({
         "chapter_id": 4,
-        "chapter_title": "Clown of the Week",
-        "subtitle": "PR Gaslighting & The Executive Hall of Fame",
-        "scenes": ch4_scenes
-    })
-
-    # --- CHAPTER 5: THE CYNICAL VERDICT & OUTRO ---
-    ch5_scenes = [
-        {
-            "dialogue": "Chapter Five: The Cynical Verdict. So what is the grand lesson for the software engineers watching this tonight?",
-            "layout_type": "chapter_bumper",
-            "broll_query": "city skyline night bokeh lights cinematic",
-            "sfx": "whoosh"
-        },
-        {
-            "dialogue": "First: never deploy on Friday. Second: always keep your resume updated in Markdown format. And third: never trust a tech demo where the CEO doesn't type real commands.",
-            "layout_type": "fullscreen_broll",
-            "broll_query": "programmer walking out of modern tech office night",
-            "sfx": "none"
-        },
-        {
-            "dialogue": f"As {company} continues to patch this disaster behind closed doors, remember that all software is held together by duct tape, caffeine, and prayers to the DNS gods.",
-            "layout_type": "meme_reaction",
-            "meme_query": "this is fine dog fire",
-            "meme_punchline": "HELD TOGETHER BY DUCT TAPE",
-            "sfx": "vine_boom"
-        },
-        {
-            "dialogue": "What is the worst production outage you have ever personally survived? Drop your war stories in the comments below, hit subscribe for our next deep dive, and remember: test your code before prod tests you.",
-            "layout_type": "fullscreen_broll",
-            "broll_query": "end screen tech futuristic abstract geometric particles",
-            "sfx": "pop"
-        }
-    ]
-
-    chapters.append({
-        "chapter_id": 5,
-        "chapter_title": "The Cynical Verdict",
-        "subtitle": "Developer Survival Guide & Final Words",
-        "scenes": ch5_scenes
+        "chapter_title": "Act 4: The Paradigm Shift",
+        "subtitle": "The Uncomfortable Reality",
+        "scenes": act4_scenes
     })
 
     # Compute full narrative text
@@ -458,11 +419,11 @@ def generate_procedural_long_script(story: Dict[str, Any], duration_minutes: int
     full_script = " ".join(all_sentences)
 
     return {
-        "title": f"The {company} Disaster: Inside the Friday Deploy That Broke Tech",
+        "title": title,
         "duration_target_minutes": duration_minutes,
-        "summary": f"A comprehensive satire and technical investigation into {company}'s recent outage in {tech_subject}.",
-        "tags": [company, "TechNews", "SoftwareEngineering", "SiliconValley", "Coding", "CloudOutage", "DeveloperHumor"],
-        "cta_question": f"What was the single worst production outage you ever witnessed in your engineering career? Debate below! 👇",
+        "summary": f"A forensic, mind-bending investigation into {title}: deconstructing first principles, physical analogies, and the catastrophic limits of human engineering.",
+        "tags": ["Engineering", "Science", "Physics", "ComputerScience", "DeepDive", "TechnologyExplained"],
+        "cta_question": f"If a single latent mathematical assumption can collapse this system, what modern tech assumption is most vulnerable today? Debate below! 👇",
         "chapters": chapters,
         "full_script": full_script
     }
@@ -470,14 +431,14 @@ def generate_procedural_long_script(story: Dict[str, Any], duration_minutes: int
 
 def generate_long_form_script(story: Dict[str, Any], duration_minutes: int = 12) -> Dict[str, Any]:
     """
-    Generate episodic, satirical tech news show script via Gemini with multi-model cascade
+    Generate 4-Act Mind-Bending Visual Explainer script via Gemini with multi-model cascade
     and automatic procedural fallback.
     """
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     target_words = int(duration_minutes * 145)
 
     if not api_key:
-        logger.info("No GEMINI_API_KEY found. Generating procedural long-form script...")
+        logger.info("No GEMINI_API_KEY found. Generating procedural 4-Act deep-dive script...")
         return generate_procedural_long_script(story, duration_minutes)
 
     try:
@@ -486,15 +447,54 @@ def generate_long_form_script(story: Dict[str, Any], duration_minutes: int = 12)
 
         sys_prompt = build_system_prompt(duration_minutes, target_words)
         user_prompt = f"""
-BREAKING TOPIC TO ADAPT INTO A LATE-NIGHT TECH SATIRE SHOW:
+TOPIC TO ADAPT INTO A MIND-BENDING VISUAL EXPLAINER (VERITASIUM / LEMMINO / THINK SCHOOL STYLE):
 Title: {story.get('title')}
-Source: {story.get('source')}
-Summary: {story.get('summary')}
-URL: {story.get('url')}
+Category: {story.get('category', 'Science & Deep Technology')}
+Core Paradox: {story.get('core_paradox', story.get('summary', story.get('title')))}
+Real-World Analogy: {story.get('real_world_analogy', 'Deconstruct using an everyday physical metaphor')}
+Catastrophe / Breaking Point: {story.get('catastrophe_case_study', 'The engineering breakdown and causal chain')}
+Paradigm Shift: {story.get('paradigm_shift', 'The broader systemic reality check')}
 
-Target Duration: {duration_minutes} minutes ({target_words} spoken words across 5 episodic chapters).
-Strictly return valid JSON adhering to the specified schema with all 5 chapters and multi-layout storyboard scenes.
+Target Duration: {duration_minutes} minutes ({target_words} spoken words across 4 investigative acts).
+Strictly return valid JSON adhering to the specified schema with all 4 acts and rich multi-layout storyboard scenes.
 """
+        for model_name in CANDIDATE_MODELS:
+            try:
+                logger.info(f"Generating 4-Act Deep Dive script via Gemini model: {model_name}...")
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(
+                    f"{sys_prompt}\n\n{user_prompt}",
+                    generation_config={"response_mime_type": "application/json"}
+                )
+                raw = response.text.strip()
+                data = json.loads(raw)
+
+                # Validate data structure
+                if "chapters" in data and isinstance(data["chapters"], list) and len(data["chapters"]) >= 3:
+                    # Stitch full_script if not present
+                    if "full_script" not in data or not data["full_script"]:
+                        all_dialogue = []
+                        for ch in data["chapters"]:
+                            for sc in ch.get("scenes", []):
+                                if "dialogue" in sc:
+                                    all_dialogue.append(sc["dialogue"])
+                        data["full_script"] = " ".join(all_dialogue)
+
+                    word_count = len(data["full_script"].split())
+                    logger.info(f"Successfully generated {len(data['chapters'])}-act script via {model_name} ({word_count} words).")
+                    return data
+                else:
+                    logger.warning(f"Model {model_name} returned insufficient chapter structure. Trying next...")
+            except Exception as m_err:
+                logger.warning(f"Model {model_name} error: {m_err}. Trying fallback model...")
+                continue
+
+        logger.warning("All Gemini candidate models failed. Using procedural 4-Act explainer generator.")
+        return generate_procedural_long_script(story, duration_minutes)
+
+    except Exception as e:
+        logger.warning(f"Error in Gemini long script generation: {e}. Using procedural script.")
+        return generate_procedural_long_script(story, duration_minutes)
         for model_name in CANDIDATE_MODELS:
             try:
                 logger.info(f"Generating episodic long script via Gemini model: {model_name}...")
