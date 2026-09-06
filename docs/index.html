@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#070a12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>AutoTube Cloud Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #060911;
+  --bg-secondary: #0c1220;
+  --bg-card: rgba(16, 24, 42, 0.72);
+  --bg-card-hover: rgba(23, 34, 59, 0.88);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(0, 240, 255, 0.45);
+  --accent-cyan: #00f0ff;
+  --accent-blue: #3b82f6;
+  --accent-purple: #8b5cf6;
+  --accent-pink: #ec4899;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-red: #ef4444;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --header-height: 64px;
+  --nav-height: 72px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(circle at 10% 10%, rgba(0, 240, 255, 0.06) 0px, transparent 40%),
+    radial-gradient(circle at 90% 90%, rgba(139, 92, 246, 0.07) 0px, transparent 40%),
+    linear-gradient(180deg, rgba(7, 10, 18, 0.6) 0%, rgba(6, 9, 17, 1) 100%);
+  background-attachment: fixed;
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  padding-bottom: calc(var(--nav-height) + 30px);
+  overflow-x: hidden;
+}
+
+/* Header */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: var(--header-height);
+  background: rgba(6, 9, 17, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.brand-badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ff0055 0%, #7928ca 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 4px 18px rgba(255, 0, 85, 0.4);
+}
+
+.brand-text-title {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  background: linear-gradient(90deg, #ffffff, #a5b4fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-text-sub {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-emerald);
+  letter-spacing: 0.4px;
+}
+
+.header-status.active {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: rgba(0, 240, 255, 0.5);
+  color: var(--accent-cyan);
+  animation: pulse-glow 2s infinite;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 rgba(0, 240, 255, 0); }
+  50% { box-shadow: 0 0 16px rgba(0, 240, 255, 0.35); }
+}
+
+/* Layout */
+main {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.tab-pane {
+  display: none;
+  animation: fadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tab-pane.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Cards */
+.card {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.card-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Stats */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-box {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 12px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+}
+
+.stat-val {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+  font-family: var(--font-sans);
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-top: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Active Cloud Job Banner */
+.cloud-active-card {
+  display: none;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.12), rgba(139, 92, 246, 0.12));
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 16px;
+  animation: pulse-border 2s infinite;
+}
+
+.cloud-active-card.visible {
+  display: block;
+}
+
+@keyframes pulse-border {
+  0%, 100% { border-color: rgba(0, 240, 255, 0.3); }
+  50% { border-color: rgba(0, 240, 255, 0.85); box-shadow: 0 0 20px rgba(0, 240, 255, 0.15); }
+}
+
+.cloud-active-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.cloud-active-badge {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cloud-active-time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.progress-bar-wrap {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  overflow: hidden;
+  margin: 12px 0 12px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 50%;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+  border-radius: 99px;
+  animation: progress-indet 1.8s infinite ease-in-out;
+}
+
+@keyframes progress-indet {
+  0% { transform: translateX(-100%); width: 40%; }
+  50% { transform: translateX(50%); width: 70%; }
+  100% { transform: translateX(250%); width: 40%; }
+}
+
+/* Schedule Timeline Card */
+.sched-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+.sched-item:last-child {
+  margin-bottom: 0;
+}
+
+.sched-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sched-time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent-cyan);
+  font-weight: 600;
+}
+
+/* Form Controls */
+.mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+
+.mode-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.mode-btn.active {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(59, 130, 246, 0.3));
+  color: #fff;
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  box-shadow: 0 4px 14px rgba(0, 240, 255, 0.15);
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.form-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #fff;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.15);
+}
+
+/* Preset Chips */
+.chips-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 8px;
+  scrollbar-width: none;
+}
+
+.chips-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chip:active, .chip:hover {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: var(--accent-cyan);
+  color: #fff;
+}
+
+/* Slider */
+.slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.slider-val {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  min-width: 60px;
+  text-align: right;
+}
+
+input[type=range] {
+  flex: 1;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.08);
+  height: 6px;
+  border-radius: 99px;
+  outline: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 12px var(--accent-cyan);
+  cursor: pointer;
+  border: 2px solid #fff;
+}
+
+/* Switch */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.switch-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.switch-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.switch-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.12);
+  transition: 0.3s;
+  border-radius: 34px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: var(--accent-emerald);
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(22px);
+}
+
+/* Buttons */
+.btn-launch {
+  width: 100%;
+  background: linear-gradient(135deg, #00f0ff 0%, #3b82f6 50%, #8b5cf6 100%);
+  border: none;
+  color: #050811;
+  font-size: 15px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 16px;
+  border-radius: 16px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 240, 255, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.btn-launch:active {
+  transform: scale(0.97);
+}
+
+.btn-launch:disabled {
+  opacity: 0.45;
+  filter: grayscale(0.8);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-action {
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary {
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: var(--accent-cyan);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+/* Workflow Runs List */
+.runs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.run-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: border-color 0.2s;
+}
+
+.run-item:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.run-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.run-status-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.run-status-icon.success {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-emerald);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.run-status-icon.in_progress {
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  animation: spin 3s linear infinite;
+}
+
+.run-status-icon.failure {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--accent-red);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.run-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.run-meta {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  display: flex;
+  gap: 8px;
+}
+
+/* Published Video Library */
+.video-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.video-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.video-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.video-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.35;
+}
+
+.video-summary {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.video-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-dim);
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+/* Token Banner */
+.token-banner {
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px dashed rgba(139, 92, 246, 0.4);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.token-banner-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c4b5fd;
+  margin-bottom: 6px;
+}
+
+.token-banner-desc {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+/* Bottom Nav */
+nav.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  background: rgba(6, 9, 17, 0.94);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-dim);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.nav-item .nav-icon {
+  font-size: 20px;
+  transition: transform 0.2s;
+}
+
+.nav-item.active {
+  color: var(--accent-cyan);
+}
+
+.nav-item.active .nav-icon {
+  transform: translateY(-2px) scale(1.1);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 24px;
+  height: 2.5px;
+  background: var(--accent-cyan);
+  border-radius: 99px;
+  box-shadow: 0 0 10px var(--accent-cyan);
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: 74px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid var(--accent-cyan);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 100;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <a href="#" class="brand" onclick="switchTab('overview')">
+    <div class="brand-badge">⚡</div>
+    <div>
+      <div class="brand-text-title">AutoTube Studio</div>
+      <div class="brand-text-sub">Cloud Command</div>
+    </div>
+  </a>
+  <div id="cloudStatusBadge" class="header-status">
+    <div class="status-dot"></div>
+    <span id="cloudStatusText">CLOUD READY</span>
+  </div>
+</header>
+
+<main>
+  <!-- Toast -->
+  <div id="toast" class="toast">Notification</div>
+
+  <!-- TAB 1: OVERVIEW -->
+  <section id="tab-overview" class="tab-pane active">
+    <!-- GitHub Token Warning if not connected -->
+    <div id="tokenWarningBanner" class="token-banner">
+      <div class="token-banner-title">🔐 Connect Your GitHub Repo</div>
+      <div class="token-banner-desc">
+        To trigger cloud runs and manage your YouTube channel 24/7 without your laptop, connect your GitHub token once.
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-action btn-primary" onclick="switchTab('settings')">⚙️ Setup Token</button>
+        <a class="btn-action btn-ghost" href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=AutoTube+Cloud+Remote" target="_blank">Generate Free Token ↗</a>
+      </div>
+    </div>
+
+    <!-- Active Cloud Job Card -->
+    <div id="activeCloudCard" class="cloud-active-card">
+      <div class="cloud-active-header">
+        <span class="cloud-active-badge">⚡ CLOUD RENDER IN PROGRESS</span>
+        <span id="activeJobElapsed" class="cloud-active-time">00:00</span>
+      </div>
+      <div id="activeJobTitle" style="font-size:13.5px; font-weight:700; color:#fff; margin-bottom:4px;">Rendering Autonomous Tech Short...</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill"></div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <a id="activeJobLogsLink" class="btn-action btn-primary" href="#" target="_blank" style="flex:1; justify-content:center;">View Live Cloud Logs ↗</a>
+        <button class="btn-action btn-danger" onclick="cancelActiveRun()">🛑 Cancel Run</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div id="statTotalPub" class="stat-val">0</div>
+        <div class="stat-label">Published</div>
+      </div>
+      <div class="stat-box">
+        <div id="statTotalRuns" class="stat-val">0</div>
+        <div class="stat-label">Cloud Runs</div>
+      </div>
+      <div class="stat-box">
+        <div id="statSuccessRate" class="stat-val">100%</div>
+        <div class="stat-label">Success</div>
+      </div>
+    </div>
+
+    <!-- Quick Cloud Launch -->
+    <div class="card">
+      <div class="card-title">
+        <span>⚡ 1-Tap Cloud Triggers</span>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+        <div class="card" style="margin:0; padding:16px; cursor:pointer; background:rgba(255,255,255,0.03);" onclick="quickTrigger('short', 'Top Trending AI Breakthroughs')">
+          <div style="font-size:24px; margin-bottom:6px;">📱</div>
+          <div style="font-size:14px; font-weight:800; color:#fff;">Daily Short</div>
+          <div style="font-size:11px; color:var(--text-dim); margin-top:2px;">9:16 Vertical Video (60s)</div>
+        </div>
+        <div class="card" style="margin:0; padding:16px; cursor:pointer; background:rgba(255,255,255,0.03);" onclick="quickTrigger('long', 'Weekly Tech & Comedy Roundup')">
+          <div style="font-size:24px; margin-bottom:6px;">🎬</div>
+          <div style="font-size:14px; font-weight:800; color:#fff;">Full Episode</div>
+          <div style="font-size:11px; color:var(--text-dim); margin-top:2px;">16:9 Remotion Show (12m)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Automated Daily Schedule -->
+    <div class="card">
+      <div class="card-title">
+        <span>🕒 Automated Cloud Schedule (IST)</span>
+        <span style="font-size:10px; color:var(--accent-emerald); font-weight:800; letter-spacing:0.5px;">ACTIVE</span>
+      </div>
+      <div class="sched-item">
+        <div class="sched-name"><span>🌅 Morning Tech Drop</span></div>
+        <div class="sched-time">08:35 AM IST</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-name"><span>☀️ Afternoon Push</span></div>
+        <div class="sched-time">02:35 PM IST</div>
+      </div>
+      <div class="sched-item">
+        <div class="sched-name"><span>🌙 Evening Peak Drop</span></div>
+        <div class="sched-time">08:05 PM IST</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 2: CLOUD GENERATOR -->
+  <section id="tab-run" class="tab-pane">
+    <div class="card">
+      <div class="card-title">Video Format</div>
+      <div class="mode-toggle">
+        <button id="btnModeShort" class="mode-btn active" onclick="setMode('short')">
+          <span>⚡ Short (9:16)</span>
+        </button>
+        <button id="btnModeLong" class="mode-btn" onclick="setMode('long')">
+          <span>🎬 Episode (16:9)</span>
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Custom Topic / Angle (Optional)</label>
+        <input id="topicInput" type="text" class="form-input" placeholder="e.g. OpenAI vs Google, Nvidia GPU bubble, Mars Starship..." />
+      </div>
+
+      <!-- Quick Chips -->
+      <div class="form-group">
+        <label class="form-label">Trending Niches</label>
+        <div class="chips-scroll">
+          <div class="chip" onclick="setPreset('AI Breakthroughs & AGI Race')">🤖 AI & Robotics</div>
+          <div class="chip" onclick="setPreset('SpaceX Starship & Mars Mission')">🚀 SpaceX & NASA</div>
+          <div class="chip" onclick="setPreset('Developer Humour & Tech Drama')">💻 Tech Comedy</div>
+          <div class="chip" onclick="setPreset('Crypto, Bitcoin & GPU Stocks')">📈 Crypto & Stocks</div>
+          <div class="chip" onclick="setPreset('Latest Global Inventions')">🌍 Global Tech</div>
+        </div>
+      </div>
+
+      <!-- Duration (Long only) -->
+      <div id="durationGroup" class="form-group" style="display:none;">
+        <div class="form-label" style="display:flex; justify-content:space-between;">
+          <span>Target Duration</span>
+          <span id="durationVal" class="slider-val">12 min</span>
+        </div>
+        <div class="slider-wrap">
+          <input id="durationSlider" type="range" min="5" max="20" step="1" value="12" oninput="updateDuration(this.value)" />
+        </div>
+      </div>
+
+      <!-- Auto-Publish -->
+      <div class="switch-row">
+        <div class="switch-label">
+          <span class="switch-title">Publish to YouTube</span>
+          <span class="switch-desc">Auto-upload directly to your connected channel</span>
+        </div>
+        <label class="toggle-switch">
+          <input id="publishToggle" type="checkbox" checked />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <button id="btnCloudLaunch" class="btn-launch" onclick="triggerWorkflow()">
+        <span>🚀 Trigger Cloud Render (GitHub Actions)</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- TAB 3: CLOUD JOBS / TRACKER -->
+  <section id="tab-jobs" class="tab-pane">
+    <div class="card-title" style="margin-bottom:12px;">
+      <span>Recent Cloud Runs</span>
+      <button class="btn-action btn-ghost" onclick="fetchWorkflowRuns()">🔄 Refresh</button>
+    </div>
+    <div id="runsList" class="runs-list">
+      <div style="text-align:center; padding:30px; color:var(--text-dim); font-size:13px;">
+        Loading cloud runs...
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 4: PUBLISHED LIBRARY -->
+  <section id="tab-videos" class="tab-pane">
+    <div class="card-title" style="margin-bottom:12px;">
+      <span>Published Library (<span id="pubCountHeader">0</span>)</span>
+      <button class="btn-action btn-ghost" onclick="fetchPublishedLibrary()">🔄 Refresh</button>
+    </div>
+    <div id="publishedList" class="video-grid">
+      <div style="text-align:center; padding:30px; color:var(--text-dim); font-size:13px;">
+        Loading published story history...
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 5: SETTINGS & SECRETS -->
+  <section id="tab-settings" class="tab-pane">
+    <div class="card">
+      <div class="card-title">GitHub Repository Connection</div>
+      <div class="form-group">
+        <label class="form-label">Repository (Owner/Repo)</label>
+        <input id="repoInput" type="text" class="form-input" value="abhixyzq/YTautomation" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Personal Access Token (PAT)</label>
+        <input id="patInput" type="password" class="form-input" placeholder="ghp_..." />
+        <p style="font-size:11px; color:var(--text-dim); margin-top:6px;">
+          Saved securely in your browser storage only. Needs <code>repo</code> and <code>workflow</code> permissions.
+        </p>
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <button class="btn-action btn-primary" onclick="saveGitHubAuth()">💾 Save & Verify Token</button>
+        <a class="btn-action btn-ghost" href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=AutoTube+Cloud+Remote" target="_blank">Generate Token ↗</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Cloud Pipeline Health & Secrets</div>
+      <p style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:12px;">
+        Ensure these secrets are set in your GitHub Repository settings for 100% automated cloud execution:
+      </p>
+      <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px;">
+        <div style="display:flex; justify-content:space-between; padding:8px 12px; background:rgba(255,255,255,0.02); border-radius:8px;">
+          <span><code>GEMINI_API_KEY</code></span>
+          <span style="color:var(--accent-emerald);">AI Script Engine</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:8px 12px; background:rgba(255,255,255,0.02); border-radius:8px;">
+          <span><code>PEXELS_API_KEY</code></span>
+          <span style="color:var(--accent-emerald);">HD Stock B-Roll</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:8px 12px; background:rgba(255,255,255,0.02); border-radius:8px;">
+          <span><code>CLIENT_SECRET_JSON</code></span>
+          <span style="color:var(--accent-emerald);">YouTube OAuth App</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:8px 12px; background:rgba(255,255,255,0.02); border-radius:8px;">
+          <span><code>TOKEN_JSON</code></span>
+          <span style="color:var(--accent-emerald);">YouTube Channel Token</span>
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <a class="btn-action btn-ghost" href="https://github.com/abhixyzq/YTautomation/settings/secrets/actions" target="_blank">Manage Repo Secrets ↗</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <div class="nav-item active" onclick="switchTab('overview')">
+    <div class="nav-icon">📊</div>
+    <span>Overview</span>
+  </div>
+  <div class="nav-item" onclick="switchTab('run')">
+    <div class="nav-icon">🚀</div>
+    <span>Create</span>
+  </div>
+  <div class="nav-item" onclick="switchTab('jobs')">
+    <div class="nav-icon">⚡</div>
+    <span>Cloud Jobs</span>
+  </div>
+  <div class="nav-item" onclick="switchTab('videos')">
+    <div class="nav-icon">🎬</div>
+    <span>Library</span>
+  </div>
+  <div class="nav-item" onclick="switchTab('settings')">
+    <div class="nav-icon">⚙️</div>
+    <span>Settings</span>
+  </div>
+</nav>
+
+<script>
+// State
+let currentTab = 'overview';
+let currentMode = 'short';
+let activeRunId = null;
+let activeRunStart = null;
+let timerInterval = null;
+
+const GITHUB_OWNER = 'abhixyzq';
+const GITHUB_REPO = 'YTautomation';
+const WORKFLOW_FILE = 'daily_shorts.yml';
+
+function getRepo() {
+  return localStorage.getItem('autotube_repo') || `${GITHUB_OWNER}/${GITHUB_REPO}`;
+}
+
+function getToken() {
+  return localStorage.getItem('autotube_token') || '';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Tab Switching
+function switchTab(tabId) {
+  currentTab = tabId;
+  document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+  const pane = document.getElementById(`tab-${tabId}`);
+  if (pane) pane.classList.add('active');
+
+  const navIdx = { overview: 0, run: 1, jobs: 2, videos: 3, settings: 4 }[tabId];
+  const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+  if (navItems[navIdx]) navItems[navIdx].classList.add('active');
+
+  if (tabId === 'jobs') fetchWorkflowRuns();
+  if (tabId === 'videos') fetchPublishedLibrary();
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('btnModeShort').classList.toggle('active', mode === 'short');
+  document.getElementById('btnModeLong').classList.toggle('active', mode === 'long');
+  document.getElementById('durationGroup').style.display = (mode === 'long') ? 'block' : 'none';
+}
+
+function setPreset(topic) {
+  document.getElementById('topicInput').value = topic;
+}
+
+function updateDuration(val) {
+  document.getElementById('durationVal').textContent = `${val} min`;
+}
+
+// GitHub API Client
+async function ghFetch(path, options = {}) {
+  const token = getToken();
+  const headers = {
+    'Accept': 'application/vnd.github+json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...(options.headers || {})
+  };
+  return fetch(`https://api.github.com${path}`, { ...options, headers });
+}
+
+// Save GitHub Auth
+function saveGitHubAuth() {
+  const repo = document.getElementById('repoInput').value.trim();
+  const token = document.getElementById('patInput').value.trim();
+  if (repo) localStorage.setItem('autotube_repo', repo);
+  if (token) localStorage.setItem('autotube_token', token);
+  verifyAuth();
+}
+
+async function verifyAuth() {
+  const token = getToken();
+  const repo = getRepo();
+  const warningBanner = document.getElementById('tokenWarningBanner');
+
+  if (!token) {
+    if (warningBanner) warningBanner.style.display = 'block';
+    return;
+  }
+
+  try {
+    const res = await ghFetch(`/repos/${repo}`);
+    if (res.ok) {
+      if (warningBanner) warningBanner.style.display = 'none';
+      showToast('✅ Connected to GitHub repository!');
+      fetchWorkflowRuns();
+      fetchPublishedLibrary();
+    } else {
+      if (warningBanner) warningBanner.style.display = 'block';
+      showToast('⚠️ Invalid GitHub token or permissions.');
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// Trigger Cloud Workflow Run
+async function triggerWorkflow() {
+  const token = getToken();
+  if (!token) {
+    showToast('⚠️ Please enter your GitHub Token in Settings first!');
+    switchTab('settings');
+    return;
+  }
+
+  const repo = getRepo();
+  const topic = document.getElementById('topicInput').value.trim();
+  const duration = document.getElementById('durationSlider').value;
+  const publish = document.getElementById('publishToggle').checked;
+
+  const btn = document.getElementById('btnCloudLaunch');
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳ Dispatching to GitHub Cloud...</span>';
+
+  try {
+    const res = await ghFetch(`/repos/${repo}/actions/workflows/${WORKFLOW_FILE}/dispatches`, {
+      method: 'POST',
+      body: JSON.stringify({
+        ref: 'main',
+        inputs: {
+          mode: currentMode,
+          topic: topic,
+          duration: String(duration),
+          publish: publish
+        }
+      })
+    });
+
+    if (res.status === 204 || res.ok) {
+      showToast('🚀 Cloud Render Triggered! Switching to Cloud Jobs...');
+      btn.disabled = false;
+      btn.innerHTML = '<span>🚀 Trigger Cloud Render (GitHub Actions)</span>';
+      switchTab('jobs');
+      setTimeout(fetchWorkflowRuns, 3500);
+    } else {
+      const data = await res.json();
+      showToast(`❌ GitHub Error: ${data.message || 'Check workflow inputs'}`);
+      btn.disabled = false;
+      btn.innerHTML = '<span>🚀 Trigger Cloud Render (GitHub Actions)</span>';
+    }
+  } catch (err) {
+    showToast('❌ Connection error to GitHub API');
+    btn.disabled = false;
+    btn.innerHTML = '<span>🚀 Trigger Cloud Render (GitHub Actions)</span>';
+  }
+}
+
+async function quickTrigger(mode, topic) {
+  setMode(mode);
+  document.getElementById('topicInput').value = topic;
+  await triggerWorkflow();
+}
+
+// Fetch Workflow Runs
+async function fetchWorkflowRuns() {
+  const repo = getRepo();
+  const container = document.getElementById('runsList');
+  try {
+    const res = await ghFetch(`/repos/${repo}/actions/runs?per_page=15`);
+    const data = await res.json();
+
+    if (!data.workflow_runs || !data.workflow_runs.length) {
+      container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-dim);">No cloud runs recorded yet.</div>`;
+      return;
+    }
+
+    const runs = data.workflow_runs;
+    document.getElementById('statTotalRuns').textContent = data.total_count || runs.length;
+
+    // Check if any run is in progress
+    const active = runs.find(r => r.status === 'in_progress' || r.status === 'queued');
+    const badge = document.getElementById('cloudStatusBadge');
+    const text = document.getElementById('cloudStatusText');
+    const activeCard = document.getElementById('activeCloudCard');
+
+    if (active) {
+      badge.className = 'header-status active';
+      text.textContent = 'CLOUD RENDERING';
+      activeCard.classList.add('visible');
+      activeRunId = active.id;
+      document.getElementById('activeJobTitle').textContent = active.display_title || 'Autonomous Video Pipeline';
+      document.getElementById('activeJobLogsLink').href = active.html_url;
+
+      if (!timerInterval) {
+        activeRunStart = new Date(active.run_started_at || active.created_at);
+        timerInterval = setInterval(updateJobTimer, 1000);
+      }
+    } else {
+      badge.className = 'header-status';
+      text.textContent = 'CLOUD READY';
+      activeCard.classList.remove('visible');
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    // Success rate calculation
+    const completed = runs.filter(r => r.status === 'completed');
+    const successes = completed.filter(r => r.conclusion === 'success');
+    if (completed.length > 0) {
+      const rate = Math.round((successes.length / completed.length) * 100);
+      document.getElementById('statSuccessRate').textContent = `${rate}%`;
+    }
+
+    container.innerHTML = runs.map(r => {
+      const isSuccess = r.conclusion === 'success';
+      const isFailed = r.conclusion === 'failure';
+      const isRunning = r.status === 'in_progress' || r.status === 'queued';
+
+      let statusClass = 'success';
+      let icon = '✓';
+      if (isRunning) { statusClass = 'in_progress'; icon = '⚡'; }
+      else if (isFailed) { statusClass = 'failure'; icon = '✕'; }
+
+      const dateStr = new Date(r.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+      return `
+        <div class="run-item">
+          <div class="run-left">
+            <div class="run-status-icon ${statusClass}">${icon}</div>
+            <div>
+              <div class="run-title">${r.display_title}</div>
+              <div class="run-meta">
+                <span>#${r.run_number}</span>
+                <span>•</span>
+                <span>${r.event}</span>
+                <span>•</span>
+                <span>${dateStr}</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <a class="btn-action btn-ghost" href="${r.html_url}" target="_blank" style="padding:6px 10px; font-size:11px;">Logs ↗</a>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    container.innerHTML = `<div style="color:var(--accent-red); padding:16px;">Failed to fetch cloud runs: ${err.message}</div>`;
+  }
+}
+
+function updateJobTimer() {
+  if (!activeRunStart) return;
+  const diff = Math.floor((new Date() - activeRunStart) / 1000);
+  const m = String(Math.floor(diff / 60)).padStart(2, '0');
+  const s = String(diff % 60).padStart(2, '0');
+  const el = document.getElementById('activeJobElapsed');
+  if (el) el.textContent = `${m}:${s}`;
+}
+
+async function cancelActiveRun() {
+  if (!activeRunId) return;
+  if (!confirm('Are you sure you want to abort the cloud render?')) return;
+  const repo = getRepo();
+  try {
+    const res = await ghFetch(`/repos/${repo}/actions/runs/${activeRunId}/cancel`, { method: 'POST' });
+    if (res.ok) {
+      showToast('🛑 Cancel request sent to GitHub Actions.');
+      setTimeout(fetchWorkflowRuns, 2000);
+    }
+  } catch (e) {
+    showToast('❌ Failed to cancel run.');
+  }
+}
+
+// Published Video Library
+async function fetchPublishedLibrary() {
+  const repo = getRepo();
+  const container = document.getElementById('publishedList');
+  try {
+    const res = await ghFetch(`/repos/${repo}/contents/assets/published_history.json`);
+    if (!res.ok) {
+      container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-dim);">No published history file found.</div>`;
+      return;
+    }
+    const fileData = await res.json();
+    const jsonStr = decodeURIComponent(escape(atob(fileData.content.replace(/\s/g, ''))));
+    const list = JSON.parse(jsonStr);
+
+    document.getElementById('statTotalPub').textContent = list.length;
+    document.getElementById('pubCountHeader').textContent = list.length;
+
+    if (!list.length) {
+      container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-dim);">No stories published yet.</div>`;
+      return;
+    }
+
+    container.innerHTML = list.slice().reverse().map(item => {
+      const isShort = item.format === 'short' || !item.duration;
+      const title = item.title || item.topic || 'Tech Breakthrough Story';
+      const summary = item.summary || item.script || 'Automated high-engagement news delivery.';
+      const date = item.timestamp ? new Date(item.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently';
+      const ytLink = item.youtube_url || (item.video_id ? `https://youtube.com/watch?v=${item.video_id}` : null);
+
+      return `
+        <div class="video-card">
+          <div class="video-top">
+            <span class="chip" style="color:var(--accent-cyan); border-color:rgba(0,240,255,0.3);">${isShort ? '⚡ Short' : '🎬 Episode'}</span>
+            <span style="font-size:11px; color:var(--text-dim); font-family:var(--font-mono);">${date}</span>
+          </div>
+          <div class="video-title">${title}</div>
+          <div class="video-summary">${summary}</div>
+          <div class="video-meta">
+            <span>Status: <strong style="color:var(--accent-emerald);">Published</strong></span>
+            ${ytLink ? `<a class="btn-action btn-primary" href="${ytLink}" target="_blank" style="padding:4px 10px; font-size:11px;">Watch on YouTube ↗</a>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (e) {
+    container.innerHTML = `<div style="color:var(--accent-red); padding:16px;">Failed to load library: ${e.message}</div>`;
+  }
+}
+
+// Initial Boot
+window.addEventListener('DOMContentLoaded', () => {
+  const token = getToken();
+  if (token) {
+    document.getElementById('patInput').value = token;
+  }
+  verifyAuth();
+  fetchWorkflowRuns();
+  fetchPublishedLibrary();
+  setInterval(fetchWorkflowRuns, 10000);
+});
+</script>
+</body>
+</html>

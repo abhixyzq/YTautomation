@@ -9,7 +9,29 @@ on:
     - cron: '5 3 * * *'
     - cron: '5 9 * * *'
     - cron: '35 14 * * *'
-  workflow_dispatch: # Allows manual 1-click trigger from GitHub Actions UI
+  workflow_dispatch: # Allows manual trigger from GitHub Actions UI or Web Dashboard
+    inputs:
+      mode:
+        description: 'Video Format'
+        required: true
+        default: 'short'
+        type: choice
+        options:
+          - short
+          - long
+      topic:
+        description: 'Custom Topic / Angle (Leave empty for auto-trending news)'
+        required: false
+        default: ''
+      duration:
+        description: 'Target Duration in minutes (for Long Episode)'
+        required: false
+        default: '12'
+      publish:
+        description: 'Publish directly to YouTube'
+        required: true
+        type: boolean
+        default: true
 
 jobs:
   build-and-publish:
@@ -71,9 +93,32 @@ jobs:
           echo "$CLIENT_SECRET_JSON" > client_secret.json
           echo "$TOKEN_JSON" > token.json
 
-      - name: 🎬 Render 4K Documentary & Auto-Publish to YouTube
+      - name: 🎬 Render Video & Auto-Publish
         run: |
-          python main.py --publish
+          CMD="python main.py"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            MODE="${{ inputs.mode }}"
+            [ -z "$MODE" ] && MODE="short"
+            CMD="$CMD --mode $MODE"
+            if [ -n "${{ inputs.topic }}" ]; then
+              CMD="$CMD --topic \"${{ inputs.topic }}\""
+            fi
+            if [ "$MODE" = "long" ]; then
+              DURATION="${{ inputs.duration }}"
+              [ -z "$DURATION" ] && DURATION="12"
+              CMD="$CMD --duration $DURATION"
+            fi
+            if [ "${{ inputs.publish }}" = "true" ] || [ "${{ inputs.publish }}" = "True" ]; then
+              CMD="$CMD --publish"
+            else
+              CMD="$CMD --dry-run"
+            fi
+          else
+            # Scheduled cron run (Daily Short published automatically)
+            CMD="$CMD --mode short --publish"
+          fi
+          echo "🚀 Executing pipeline command: $CMD"
+          eval $CMD
 
       - name: 💾 Commit & Sync Published Story History
         if: always()
