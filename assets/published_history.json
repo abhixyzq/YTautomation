@@ -40,5 +40,11 @@
     "url": "https://news.ycombinator.com",
     "source": "Custom User Topic",
     "published_at": "2026-09-06T08:24:09.911583"
+  },
+  {
+    "title": "OpenBSD Stories: Strange Medieval Devices",
+    "url": "http://miod.online.fr/software/openbsd/stories/smd.html",
+    "source": "Hacker News",
+    "published_at": "2026-09-06T04:00:31.301978"
   }
 ]
