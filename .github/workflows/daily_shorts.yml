@@ -2,13 +2,13 @@ name: 🚀 Autonomous Daily Tech Shorts
 
 on:
   schedule:
-    # 3 times daily with 25-30 min pre-buffer (UTC to IST):
-    # 03:05 UTC = 08:35 AM IST (Pre-buffers for 09:00 AM Morning Tech Drop)
-    # 09:05 UTC = 02:35 PM IST (Pre-buffers for 03:00 PM Afternoon Push)
-    # 14:35 UTC = 08:05 PM IST (Pre-buffers for 08:30 PM Evening Peak Drop)
-    - cron: '5 3 * * *'
-    - cron: '5 9 * * *'
-    - cron: '35 14 * * *'
+    # 3 times daily with 45-60 min anti-congestion pre-buffer (UTC to IST):
+    # 02:23 UTC = 07:53 AM IST (Guarantees Morning Tech Drop arrives by 08:30 - 09:00 AM)
+    # 08:23 UTC = 01:53 PM IST (Guarantees Afternoon Push arrives by 02:30 - 03:00 PM)
+    # 13:53 UTC = 07:23 PM IST (Guarantees Prime Evening Drop arrives by 08:00 - 08:30 PM)
+    - cron: '23 2 * * *'
+    - cron: '23 8 * * *'
+    - cron: '53 13 * * *'
   workflow_dispatch: # Allows manual trigger from GitHub Actions UI or Web Dashboard
     inputs:
       mode:
