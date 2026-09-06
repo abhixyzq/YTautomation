@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#080c14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>AutoTube Mobile Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #070a11;
+  --bg-secondary: #0d1322;
+  --bg-card: rgba(18, 26, 44, 0.72);
+  --bg-card-hover: rgba(26, 38, 64, 0.85);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(0, 240, 255, 0.4);
+  --accent-cyan: #00f0ff;
+  --accent-blue: #3b82f6;
+  --accent-purple: #8b5cf6;
+  --accent-pink: #ec4899;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-red: #ef4444;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  --nav-height: 72px;
+  --header-height: 64px;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(0, 240, 255, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.08) 0px, transparent 50%);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  padding-bottom: calc(var(--nav-height) + 24px);
+  overflow-x: hidden;
+  user-select: none;
+}
+
+/* Header */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: var(--header-height);
+  background: rgba(7, 10, 17, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ff0055, #7928ca);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 4px 14px rgba(255, 0, 85, 0.4);
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  background: linear-gradient(90deg, #ffffff, #a5b4fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+/* Status Pill */
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent-emerald);
+  letter-spacing: 0.3px;
+  transition: all 0.3s ease;
+}
+
+.status-pill.running {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: rgba(0, 240, 255, 0.4);
+  color: var(--accent-cyan);
+  animation: pulse-glow 2s infinite;
+}
+
+.status-pill.error {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: var(--accent-red);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.status-pill.running .status-dot {
+  animation: blink 1s infinite alternate;
+}
+
+@keyframes blink {
+  0% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 rgba(0, 240, 255, 0); }
+  50% { box-shadow: 0 0 16px rgba(0, 240, 255, 0.3); }
+}
+
+/* Main Container & Tabs */
+main {
+  padding: 16px;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.tab-pane {
+  display: none;
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tab-pane.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Glass Card */
+.card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 14px;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.card:hover {
+  background: var(--bg-card-hover);
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Stat Grid */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stat-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 10px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-box::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+  opacity: 0.6;
+}
+
+.stat-val {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+  font-family: var(--font-sans);
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Active Pipeline Banner */
+.live-banner {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.12), rgba(139, 92, 246, 0.12));
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 16px;
+  display: none;
+}
+
+.live-banner.visible {
+  display: block;
+  animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% { border-color: rgba(0, 240, 255, 0.3); }
+  50% { border-color: rgba(0, 240, 255, 0.8); }
+}
+
+.live-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.live-mode {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.live-time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.progress-bar-wrap {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  overflow: hidden;
+  margin: 12px 0 10px;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 60%;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+  border-radius: 99px;
+  animation: progress-indet 1.8s infinite ease-in-out;
+}
+
+@keyframes progress-indet {
+  0% { transform: translateX(-100%); width: 40%; }
+  50% { transform: translateX(50%); width: 70%; }
+  100% { transform: translateX(250%); width: 40%; }
+}
+
+.btn-stop {
+  width: 100%;
+  margin-top: 8px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-stop:active {
+  background: rgba(239, 68, 68, 0.35);
+  transform: scale(0.98);
+}
+
+/* Quick Launch Grid */
+.quick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.quick-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 112px;
+}
+
+.quick-btn:active {
+  transform: scale(0.96);
+  border-color: var(--accent-cyan);
+  background: rgba(0, 240, 255, 0.06);
+}
+
+.quick-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.quick-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.quick-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+/* Network Banner */
+.net-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px dashed rgba(139, 92, 246, 0.3);
+  border-radius: 14px;
+  margin-bottom: 16px;
+}
+
+.net-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.net-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-purple);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.net-url {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* Form Controls in Run Tab */
+.mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+
+.mode-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.mode-btn.active {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(59, 130, 246, 0.3));
+  color: #fff;
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  box-shadow: 0 4px 14px rgba(0, 240, 255, 0.15);
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.form-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #fff;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.15);
+}
+
+/* Preset Chips */
+.chips-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 8px;
+  scrollbar-width: none;
+}
+
+.chips-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chip:active {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: var(--accent-cyan);
+  color: #fff;
+}
+
+/* Slider */
+.slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.slider-val {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  min-width: 60px;
+  text-align: right;
+}
+
+input[type=range] {
+  flex: 1;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.08);
+  height: 6px;
+  border-radius: 99px;
+  outline: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 12px var(--accent-cyan);
+  cursor: pointer;
+  border: 2px solid #fff;
+}
+
+/* Switch Toggle */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.switch-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.switch-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.switch-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.12);
+  transition: 0.3s;
+  border-radius: 34px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: var(--accent-emerald);
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(22px);
+}
+
+/* Primary Launch Button */
+.btn-launch {
+  width: 100%;
+  background: linear-gradient(135deg, #00f0ff 0%, #3b82f6 50%, #8b5cf6 100%);
+  border: none;
+  color: #050811;
+  font-size: 15px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 16px;
+  border-radius: 16px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 240, 255, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.btn-launch:active {
+  transform: scale(0.97);
+  box-shadow: 0 4px 12px rgba(0, 240, 255, 0.2);
+}
+
+.btn-launch:disabled {
+  opacity: 0.5;
+  filter: grayscale(0.8);
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Media/Outputs List */
+.media-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.media-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s;
+}
+
+.media-item:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.media-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.media-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.media-badge.short {
+  background: rgba(236, 72, 153, 0.15);
+  color: #f472b6;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
+.media-badge.episode {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.media-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.media-meta {
+  font-size: 11px;
+  color: var(--text-dim);
+  display: flex;
+  gap: 12px;
+}
+
+.media-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn-action {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.btn-preview {
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  color: var(--accent-cyan);
+}
+
+.btn-download {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.btn-action:active {
+  transform: scale(0.96);
+}
+
+/* Terminal / Live Logs */
+.terminal-box {
+  background: #04070d;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: #cbd5e1;
+  height: 60vh;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.term-line {
+  margin-bottom: 3px;
+}
+
+.term-line.info { color: #94a3b8; }
+.term-line.success { color: #4ade80; font-weight: 600; }
+.term-line.warning { color: #facc15; }
+.term-line.error { color: #f87171; font-weight: 600; }
+.term-line.highlight { color: #38bdf8; font-weight: 600; }
+
+.term-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.term-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Settings List */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.setting-row:last-child {
+  border-bottom: none;
+}
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.setting-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.setting-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.setting-val {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.setting-val.ok {
+  color: var(--accent-emerald);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.setting-val.missing {
+  color: var(--accent-red);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Video Player Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 480px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80%;
+}
+
+.modal-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.modal-video-wrap {
+  width: 100%;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: 65vh;
+}
+
+.modal-video-wrap video {
+  width: 100%;
+  max-height: 65vh;
+  object-fit: contain;
+}
+
+/* Bottom Nav Bar */
+nav.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  background: rgba(10, 15, 26, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.nav-item .nav-icon {
+  font-size: 20px;
+  transition: transform 0.2s;
+}
+
+.nav-item.active {
+  color: var(--accent-cyan);
+}
+
+.nav-item.active .nav-icon {
+  transform: translateY(-2px) scale(1.1);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 24px;
+  height: 2.5px;
+  background: var(--accent-cyan);
+  border-radius: 99px;
+  box-shadow: 0 0 10px var(--accent-cyan);
+}
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  top: 74px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid var(--accent-cyan);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 100;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="brand">
+    <div class="brand-icon">⚡</div>
+    <div>
+      <div class="brand-name">AutoTube Studio</div>
+      <div class="brand-sub">Mobile Remote</div>
+    </div>
+  </div>
+  <div id="statusPill" class="status-pill">
+    <div class="status-dot"></div>
+    <span id="statusText">IDLE</span>
+  </div>
+</header>
+
+<main>
+  <!-- Toast -->
+  <div id="toast" class="toast">Notification</div>
+
+  <!-- TAB 1: OVERVIEW -->
+  <section id="tab-overview" class="tab-pane active">
+    <!-- Network URL Helper -->
+    <div class="net-card">
+      <div class="net-info">
+        <span class="net-label">Phone Direct URL</span>
+        <span id="netUrlText" class="net-url">http://...:5000</span>
+      </div>
+      <button class="term-btn" onclick="copyNetUrl()">📋 Copy</button>
+    </div>
+
+    <!-- Active Pipeline Banner (Shown while running) -->
+    <div id="liveBanner" class="live-banner">
+      <div class="live-header">
+        <span id="liveMode" class="live-mode">⚡ GENERATING VIDEO</span>
+        <span id="liveTimer" class="live-time">00:00</span>
+      </div>
+      <div id="liveTopic" style="font-size:13px; color:#fff; font-weight:600; margin-bottom:4px;">Topic: Daily News</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill"></div>
+      </div>
+      <button class="btn-stop" onclick="stopPipeline()">🛑 ABORT PIPELINE</button>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div id="statShorts" class="stat-val">0</div>
+        <div class="stat-label">Shorts</div>
+      </div>
+      <div class="stat-box">
+        <div id="statEpisodes" class="stat-val">0</div>
+        <div class="stat-label">Episodes</div>
+      </div>
+      <div class="stat-box">
+        <div id="statPublished" class="stat-val">0</div>
+        <div class="stat-label">Published</div>
+      </div>
+    </div>
+
+    <!-- Quick Launch Cards -->
+    <div class="card">
+      <div class="card-title">
+        <span>⚡ Quick Actions</span>
+      </div>
+      <div class="quick-grid">
+        <div class="quick-btn" onclick="quickLaunch('short', 'Top AI Breakthroughs Today')">
+          <div>
+            <div class="quick-icon">📱</div>
+            <div class="quick-name">Daily Short</div>
+          </div>
+          <div class="quick-desc">60s 9:16 vertical clip with kinetic punchy captions</div>
+        </div>
+
+        <div class="quick-btn" onclick="quickLaunch('long', 'Weekly Tech & Comedy Roundup')">
+          <div>
+            <div class="quick-icon">🎬</div>
+            <div class="quick-name">Full Episode</div>
+          </div>
+          <div class="quick-desc">12-min 16:9 show with animated B-roll & memes</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Outputs Summary -->
+    <div class="card">
+      <div class="card-title">
+        <span>Latest Video</span>
+        <a href="#" onclick="switchTab('outputs')" style="font-size:11px; color:var(--accent-cyan); text-decoration:none;">View All →</a>
+      </div>
+      <div id="recentOutputCard" style="font-size:13px; color:var(--text-muted);">
+        Scanning output files...
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 2: GENERATOR -->
+  <section id="tab-run" class="tab-pane">
+    <div class="card">
+      <div class="card-title">Video Format</div>
+      <div class="mode-toggle">
+        <button id="btnModeShort" class="mode-btn active" onclick="setMode('short')">
+          <span>⚡ Short (9:16)</span>
+        </button>
+        <button id="btnModeLong" class="mode-btn" onclick="setMode('long')">
+          <span>🎬 Episode (16:9)</span>
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Custom Topic / Angle (Optional)</label>
+        <input id="topicInput" type="text" class="form-input" placeholder="e.g. Claude 3.7 vs GPT-5, Nvidia earnings..." />
+      </div>
+
+      <!-- Quick Topic Chips -->
+      <div class="form-group">
+        <label class="form-label">Quick Presets</label>
+        <div class="chips-scroll">
+          <div class="chip" onclick="setPreset('AI Breakthroughs & AGI Race')">🤖 AI & Robotics</div>
+          <div class="chip" onclick="setPreset('SpaceX Starship & NASA')">🚀 Space & Mars</div>
+          <div class="chip" onclick="setPreset('Developer Humour & Tech Drama')">💻 Tech Comedy</div>
+          <div class="chip" onclick="setPreset('Crypto, Bitcoin & GPU Bubble')">📈 Crypto & Stocks</div>
+          <div class="chip" onclick="setPreset('Latest Global Breakthroughs')">🌍 Global News</div>
+        </div>
+      </div>
+
+      <!-- Duration slider (Only visible for long mode) -->
+      <div id="durationGroup" class="form-group" style="display:none;">
+        <div class="form-label" style="display:flex; justify-content:space-between;">
+          <span>Target Duration</span>
+          <span id="durationVal" class="slider-val">12 min</span>
+        </div>
+        <div class="slider-wrap">
+          <input id="durationSlider" type="range" min="5" max="20" step="1" value="12" oninput="updateDuration(this.value)" />
+        </div>
+      </div>
+
+      <!-- Auto-Publish Toggle -->
+      <div class="switch-row">
+        <div class="switch-label">
+          <span class="switch-title">Publish to YouTube</span>
+          <span class="switch-desc">Upload immediately or keep as local render draft</span>
+        </div>
+        <label class="toggle-switch">
+          <input id="publishToggle" type="checkbox" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <button id="btnLaunch" class="btn-launch" onclick="launchPipeline()">
+        <span>🚀 Start Pipeline Render</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- TAB 3: OUTPUTS -->
+  <section id="tab-outputs" class="tab-pane">
+    <div class="card-title" style="margin-bottom:12px;">
+      <span>Rendered Videos (<span id="outputCountHeader">0</span>)</span>
+      <button class="term-btn" onclick="fetchOutputs()">🔄 Refresh</button>
+    </div>
+    <div id="outputsList" class="media-list">
+      <div style="text-align:center; padding:30px; color:var(--text-dim); font-size:13px;">
+        Loading rendered videos...
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 4: LIVE LOGS -->
+  <section id="tab-logs" class="tab-pane">
+    <div class="term-controls">
+      <div style="font-size:12px; font-weight:700; color:var(--text-muted);">
+        <span>LIVE PIPELINE TERMINAL</span>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="term-btn" onclick="clearTerminal()">🧹 Clear</button>
+        <button class="term-btn" onclick="copyLogs()">📋 Copy</button>
+      </div>
+    </div>
+    <div id="terminal" class="terminal-box">
+      <div class="term-line info">[System] Connecting to pipeline log stream...</div>
+    </div>
+  </section>
+
+  <!-- TAB 5: SETTINGS -->
+  <section id="tab-settings" class="tab-pane">
+    <div class="card">
+      <div class="card-title">Service & API Credentials</div>
+      <div id="envSettingsList">
+        <div style="padding:15px; text-align:center; color:var(--text-dim);">Loading credentials status...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Quick Server Command</div>
+      <p style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">
+        To start or restart the mobile dashboard anytime from your laptop terminal:
+      </p>
+      <div style="background:#000; padding:10px 14px; border-radius:10px; font-family:var(--font-mono); font-size:12px; color:var(--accent-cyan); word-break:break-all;">
+        python dashboard.py
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Video Player Modal -->
+<div id="videoModal" class="modal-overlay" onclick="closeModal(event)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span id="modalVideoTitle" class="modal-title">Video Preview</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-video-wrap">
+      <video id="modalVideoPlayer" controls playsinline preload="metadata">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Navigation Bar -->
+<nav class="bottom-nav">
+  <div class="nav-item active" onclick="switchTab('overview')">
+    <div class="nav-icon">📊</div>
+    <span>Overview</span>
+  </div>
+  <div class="nav-item" onclick="switchTab('run')">
+    <div class="nav-icon">🚀</div>
+    <span>Create</span>
+  </div>
+  <div class="nav-item" onclick="switchTab('outputs')">
+    <div class="nav-icon">📁</div>
+    <span>Media</span>
+  </div>
+  <div class="nav-item" onclick="switchTab('logs')">
+    <div class="nav-icon">📜</div>
+    <span>Logs</span>
+  </div>
+  <div class="nav-item" onclick="switchTab('settings')">
+    <div class="nav-icon">⚙️</div>
+    <span>Settings</span>
+  </div>
+</nav>
+
+<script>
+// State
+let currentTab = 'overview';
+let currentMode = 'short';
+let startTime = null;
+let timerInterval = null;
+let isPipelineRunning = false;
+
+// Toast helper
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// Tab Switching
+function switchTab(tabId) {
+  currentTab = tabId;
+  document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+  const pane = document.getElementById(`tab-${tabId}`);
+  if (pane) pane.classList.add('active');
+
+  const navIdx = { overview: 0, run: 1, outputs: 2, logs: 3, settings: 4 }[tabId];
+  const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+  if (navItems[navIdx]) navItems[navIdx].classList.add('active');
+
+  if (tabId === 'outputs') fetchOutputs();
+  if (tabId === 'settings') fetchEnv();
+}
+
+// Mode Selection
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('btnModeShort').classList.toggle('active', mode === 'short');
+  document.getElementById('btnModeLong').classList.toggle('active', mode === 'long');
+  document.getElementById('durationGroup').style.display = (mode === 'long') ? 'block' : 'none';
+}
+
+function setPreset(topic) {
+  document.getElementById('topicInput').value = topic;
+}
+
+function updateDuration(val) {
+  document.getElementById('durationVal').textContent = `${val} min`;
+}
+
+// Pipeline Polling & Status
+async function checkStatus() {
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+
+    // Update Status Pill
+    const pill = document.getElementById('statusPill');
+    const text = document.getElementById('statusText');
+    const liveBanner = document.getElementById('liveBanner');
+    const btnLaunch = document.getElementById('btnLaunch');
+
+    isPipelineRunning = data.running;
+    if (data.local_ip) {
+      document.getElementById('netUrlText').textContent = `http://${data.local_ip}:5000`;
+    }
+
+    if (data.running) {
+      pill.className = 'status-pill running';
+      text.textContent = 'BUSY';
+      liveBanner.classList.add('visible');
+      document.getElementById('liveMode').textContent = data.mode === 'long' ? '🎬 RENDERING EPISODE' : '⚡ RENDERING SHORT';
+      document.getElementById('liveTopic').textContent = data.topic ? `Topic: ${data.topic}` : 'Automated Daily Curation';
+      if (btnLaunch) {
+        btnLaunch.disabled = true;
+        btnLaunch.innerHTML = '<span>⏳ Pipeline in progress...</span>';
+      }
+      if (!timerInterval) {
+        startTime = data.started_at ? new Date(data.started_at) : new Date();
+        timerInterval = setInterval(updateLiveTimer, 1000);
+      }
+    } else {
+      if (data.status === 'error') {
+        pill.className = 'status-pill error';
+        text.textContent = 'FAILED';
+      } else {
+        pill.className = 'status-pill';
+        text.textContent = 'IDLE';
+      }
+      liveBanner.classList.remove('visible');
+      if (btnLaunch) {
+        btnLaunch.disabled = false;
+        btnLaunch.innerHTML = '<span>🚀 Start Pipeline Render</span>';
+      }
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    // Update Stats
+    document.getElementById('statShorts').textContent = data.total_shorts || 0;
+    document.getElementById('statEpisodes').textContent = data.total_episodes || 0;
+    document.getElementById('statPublished').textContent = data.total_published || 0;
+
+  } catch (err) {
+    console.warn('Status poll error:', err);
+  }
+}
+
+function updateLiveTimer() {
+  if (!startTime) return;
+  const diffSec = Math.floor((new Date() - startTime) / 1000);
+  const m = String(Math.floor(diffSec / 60)).padStart(2, '0');
+  const s = String(diffSec % 60).padStart(2, '0');
+  const el = document.getElementById('liveTimer');
+  if (el) el.textContent = `${m}:${s}`;
+}
+
+// Launch Pipeline
+async function launchPipeline() {
+  if (isPipelineRunning) {
+    showToast('⚠️ Pipeline is already running!');
+    return;
+  }
+
+  const topic = document.getElementById('topicInput').value.trim();
+  const duration = parseInt(document.getElementById('durationSlider').value, 10);
+  const publish = document.getElementById('publishToggle').checked;
+
+  try {
+    const res = await fetch('/api/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: currentMode, topic, duration, publish })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast('🚀 Pipeline started! Switching to live logs...');
+      switchTab('logs');
+      checkStatus();
+    } else {
+      showToast(`❌ Error: ${data.error || 'Failed to start'}`);
+    }
+  } catch (e) {
+    showToast('❌ Connection error to dashboard backend.');
+  }
+}
+
+async function quickLaunch(mode, topic) {
+  if (isPipelineRunning) {
+    showToast('⚠️ Pipeline is already busy!');
+    return;
+  }
+  setMode(mode);
+  document.getElementById('topicInput').value = topic;
+  await launchPipeline();
+}
+
+async function stopPipeline() {
+  if (!confirm('Are you sure you want to terminate the ongoing render?')) return;
+  try {
+    const res = await fetch('/api/stop', { method: 'POST' });
+    const data = await res.json();
+    showToast(data.message || 'Stop command sent.');
+    checkStatus();
+  } catch (e) {
+    showToast('❌ Failed to stop.');
+  }
+}
+
+// Outputs Browser
+async function fetchOutputs() {
+  const container = document.getElementById('outputsList');
+  try {
+    const res = await fetch('/api/outputs');
+    const files = await res.json();
+    document.getElementById('outputCountHeader').textContent = files.length;
+
+    if (!files.length) {
+      container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-dim); font-size:13px;">No rendered videos yet. Generate one in the Create tab!</div>`;
+      document.getElementById('recentOutputCard').textContent = 'No videos generated yet.';
+      return;
+    }
+
+    // Update Overview quick card with top video
+    const top = files[0];
+    document.getElementById('recentOutputCard').innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-weight:700; color:#fff;">${top.name}</div>
+          <div style="font-size:11px; color:var(--text-dim); margin-top:2px;">${top.size_mb} MB • ${top.created}</div>
+        </div>
+        <button class="btn-action btn-preview" style="padding:6px 10px;" onclick="previewVideo('/output/${top.name}', '${top.name}')">▶ Play</button>
+      </div>
+    `;
+
+    container.innerHTML = files.map(f => `
+      <div class="media-item">
+        <div class="media-top">
+          <span class="media-badge ${f.type}">${f.type}</span>
+          <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-dim);">${f.size_mb} MB</span>
+        </div>
+        <div class="media-title">${f.name}</div>
+        <div class="media-meta">
+          <span>📅 ${f.created}</span>
+        </div>
+        <div class="media-actions">
+          <button class="btn-action btn-preview" onclick="previewVideo('/output/${f.name}', '${f.name}')">
+            <span>▶ Preview</span>
+          </button>
+          <a class="btn-action btn-download" href="/output/${f.name}" download="${f.name}">
+            <span>⬇ Download</span>
+          </a>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    container.innerHTML = `<div style="color:var(--accent-red); padding:16px;">Failed to fetch outputs: ${err}</div>`;
+  }
+}
+
+// Video Player Modal
+function previewVideo(url, name) {
+  const modal = document.getElementById('videoModal');
+  const video = document.getElementById('modalVideoPlayer');
+  document.getElementById('modalVideoTitle').textContent = name;
+  video.src = url;
+  modal.classList.add('open');
+  video.play().catch(() => {});
+}
+
+function closeModal(e) {
+  const modal = document.getElementById('videoModal');
+  const video = document.getElementById('modalVideoPlayer');
+  video.pause();
+  video.src = '';
+  modal.classList.remove('open');
+}
+
+// Live Logs via SSE
+function initLogStream() {
+  const term = document.getElementById('terminal');
+  try {
+    const evtSource = new EventSource('/api/logs/stream');
+    evtSource.onmessage = function(e) {
+      try {
+        const line = JSON.parse(e.data);
+        appendTermLine(line);
+      } catch (err) {
+        appendTermLine(e.data);
+      }
+    };
+    evtSource.onerror = function() {
+      // Reconnects automatically
+    };
+  } catch (e) {
+    console.warn('SSE not supported or failed, falling back to poll');
+  }
+}
+
+function appendTermLine(raw) {
+  const term = document.getElementById('terminal');
+  const div = document.createElement('div');
+  div.className = 'term-line';
+  if (raw.includes('✅') || raw.includes('success')) div.className += ' success';
+  else if (raw.includes('❌') || raw.includes('error') || raw.includes('Exception')) div.className += ' error';
+  else if (raw.includes('⚠️')) div.className += ' warning';
+  else if (raw.includes('▶') || raw.includes('🎬') || raw.includes('⚡')) div.className += ' highlight';
+  div.textContent = raw;
+  term.appendChild(div);
+  term.scrollTop = term.scrollHeight;
+}
+
+function clearTerminal() {
+  document.getElementById('terminal').innerHTML = '<div class="term-line info">[Terminal Cleared]</div>';
+}
+
+function copyLogs() {
+  const text = document.getElementById('terminal').innerText;
+  navigator.clipboard.writeText(text).then(() => showToast('📋 Logs copied to clipboard!'));
+}
+
+function copyNetUrl() {
+  const url = document.getElementById('netUrlText').innerText;
+  navigator.clipboard.writeText(url).then(() => showToast('📋 Phone URL copied!'));
+}
+
+// Settings / Env Check
+async function fetchEnv() {
+  const list = document.getElementById('envSettingsList');
+  try {
+    const res = await fetch('/api/env');
+    const env = await res.json();
+    const rows = [
+      { name: 'Gemini AI API', val: env.GEMINI_API_KEY, desc: 'Generates scripts, hooks & comedy news' },
+      { name: 'Pexels B-Roll', val: env.PEXELS_API_KEY, desc: 'Fetches HD 1080p stock footage' },
+      { name: 'Giphy API', val: env.GIPHY_API_KEY, desc: 'Powers cinematic meme popups' },
+      { name: 'YouTube Auth', val: 'oauth2 token.json', desc: 'Auto uploads shorts & long videos' },
+      { name: 'Voice Engine', val: env.VOICE_NAME, desc: 'Edge-TTS high clarity voice' },
+      { name: 'Publish Privacy', val: env.PUBLISH_MODE, desc: 'Public or Private default upload' },
+      { name: 'Script Language', val: env.LANGUAGE, desc: 'ENG / Hinglish configuration' }
+    ];
+
+    list.innerHTML = rows.map(r => {
+      const isMissing = r.val.includes('Not set') || r.val.includes('❌');
+      return `
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-name">${r.name}</div>
+            <div class="setting-desc">${r.desc}</div>
+          </div>
+          <span class="setting-val ${isMissing ? 'missing' : 'ok'}">${r.val}</span>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    list.innerHTML = `<div style="color:var(--accent-red); padding:10px;">Failed to load settings: ${e}</div>`;
+  }
+}
+
+// Initial Boot
+window.addEventListener('DOMContentLoaded', () => {
+  checkStatus();
+  fetchOutputs();
+  initLogStream();
+  setInterval(checkStatus, 3000);
+});
+</script>
+</body>
+</html>
