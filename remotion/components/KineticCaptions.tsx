@@ -64,7 +64,7 @@ export const KineticCaptions: React.FC<KineticCaptionsProps> = ({
               })
             : 1;
 
-          const scale = isActive ? 1.0 + wordSpring * 0.12 : 1.0;
+          const scale = isActive ? 1.0 + wordSpring * 0.18 : 1.0;
           const color = isActive ? "#fef08a" : "#ffffff";
           const textShadow = isActive
             ? "0 0 20px rgba(254, 240, 138, 0.8), 0 2px 8px rgba(0,0,0,0.9)"
@@ -82,10 +82,9 @@ export const KineticCaptions: React.FC<KineticCaptionsProps> = ({
                 display: "inline-block",
                 fontFamily: "system-ui, -apple-system, sans-serif",
                 letterSpacing: "0.5px",
-                transition: "color 0.05s ease",
               }}
             >
-              {w.word}
+              {w.word.toUpperCase()}
             </span>
           );
         })}

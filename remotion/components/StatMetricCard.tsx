@@ -125,13 +125,20 @@ export const StatMetricCard: React.FC<StatMetricCardProps> = ({
             >
               ● CRITICAL IMPACT METRIC
             </div>
+          {/* Change Badge - Red for risk/negative, Green for positive */}
             <div
               style={{
-                background: "rgba(239, 68, 68, 0.2)",
-                border: "1px solid #ef4444",
+                background: statChange && (statChange.includes("GROWTH") || statChange.includes("GAIN") || statChange.includes("IMPROVEMENT") || statChange.includes("SAVED") || (statChange.startsWith("+") && !statChange.includes("RISK") && !statChange.includes("DOWNTIME") && !statChange.includes("SURPLUS")))
+                  ? "rgba(34, 197, 94, 0.2)"
+                  : "rgba(239, 68, 68, 0.2)",
+                border: `1px solid ${statChange && (statChange.includes("GROWTH") || statChange.includes("GAIN") || statChange.includes("IMPROVEMENT") || statChange.includes("SAVED") || (statChange.startsWith("+") && !statChange.includes("RISK") && !statChange.includes("DOWNTIME") && !statChange.includes("SURPLUS")))
+                  ? "#22c55e"
+                  : "#ef4444"}`,
                 borderRadius: "8px",
                 padding: "6px 14px",
-                color: "#f87171",
+                color: statChange && (statChange.includes("GROWTH") || statChange.includes("GAIN") || statChange.includes("IMPROVEMENT") || statChange.includes("SAVED") || (statChange.startsWith("+") && !statChange.includes("RISK") && !statChange.includes("DOWNTIME") && !statChange.includes("SURPLUS")))
+                  ? "#4ade80"
+                  : "#f87171",
                 fontSize: "16px",
                 fontWeight: 700,
               }}

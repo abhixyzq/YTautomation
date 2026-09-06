@@ -45,7 +45,6 @@ export const MemeReaction: React.FC<MemeReactionProps> = ({
         overflow: "hidden",
       }}
     >
-      {/* Center Meme Video Card */}
       <div
         style={{
           transform: `scale(${popSpring})`,
@@ -53,8 +52,8 @@ export const MemeReaction: React.FC<MemeReactionProps> = ({
           border: "4px solid #00e5ff",
           boxShadow: "0 0 50px rgba(0, 229, 255, 0.5), 0 20px 60px rgba(0,0,0,0.9)",
           overflow: "hidden",
-          maxWidth: "960px",
-          maxHeight: "620px",
+          width: "960px",
+          height: "620px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -65,13 +64,25 @@ export const MemeReaction: React.FC<MemeReactionProps> = ({
           <Video
             src={memePath}
             style={{
-              maxWidth: "960px",
-              maxHeight: "620px",
-              objectFit: "contain",
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
             }}
           />
         ) : (
-          <div style={{ width: "600px", height: "400px", background: "#1e293b" }} />
+          <div style={{
+            width: "100%",
+            height: "100%",
+            background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "24px",
+          }}>
+            <div style={{ fontSize: "80px" }}>💀</div>
+            <div style={{ color: "#94a3b8", fontSize: "24px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>MEME UNAVAILABLE</div>
+          </div>
         )}
       </div>
 

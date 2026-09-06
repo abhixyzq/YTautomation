@@ -224,7 +224,7 @@ class CaptionRenderer:
 
         # 2. Guaranteed centered position with strict boundary clamping
         start_x = max(80, (self.width - total_w) // 2)
-        y_pos = int(self.height * 0.63)
+        y_pos = int(self.height * 0.75)
 
         # 3. Dynamic contrast backing badge (pill)
         pad_x = 30

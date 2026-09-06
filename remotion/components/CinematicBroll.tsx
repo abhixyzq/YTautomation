@@ -12,9 +12,9 @@ export const CinematicBroll: React.FC<CinematicBrollProps> = ({
 }) => {
   const frame = useCurrentFrame();
 
-  // Smooth continuous Ken Burns pan & zoom
+  // Smooth directional Ken Burns pan right + zoom
   const zoom = 1.0 + (frame / 400) * 0.06;
-  const panX = Math.sin(frame / 120) * 15;
+  const panX = (frame / 300) * 20;
 
   return (
     <div
