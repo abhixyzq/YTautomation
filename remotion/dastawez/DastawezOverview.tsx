@@ -1,5 +1,5 @@
 import React from "react";
-import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { interpolate, spring, useCurrentFrame, useVideoConfig, Img } from "remotion";
 import { DastawezHeader } from "./DastawezHeader";
 import { EvidenceMetadata } from "./types";
 
@@ -13,6 +13,9 @@ interface DastawezOverviewProps {
   urgencyBadge?: string;
   category?: string;
   evidence?: EvidenceMetadata;
+  officialImagePath?: string;
+  officialImageTitle?: string;
+  attribution?: string;
   currentActIndex?: number;
   totalActs?: number;
 }
@@ -27,6 +30,9 @@ export const DastawezOverview: React.FC<DastawezOverviewProps> = ({
   urgencyBadge,
   category,
   evidence,
+  officialImagePath,
+  officialImageTitle,
+  attribution,
   currentActIndex = 1,
   totalActs = 6,
 }) => {
@@ -174,6 +180,54 @@ export const DastawezOverview: React.FC<DastawezOverviewProps> = ({
               >
                 {benefitHighlight || "सीधा लाभ बैंक खाते में (DBT)"}
               </div>
+              {officialImagePath && (
+                <div
+                  style={{
+                    position: "relative",
+                    borderRadius: 16,
+                    overflow: "hidden",
+                    border: "1px solid rgba(59, 130, 246, 0.45)",
+                    height: 125,
+                    marginTop: 14,
+                    background: "#020617",
+                  }}
+                >
+                  <Img
+                    src={officialImagePath}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      opacity: 0.9,
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background: "linear-gradient(180deg, transparent 30%, rgba(2, 6, 23, 0.92) 100%)",
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 6,
+                      left: 10,
+                      right: 10,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span style={{ fontSize: 11, color: "#93c5fd", fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "72%" }}>
+                      🏛️ {officialImageTitle || "आधिकारिक संदर्भ दृश्य"}
+                    </span>
+                    <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600 }}>
+                      {attribution || "Wikimedia Commons"}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

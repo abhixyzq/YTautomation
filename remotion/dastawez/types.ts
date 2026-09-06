@@ -61,6 +61,12 @@ export interface DastawezScene {
   what_changed?: WhatChangedData;
   evidence?: EvidenceMetadata;
   audio_path?: string;
+  visual_media?: {
+    broll_video_path?: string;
+    official_image_path?: string;
+    official_image_title?: string;
+    attribution?: string;
+  };
   duration_seconds: number;
   duration_frames_30fps: number;
   phrases?: Phrase[];
@@ -74,6 +80,12 @@ export interface DastawezShowProps {
   scenes: DastawezScene[];
   ambient_audio_path?: string;
   evidence?: EvidenceMetadata;
+  visual_media?: {
+    broll_video_path?: string;
+    official_image_path?: string;
+    official_image_title?: string;
+    attribution?: string;
+  };
 }
 
 export interface DastawezThumbnailProps {

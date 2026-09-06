@@ -106,12 +106,35 @@ def build_daily_dastawez_video(
                 logger.warning(f"Could not copy audio to public dir: {e}")
         remotion_scenes.append(sc_copy)
 
+    # 3.5 Discover Authentic Government Visuals & 1080p B-Roll
+    print("\n[Step 3.5] Sourcing Official Photos (Wikimedia) & 1080p B-Roll (Pexels)...")
+    visual_media_bundle = {}
+    try:
+        from dastawez.media_fetcher import get_topic_visual_bundle
+        media_bundle = get_topic_visual_bundle(selected_scheme)
+        if media_bundle.get("official_image"):
+            img_info = media_bundle["official_image"]
+            print(f"         ✓ Official Govt Photo (Wikimedia): {img_info.get('title')[:60]}...")
+            visual_media_bundle["official_image_path"] = img_info.get("public_path")
+            visual_media_bundle["official_image_title"] = img_info.get("title")
+            visual_media_bundle["attribution"] = img_info.get("attribution")
+        if media_bundle.get("broll_video"):
+            broll_info = media_bundle["broll_video"]
+            print(f"         ✓ Cinematic 1080p B-Roll: {broll_info.get('public_path')}")
+            visual_media_bundle["broll_video_path"] = broll_info.get("public_path")
+    except Exception as e:
+        logger.warning(f"Could not load visual assets: {e}")
+
+    for sc in remotion_scenes:
+        sc["visual_media"] = visual_media_bundle
+
     remotion_props = {
       "title": script_data["title"],
       "scheme_id": scheme_id,
       "category": selected_scheme.get("category", "सरकारी योजनाएं एवं नागरिक सेवाएं"),
       "scenes": remotion_scenes,
-      "evidence": remotion_scenes[0].get("evidence", {}) if remotion_scenes else {}
+      "evidence": remotion_scenes[0].get("evidence", {}) if remotion_scenes else {},
+      "visual_media": visual_media_bundle
     }
     remotion_props_path = os.path.join(episode_dir, "remotion_props.json")
     with open(remotion_props_path, "w", encoding="utf-8") as f:

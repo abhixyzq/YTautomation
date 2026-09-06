@@ -1,5 +1,5 @@
 import React from "react";
-import { Audio, staticFile, Sequence } from "remotion";
+import { Audio, Video, staticFile, Sequence } from "remotion";
 import { DastawezShowProps } from "./types";
 import { DastawezOverview } from "./DastawezOverview";
 import { DastawezWhatChanged } from "./DastawezWhatChanged";
@@ -45,6 +45,7 @@ export const DastawezShow: React.FC<DastawezShowProps> = ({
   scenes = [],
   ambient_audio_path,
   evidence: globalEvidence,
+  visual_media,
 }) => {
   const resolvedAmbient = resolveMediaSrc(ambient_audio_path);
 
@@ -82,6 +83,10 @@ export const DastawezShow: React.FC<DastawezShowProps> = ({
       {sequenceConfigs.map(({ scene, from, durationInFrames, actIndex }, idx) => {
         const resolvedSceneAudio = resolveMediaSrc(scene.audio_path);
         const evidence = scene.evidence || globalEvidence;
+        const sceneBroll = resolveMediaSrc(scene.visual_media?.broll_video_path || visual_media?.broll_video_path);
+        const officialImg = resolveMediaSrc(scene.visual_media?.official_image_path || visual_media?.official_image_path);
+        const officialImgTitle = scene.visual_media?.official_image_title || visual_media?.official_image_title;
+        const officialImgAttr = scene.visual_media?.attribution || visual_media?.attribution;
 
         return (
           <Sequence
@@ -90,6 +95,39 @@ export const DastawezShow: React.FC<DastawezShowProps> = ({
             durationInFrames={durationInFrames}
             name={`Scene_${scene.scene_id}_${scene.act_name}`}
           >
+            {/* Cinematic Ambient B-Roll Video Layer (Subtle Movement Beneath UI) */}
+            {sceneBroll && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  overflow: "hidden",
+                  zIndex: 0,
+                  pointerEvents: "none",
+                }}
+              >
+                <Video
+                  src={sceneBroll}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    opacity: 0.16,
+                    filter: "brightness(0.65) contrast(1.15) saturate(1.2)",
+                  }}
+                  loop
+                  muted
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "radial-gradient(circle at 50% 30%, rgba(3, 10, 20, 0.4) 0%, rgba(3, 6, 12, 0.85) 100%)",
+                  }}
+                />
+              </div>
+            )}
+
             {/* Audio Voiceover for Scene */}
             {resolvedSceneAudio && (
               <Audio src={resolvedSceneAudio} volume={1.0} />
@@ -107,6 +145,9 @@ export const DastawezShow: React.FC<DastawezShowProps> = ({
                 urgencyBadge={scene.urgency_badge}
                 category={category}
                 evidence={evidence}
+                officialImagePath={officialImg}
+                officialImageTitle={officialImgTitle}
+                attribution={officialImgAttr}
                 currentActIndex={actIndex}
                 totalActs={totalActs}
               />
