@@ -7,6 +7,7 @@ for @iDastawez (Indian Government Schemes, Yojanas & Citizen Services).
 import os
 import sys
 import json
+import shutil
 import logging
 import subprocess
 from datetime import datetime
@@ -84,12 +85,31 @@ def build_daily_dastawez_video(
     total_duration_sec = voice_data.get("total_audio_duration_seconds", 240)
     print(f"         Total Audio Duration: {round(total_duration_sec, 1)} seconds ({round(total_duration_sec/60, 2)} minutes)")
 
-    # Prepare Remotion props file
+    # Prepare Remotion scenes & sync audio files into public/ directory
+    # (Remotion internal HTTP server serves static assets from --public-dir=public via staticFile())
+    public_dir = os.path.abspath("public")
+    public_audio_dir = os.path.join(public_dir, "dastawez_audio")
+    os.makedirs(public_audio_dir, exist_ok=True)
+
+    remotion_scenes = []
+    for sc in voice_data.get("scenes", []):
+        sc_copy = dict(sc)
+        orig_audio = sc.get("audio_path")
+        if orig_audio and os.path.exists(orig_audio):
+            audio_filename = f"{today_str}_{scheme_id}_scene_{sc['scene_id']}.mp3"
+            dest_path = os.path.join(public_audio_dir, audio_filename)
+            try:
+                shutil.copy2(orig_audio, dest_path)
+                sc_copy["audio_path"] = f"dastawez_audio/{audio_filename}"
+            except Exception as e:
+                logger.warning(f"Could not copy audio to public dir: {e}")
+        remotion_scenes.append(sc_copy)
+
     remotion_props = {
       "title": script_data["title"],
       "scheme_id": scheme_id,
       "category": selected_scheme.get("category", "सरकारी योजनाएं एवं नागरिक सेवाएं"),
-      "scenes": voice_data["scenes"]
+      "scenes": remotion_scenes
     }
     remotion_props_path = os.path.join(episode_dir, "remotion_props.json")
     with open(remotion_props_path, "w", encoding="utf-8") as f:

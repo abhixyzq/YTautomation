@@ -116,40 +116,40 @@ export const Root: React.FC = () => {
     <>
       <Composition
         id="TechShowLandscape"
-        component={TechShow}
+        component={TechShow as any}
         durationInFrames={30 * 60}
         fps={30}
         width={1920}
         height={1080}
         calculateMetadata={async ({ props }) => {
-          const durationSec = (props as TechShowProps).duration || 60;
+          const durationSec = (props as any)?.duration || 60;
           return {
             durationInFrames: Math.max(30, Math.ceil(durationSec * 30)),
             props,
           };
         }}
-        defaultProps={defaultProps}
+        defaultProps={defaultProps as any}
       />
       <Still
         id="ThumbnailLandscape"
-        component={Thumbnail}
+        component={Thumbnail as any}
         width={1280}
         height={720}
-        defaultProps={defaultThumbProps}
+        defaultProps={defaultThumbProps as any}
       />
 
       {/* iDastawez Compositions */}
       <Composition
         id="DastawezLandscape"
-        component={DastawezShow}
+        component={DastawezShow as any}
         durationInFrames={30 * 210}
         fps={30}
         width={1920}
         height={1080}
         calculateMetadata={async ({ props }) => {
-          const dastawezProps = props as DastawezShowProps;
-          const totalFrames = (dastawezProps.scenes || []).reduce(
-            (acc, sc) => acc + (sc.duration_frames_30fps || Math.round((sc.duration_seconds || 5) * 30)),
+          const dastawezProps = props as any;
+          const totalFrames = (dastawezProps?.scenes || []).reduce(
+            (acc: number, sc: any) => acc + (sc.duration_frames_30fps || Math.round((sc.duration_seconds || 5) * 30)),
             0
           );
           return {
@@ -157,14 +157,14 @@ export const Root: React.FC = () => {
             props,
           };
         }}
-        defaultProps={defaultDastawezProps}
+        defaultProps={defaultDastawezProps as any}
       />
       <Still
         id="DastawezThumbnail"
-        component={DastawezThumbnail}
+        component={DastawezThumbnail as any}
         width={1280}
         height={720}
-        defaultProps={defaultDastawezThumbProps}
+        defaultProps={defaultDastawezThumbProps as any}
       />
     </>
   );

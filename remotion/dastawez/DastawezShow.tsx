@@ -12,10 +12,24 @@ export const resolveMediaSrc = (path?: string) => {
   if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
     return path;
   }
-  const normalized = path.replace(/\\/g, "/");
+  let normalized = path.replace(/\\/g, "/");
+
+  // If path contains public/, strip everything up to public/
+  const pubIdx = normalized.indexOf("/public/");
+  if (pubIdx !== -1) {
+    normalized = normalized.substring(pubIdx + "/public/".length);
+  } else if (normalized.startsWith("public/")) {
+    normalized = normalized.substring("public/".length);
+  }
+
+  // Also strip workspace marker if present
   const marker = "/automate/";
   const idx = normalized.indexOf(marker);
-  const rel = idx !== -1 ? normalized.substring(idx + marker.length) : normalized.replace(/^\/+/, "");
+  if (idx !== -1) {
+    normalized = normalized.substring(idx + marker.length);
+  }
+
+  const rel = normalized.replace(/^\/+/, "");
   try {
     return staticFile(rel);
   } catch (e) {
