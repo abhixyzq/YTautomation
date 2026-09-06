@@ -10,7 +10,7 @@ import re
 import json
 import asyncio
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 import edge_tts
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -78,45 +78,103 @@ def clean_hindi_for_tts(text: str) -> str:
     return text
 
 
+def _calculate_word_and_phrase_timings(
+    sentence_boundaries: List[Dict[str, Any]], 
+    cleaned_text: str
+) -> Tuple[float, List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """
+    Computes exact start and end timestamps for each spoken Hindi word
+    and groups them into punchy 3-5 word subtitle phrases.
+    """
+    all_word_timings = []
+    
+    for sentence in sentence_boundaries:
+        # 10,000,000 ticks = 1 second
+        offset_sec = sentence["offset"] / 10000000.0
+        duration_sec = sentence["duration"] / 10000000.0
+        stext = sentence["text"].strip()
+        words = stext.split()
+        if not words:
+            continue
+            
+        total_weights = sum(max(len(w), 2) for w in words)
+        curr_t = offset_sec
+        for w in words:
+            weight = max(len(w), 2)
+            w_duration = (weight / total_weights) * duration_sec
+            all_word_timings.append({
+                "word": w,
+                "start": round(curr_t, 3),
+                "end": round(curr_t + w_duration, 3)
+            })
+            curr_t += w_duration
+
+    # Group words into clean 3-5 word phrases for subtitles
+    phrases = []
+    max_words_per_phrase = 4
+    current_chunk = []
+    for w_obj in all_word_timings:
+        current_chunk.append(w_obj)
+        if len(current_chunk) >= max_words_per_phrase or w_obj["word"].endswith(("।", "?", "!", ",")):
+            phrases.append({
+                "phrase_text": " ".join(w["word"] for w in current_chunk),
+                "start": current_chunk[0]["start"],
+                "end": round(current_chunk[-1]["end"] + 0.1, 3),
+                "words": current_chunk
+            })
+            current_chunk = []
+    if current_chunk:
+        phrases.append({
+            "phrase_text": " ".join(w["word"] for w in current_chunk),
+            "start": current_chunk[0]["start"],
+            "end": round(current_chunk[-1]["end"] + 0.1, 3),
+            "words": current_chunk
+        })
+
+    # Total duration
+    if all_word_timings:
+        total_dur = all_word_timings[-1]["end"] + 0.3
+    else:
+        total_dur = max(len(cleaned_text.split()) / 2.6, 5.0)
+
+    return round(total_dur, 2), all_word_timings, phrases
+
+
 async def _generate_audio_file(
     text: str, 
     output_audio_path: str, 
     voice: str = DEFAULT_HINDI_VOICE,
     rate: str = DEFAULT_RATE,
     pitch: str = DEFAULT_PITCH
-) -> float:
+) -> Dict[str, Any]:
     """
-    Generates an MP3 file for the provided Hindi text and returns duration in seconds.
+    Generates an MP3 file via edge-tts stream and extracts exact word/phrase timestamps.
     """
     cleaned_text = clean_hindi_for_tts(text)
     communicate = edge_tts.Communicate(cleaned_text, voice=voice, rate=rate, pitch=pitch)
     
     os.makedirs(os.path.dirname(output_audio_path), exist_ok=True)
-    await communicate.save(output_audio_path)
+    sentence_boundaries = []
     
-    # Calculate duration using ffprobe or mutagen/pydub or simple estimate
-    duration = 0.0
-    try:
-        import mutagen.mp3
-        audio = mutagen.mp3.MP3(output_audio_path)
-        duration = audio.info.length
-    except Exception:
-        # Fallback to ffprobe
-        import subprocess
-        try:
-            cmd = [
-                "ffprobe", "-v", "error", "-show_entries",
-                "format=duration", "-of", "default=noprint_wrappers=1:nokey=1",
-                output_audio_path
-            ]
-            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
-            duration = float(result.stdout.strip())
-        except Exception:
-            # Fallback estimate: ~2.6 words per second in Hindi
-            words = len(cleaned_text.split())
-            duration = words / 2.6
-            
-    return duration
+    with open(output_audio_path, "wb") as f:
+        async for chunk in communicate.stream():
+            chunk_type = chunk.get("type")
+            if chunk_type == "audio":
+                f.write(chunk.get("data", b""))
+            elif chunk_type == "SentenceBoundary":
+                sentence_boundaries.append(chunk)
+
+    duration, word_timings, phrases = _calculate_word_and_phrase_timings(sentence_boundaries, cleaned_text)
+    
+    # Verify file was written
+    if not os.path.exists(output_audio_path) or os.path.getsize(output_audio_path) < 100:
+        raise RuntimeError(f"Audio file synthesis failed: {output_audio_path}")
+        
+    return {
+        "duration": duration,
+        "word_timings": word_timings,
+        "phrases": phrases
+    }
 
 
 def generate_scene_voiceovers(
@@ -126,7 +184,8 @@ def generate_scene_voiceovers(
 ) -> Dict[str, Any]:
     """
     Generates studio neural voiceovers for each scene in the script.
-    Saves individual MP3 files and returns scene metadata with exact durations.
+    Saves individual MP3 files and returns scene metadata with exact durations,
+    word timestamps, and subtitle phrase chunks.
     """
     os.makedirs(output_dir, exist_ok=True)
     scenes = script_data.get("scenes", [])
@@ -144,17 +203,20 @@ def generate_scene_voiceovers(
             audio_path = os.path.join(output_dir, audio_filename)
             dialogue = scene["dialogue"]
             
-            duration = await _generate_audio_file(dialogue, audio_path, voice=voice)
-            total_duration += duration
+            res = await _generate_audio_file(dialogue, audio_path, voice=voice)
+            dur = res["duration"]
+            total_duration += dur
             
             enriched = dict(scene)
             enriched["audio_file"] = audio_filename
             enriched["audio_path"] = os.path.abspath(audio_path).replace("\\", "/")
-            enriched["duration_seconds"] = round(duration, 2)
-            enriched["duration_frames_30fps"] = int(round(duration * 30))
+            enriched["duration_seconds"] = dur
+            enriched["duration_frames_30fps"] = int(round(dur * 30))
+            enriched["phrases"] = res["phrases"]
+            enriched["word_timings"] = res["word_timings"]
             enriched_scenes.append(enriched)
             
-            print(f"  ✓ Scene {scene_id} [{scene['act_name']}]: {round(duration, 1)}s ({len(dialogue.split())} words)")
+            print(f"  ✓ Scene {scene_id} [{scene['act_name']}]: {round(dur, 1)}s ({len(dialogue.split())} words, {len(res['phrases'])} caption phrases)")
 
     asyncio.run(process_all_scenes())
     

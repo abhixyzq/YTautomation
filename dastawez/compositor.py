@@ -109,7 +109,8 @@ def build_daily_dastawez_video(
       "title": script_data["title"],
       "scheme_id": scheme_id,
       "category": selected_scheme.get("category", "सरकारी योजनाएं एवं नागरिक सेवाएं"),
-      "scenes": remotion_scenes
+      "scenes": remotion_scenes,
+      "evidence": remotion_scenes[0].get("evidence", {}) if remotion_scenes else {}
     }
     remotion_props_path = os.path.join(episode_dir, "remotion_props.json")
     with open(remotion_props_path, "w", encoding="utf-8") as f:

@@ -1,13 +1,51 @@
+export interface WordTiming {
+  word: string;
+  start: number;
+  end: number;
+}
+
+export interface Phrase {
+  phrase_text: string;
+  start: number;
+  end: number;
+  words: WordTiming[];
+}
+
+export interface EvidenceMetadata {
+  ministry?: string;
+  notification_ref?: string;
+  portal_url?: string;
+  official_portal_domain?: string;
+  last_verified_date?: string;
+  source_citation?: string;
+  helpline?: string;
+}
+
+export interface WhatChangedData {
+  old_rule?: string;
+  new_rule?: string;
+  deadline?: string;
+}
+
 export interface DastawezScene {
   scene_id: number;
   act_name: string;
   dialogue: string;
-  layout_type: "scheme_overview" | "eligibility_card" | "documents_checklist" | "step_by_step_flow" | "official_alert";
+  layout_type:
+    | "overview"
+    | "scheme_overview"
+    | "what_changed"
+    | "eligibility_card"
+    | "documents_checklist"
+    | "step_by_step_flow"
+    | "official_alert"
+    | "source_verification";
   scheme_name: string;
   ministry?: string;
   benefit_highlight?: string;
   latest_update?: string;
   portal_url?: string;
+  official_portal_domain?: string;
   helpline?: string;
   warning?: string;
   urgency_badge?: string;
@@ -20,9 +58,13 @@ export interface DastawezScene {
     title: string;
     desc: string;
   }>;
+  what_changed?: WhatChangedData;
+  evidence?: EvidenceMetadata;
   audio_path?: string;
   duration_seconds: number;
   duration_frames_30fps: number;
+  phrases?: Phrase[];
+  word_timings?: WordTiming[];
 }
 
 export interface DastawezShowProps {
@@ -31,4 +73,15 @@ export interface DastawezShowProps {
   category: string;
   scenes: DastawezScene[];
   ambient_audio_path?: string;
+  evidence?: EvidenceMetadata;
 }
+
+export interface DastawezThumbnailProps {
+  scheme_name: string;
+  big_benefit: string;
+  urgency_badge?: string;
+  portal_name?: string;
+  helpline?: string;
+  rule_change_badge?: string;
+}
+

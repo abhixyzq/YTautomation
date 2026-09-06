@@ -1,201 +1,217 @@
 import React from "react";
-import { spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { DastawezHeader } from "./DastawezHeader";
+import { EvidenceMetadata } from "./types";
 
-interface Props {
+interface DastawezAlertProps {
   schemeName: string;
   ministry?: string;
   portalUrl?: string;
+  officialPortalDomain?: string;
   helpline?: string;
   warning?: string;
   category?: string;
+  evidence?: EvidenceMetadata;
+  currentActIndex?: number;
+  totalActs?: number;
 }
 
-export const DastawezAlert: React.FC<Props> = ({
+export const DastawezAlert: React.FC<DastawezAlertProps> = ({
   schemeName,
   ministry,
   portalUrl,
+  officialPortalDomain,
   helpline,
   warning,
   category,
+  evidence,
+  currentActIndex = 5,
+  totalActs = 6,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const alertSpring = spring({ frame, fps, delay: 5, config: { damping: 14 } });
-  const ctaSpring = spring({ frame, fps, delay: 20, config: { damping: 12 } });
+  const cameraScale = interpolate(frame, [0, 900], [1.0, 1.03], {
+    extrapolateRight: "clamp",
+  });
+
+  const entrance = spring({ frame, fps, delay: 4, config: { damping: 14, stiffness: 100 } });
+  const card1Spring = spring({ frame, fps, delay: 10, config: { damping: 14 } });
+  const card2Spring = spring({ frame, fps, delay: 40, config: { damping: 14 } });
+
+  const domain =
+    officialPortalDomain ||
+    (portalUrl ? portalUrl.replace("https://", "").replace("http://", "").split("/")[0] : "gov.in");
 
   return (
     <div
       style={{
         width: "100%",
         height: "100%",
-        background: "radial-gradient(circle at 50% 20%, #151a30 0%, #0a0e1c 60%, #03050a 100%)",
+        background: "radial-gradient(circle at 50% 25%, #18090d 0%, #0c0507 60%, #050203 100%)",
         position: "relative",
         overflow: "hidden",
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
-      <DastawezHeader ministry={ministry} category={category} schemeName={schemeName} />
+      {/* Subtle Grid */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage:
+            "radial-gradient(rgba(239, 68, 68, 0.1) 1px, transparent 1px), radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px)",
+          backgroundSize: "40px 40px, 80px 80px",
+          pointerEvents: "none",
+          opacity: 0.6,
+        }}
+      />
+
+      <DastawezHeader
+        ministry={ministry}
+        category={category}
+        schemeName={schemeName}
+        currentActIndex={currentActIndex}
+        totalActs={totalActs}
+        actTitle="सावधानी व हेल्पलाइन"
+        portalDomain={domain}
+      />
 
       <div
         style={{
           position: "absolute",
-          top: 140,
-          bottom: 40,
-          left: 56,
-          right: 56,
+          top: 145,
+          bottom: 110,
+          left: 64,
+          right: 64,
           display: "flex",
           flexDirection: "column",
-          gap: 28,
           justifyContent: "center",
+          gap: 22,
+          transform: `scale(${cameraScale})`,
         }}
       >
-        {/* Anti-Fraud Alert Box */}
-        <div
-          style={{
-            background: "linear-gradient(135deg, rgba(220, 38, 38, 0.15) 0%, rgba(153, 27, 27, 0.25) 100%)",
-            border: "2px solid rgba(248, 113, 113, 0.4)",
-            borderRadius: 24,
-            padding: "32px 36px",
-            display: "flex",
-            alignItems: "center",
-            gap: 24,
-            boxShadow: "0 20px 40px rgba(220, 38, 38, 0.25)",
-            transform: `scale(${alertSpring})`,
-            opacity: alertSpring,
-          }}
-        >
+        {/* Header Badge */}
+        <div style={{ transform: `translateY(${(1 - entrance) * 20}px)`, opacity: entrance }}>
           <div
             style={{
-              width: 72,
-              height: 72,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)",
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
-              justifyContent: "center",
-              fontSize: 36,
-              color: "#ffffff",
-              boxShadow: "0 0 25px rgba(239, 68, 68, 0.6)",
-              flexShrink: 0,
+              gap: 8,
+              background: "rgba(220, 38, 38, 0.15)",
+              border: "1px solid rgba(239, 68, 68, 0.5)",
+              padding: "6px 18px",
+              borderRadius: 100,
+              width: "fit-content",
             }}
           >
-            🛡️
+            <span style={{ fontSize: 15, fontWeight: 800, color: "#f87171", letterSpacing: 0.6 }}>
+              नागरिक सुरक्षा एडवाइजरी | CITIZEN FRAUD CAUTION
+            </span>
           </div>
-          <div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: "#fca5a5", textTransform: "uppercase", letterSpacing: 1 }}>
-              आधिकारिक चेतावनी एवं साइबर सुरक्षा अलर्ट
-            </div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: "#ffffff", marginTop: 6, lineHeight: 1.3 }}>
-              {warning || "सरकारी योजनाओं के लिए आवेदन 100% निःशुल्क है। किसी भी अनधिकृत लिंक या साइबर कैफे वाले को अवैध शुल्क न दें।"}
-            </div>
-          </div>
+          <h2 style={{ fontSize: 44, fontWeight: 900, color: "#ffffff", margin: "6px 0 0 0" }}>
+            फर्जी वेबसाइटों एवं दलालों से कैसे बचें?
+          </h2>
         </div>
 
-        {/* Portal & Helpline Row */}
-        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 28 }}>
-          {/* Official Portal Card */}
+        {/* Two-Column Layout: Warning vs Helpline */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 28, marginTop: 4 }}>
+          {/* Card 1: Official Warning Box */}
           <div
             style={{
-              background: "rgba(15, 23, 42, 0.75)",
-              backdropFilter: "blur(16px)",
-              border: "1px solid rgba(255, 255, 255, 0.14)",
+              background: "rgba(24, 12, 16, 0.9)",
+              border: "2px solid rgba(239, 68, 68, 0.6)",
               borderRadius: 22,
               padding: "28px 32px",
+              boxShadow: "0 16px 45px rgba(0, 0, 0, 0.6), 0 0 20px rgba(239, 68, 68, 0.15)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+              transform: `translateX(${(1 - card1Spring) * -30}px)`,
+              opacity: card1Spring,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 26 }}>⚠️</span>
+              <div style={{ fontSize: 16, fontWeight: 800, color: "#f87171", textTransform: "uppercase" }}>
+                महत्वपूर्ण सरकारी चेतावनी
+              </div>
+            </div>
+
+            <div style={{ fontSize: 23, fontWeight: 700, color: "#ffffff", lineHeight: 1.5 }}>
+              {warning || "किसी भी अनधिकृत लिंक या साइबर दलाल को व्यक्तिगत दस्तावेज व अवैध फीस न दें।"}
+            </div>
+
+            <div
+              style={{
+                background: "rgba(15, 23, 42, 0.8)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderRadius: 12,
+                padding: "14px 18px",
+                fontSize: 15,
+                color: "#cbd5e1",
+                lineHeight: 1.5,
+              }}
+            >
+              🔒 <strong>सुरक्षा नियम:</strong> सरकारी योजनाओं में ऑनलाइन आवेदन सदैव <strong>.gov.in</strong> या <strong>.nic.in</strong> पोर्टल पर ही होता है। किसी भी .com / .org / .xyz लिंक पर भरोसा न करें।
+            </div>
+          </div>
+
+          {/* Card 2: Official National Helpline */}
+          <div
+            style={{
+              background: "rgba(10, 18, 36, 0.88)",
+              border: "1px solid rgba(59, 130, 246, 0.4)",
+              borderRadius: 22,
+              padding: "28px 32px",
+              boxShadow: "0 16px 45px rgba(0, 0, 0, 0.6)",
               display: "flex",
               flexDirection: "column",
               justifyContent: "space-between",
+              gap: 18,
+              transform: `translateX(${(1 - card2Spring) * 30}px)`,
+              opacity: card2Spring,
             }}
           >
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>
-              🌐 एकमात्र आधिकारिक सरकारी पोर्टल
-            </div>
-            <div
-              style={{
-                fontSize: 32,
-                fontWeight: 800,
-                color: "#38bdf8",
-                marginTop: 10,
-                wordBreak: "break-all",
-              }}
-            >
-              {portalUrl || "https://india.gov.in"}
-            </div>
-            <div style={{ fontSize: 15, color: "#64748b", marginTop: 8 }}>
-              (सीधा लिंक नीचे वीडियो के डिस्क्रिप्शन बॉक्स में उपलब्ध है)
-            </div>
-          </div>
-
-          {/* Helpline Card */}
-          <div
-            style={{
-              background: "rgba(15, 23, 42, 0.75)",
-              backdropFilter: "blur(16px)",
-              border: "1px solid rgba(255, 255, 255, 0.14)",
-              borderRadius: 22,
-              padding: "28px 32px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>
-              📞 राष्ट्रीय टोल-फ्री हेल्पलाइन
-            </div>
-            <div
-              style={{
-                fontSize: 36,
-                fontWeight: 900,
-                color: "#34d399",
-                marginTop: 10,
-              }}
-            >
-              {helpline || "1800-11-1947"}
-            </div>
-            <div style={{ fontSize: 15, color: "#64748b", marginTop: 8 }}>
-              (किसी भी समस्या के समाधान के लिए सुबह 8 से रात 8 बजे तक)
-            </div>
-          </div>
-        </div>
-
-        {/* Subscribe & Share CTA */}
-        <div
-          style={{
-            background: "linear-gradient(90deg, rgba(249, 115, 22, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%)",
-            border: "1px solid rgba(255, 255, 255, 0.16)",
-            borderRadius: 22,
-            padding: "22px 32px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            transform: `translateY(${(1 - ctaSpring) * 20}px)`,
-            opacity: ctaSpring,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ fontSize: 32 }}>🔔</div>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#ffffff" }}>
-                सच्ची और प्रमाणित सरकारी योजनाओं के लिए iDastawez को सब्सक्राइब करें
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>
+                सत्यापित राष्ट्रीय हेल्पलाइन
               </div>
-              <div style={{ fontSize: 15, color: "#cbd5e1", marginTop: 2 }}>
-                इस वीडियो को अपने परिवार और दोस्तों के साथ व्हाट्सएप पर ज़रूर साझा करें।
+              <div
+                style={{
+                  fontSize: 36,
+                  fontWeight: 900,
+                  color: "#38bdf8",
+                  marginTop: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                }}
+              >
+                <span>📞</span>
+                <span>{helpline || "1800-11-0001"}</span>
+              </div>
+              <div style={{ fontSize: 14, color: "#94a3b8", marginTop: 6 }}>
+                सोमवार से शनिवार (कार्यदिवस) में सीधे संपर्क करें
               </div>
             </div>
-          </div>
-          <div
-            style={{
-              background: "#ef4444",
-              color: "#ffffff",
-              fontWeight: 900,
-              fontSize: 18,
-              padding: "12px 28px",
-              borderRadius: 30,
-              boxShadow: "0 6px 20px rgba(239, 68, 68, 0.4)",
-            }}
-          >
-            SUBSCRIBE @iDastawez
+
+            <div
+              style={{
+                background: "rgba(15, 23, 42, 0.7)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                borderRadius: 12,
+                padding: "12px 18px",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <span style={{ fontSize: 18 }}>🌐</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: "#ffffff" }}>
+                पोर्टल: {domain}
+              </span>
+            </div>
           </div>
         </div>
       </div>

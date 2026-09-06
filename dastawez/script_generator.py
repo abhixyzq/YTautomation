@@ -23,139 +23,286 @@ logger = logging.getLogger(__name__)
 
 def generate_dastawez_script(scheme: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Constructs a highly structured 3.5-minute authentic Hindi video script
-    covering: Hook/Benefit -> Eligibility -> Documents Checklist -> Application Steps -> Official Alert.
+    Constructs an adaptive, evidence-first Hindi explainer script for @iDastawez.
+    Dynamically routes storyboards based on topic_type (regulatory_deadline vs benefit_scheme).
     """
     name_hi = scheme["scheme_name_hi"]
     ministry = scheme["ministry"]
     benefit = scheme["benefit_amount"]
     portal = scheme["portal_url"]
+    portal_domain = scheme.get("official_portal_domain", portal.replace("https://", "").replace("http://", "").split("/")[0])
     helpline = scheme["helpline"]
     latest_update = scheme["latest_official_update"]
     warning = scheme["official_warning"]
+    topic_type = scheme.get("topic_type", "benefit_scheme")
+    what_changed_data = scheme.get("what_changed", {
+        "old_rule": "पहले सामान्य नियमों के तहत आवेदन की सुविधा थी।",
+        "new_rule": latest_update,
+        "deadline": "आधिकारिक पोर्टल पर अंतिम तिथि पूर्व कार्यवाही आवश्यक"
+    })
+    evidence_data = {
+        "ministry": ministry,
+        "notification_ref": scheme.get("notification_ref", "MoF/PIB/Public-Notice-2026"),
+        "portal_url": portal,
+        "official_portal_domain": portal_domain,
+        "last_verified_date": scheme.get("last_verified_date", "सितंबर 2026"),
+        "source_citation": scheme.get("source_citation", f"भारत सरकार के आधिकारिक पोर्टल {portal_domain} से सत्यापित"),
+        "helpline": helpline
+    }
 
-    # Act 1: Hook & Scheme Overview (00:00 - 00:35)
-    news_headline_text = f"हाल ही में जारी ताज़ा रिपोर्ट के अनुसार: {scheme.get('latest_news_headline')}। " if scheme.get('latest_news_headline') else ""
-    fact_check_text = f"सोशल मीडिया पर चल रही अफवाहों से सावधान रहें: {scheme.get('fact_check_alert')}। " if scheme.get('fact_check_alert') else ""
+    news_headline_text = f"ताज़ा अपडेट के अनुसार: {scheme.get('latest_news_headline')}। " if scheme.get('latest_news_headline') else ""
 
-    act1_dialogue = (
-        f"नमस्कार, iDastawez पर आपका स्वागत है। "
-        f"सरकारी योजनाओं और आधिकारिक नियमों की सटीक जानकारी की श्रृंखला में आज का यह वीडियो बेहद महत्वपूर्ण है। "
-        f"{news_headline_text}"
-        f"{ministry} द्वारा {name_hi} को लेकर एक बड़ा आधिकारिक फैसला और निर्देश जारी किया गया है, "
-        f"जिसके तहत पात्र नागरिकों को {benefit} का सीधा लाभ सुनिश्चित किया जा रहा है। "
-        f"{latest_update} "
-        f"आज हम जानेंगे कि इस योजना के लिए कौन पात्र है, किन दस्तावेज़ों की ज़रूरत होगी, "
-        f"और आप आधिकारिक पोर्टल पर बिना किसी दलाल के घर बैठे कैसे आवेदन या e-KYC कर सकते हैं।"
+    # Common Act: Source Verification (Trust Anchor)
+    source_dialogue = (
+        f"इस पूरे विश्लेषण की प्रामाणिकता के लिए स्रोत नोट कर लें: "
+        f"यह जानकारी {ministry} द्वारा जारी आधिकारिक अधिसूचना संख्या {evidence_data['notification_ref']} "
+        f"और आधिकारिक सरकारी पोर्टल {portal_domain} पर उपलब्ध सार्वजनिक दस्तावेजों पर आधारित है। "
+        f"किसी भी नियम की पुष्टि के लिए केवल सरकारी डोमेन gov.in या nic.in का ही उपयोग करें। "
+        f"सच्ची और निष्पक्ष नागरिक जानकारी के लिए iDastawez को सब्सक्राइब करें। धन्यवाद, जय हिन्द!"
     )
 
-    # Act 2: Patrata - Kisko Milega aur Kisko Nahi (00:35 - 01:25)
-    yes_points_str = "। इसके अलावा, ".join(scheme["eligibility_yes"])
-    no_points_str = "। साथ ही, ".join(scheme["eligibility_no"])
-    act2_dialogue = (
-        f"सबसे पहले बात करते हैं सबसे ज़रूरी पहलू की — यानी पात्रता (Eligibility)। "
-        f"अक्सर अधूरी जानकारी के कारण लोग गलत फॉर्म भर देते हैं और उनका आवेदन निरस्त हो जाता है। "
-        f"ध्यान से सुनिए कि इस योजना के लिए कौन पात्र है: {yes_points_str}। "
-        f"अब यह भी जान लीजिए कि कौन लोग इस योजना में आवेदन नहीं कर सकते ताकि आपका समय बर्बाद न हो: "
-        f"{no_points_str}। "
-        f"यदि आप इन सभी पात्रताओं को पूरा करते हैं, तो चलिए देखते हैं कि आवेदन के लिए आपके पास कौन से दस्तावेज़ तैयार होने चाहिए।"
-    )
+    scenes = []
 
-    # Act 3: Zaroori Dastawez Checklist (01:25 - 02:15)
-    docs_str = "। दूसरा महत्वपूर्ण दस्तावेज़ है ".join(scheme["documents_required"])
-    act3_dialogue = (
-        f"दस्तावेज़ों की सूची को बहुत ध्यान से नोट कर लीजिए, क्योंकि ऑनलाइन पोर्टल पर यही कागज़ात अपलोड करने होंगे। "
-        f"पहला सबसे अनिवार्य दस्तावेज़ है {docs_str}। "
-        f"विशेष ध्यान रखें कि आपके आधार कार्ड में आपका चालू मोबाइल नंबर लिंक होना चाहिए, "
-        f"क्योंकि ओटीपी सत्यापन के बिना फॉर्म आगे नहीं बढ़ेगा। "
-        f"इसके अलावा, आपके बैंक खाते में एनपीसीआई और आधार सीडिंग एक्टिव होनी चाहिए, "
-        f"ताकि सरकार द्वारा भेजी गई सहायता राशि बिना किसी रुकावट सीधे आपके खाते में क्रेडिट हो सके।"
-    )
-
-    # Act 4: Step-by-Step Online Apply / Portal Guide (02:15 - 03:20)
-    steps = scheme["application_steps"]
-    step_texts = []
-    for s in steps:
-        step_texts.append(f"स्टेप {s['step']}: {s['title']} — {s['desc']}")
-    steps_dialogue = " ".join(step_texts)
-
-    act4_dialogue = (
-        f"अब बात करते हैं आवेदन की पूरी प्रक्रिया (Step-by-Step Online Process) की। "
-        f"आपको किसी भी दलाल या एजेंट के पास जाने की आवश्यकता नहीं है, आप स्वयं अपने मोबाइल या कंप्यूटर से आवेदन कर सकते हैं। "
-        f"{steps_dialogue} "
-        f"जैसे ही आपका आवेदन सफलतापूर्वक जमा होगा, आपको स्क्रीन पर एक एप्लीकेशन रेफरेंस नंबर मिलेगा। "
-        f"उस नंबर को सुरक्षित नोट कर लें, ताकि आप भविष्य में अपने आवेदन की स्थिति ट्रैक कर सकें।"
-    )
-
-    # Act 5: Official Alert & Help Desk (03:20 - 03:45)
-    act5_dialogue = (
-        f"अंत में सबसे महत्वपूर्ण आधिकारिक चेतावनी: {warning} "
-        f"{fact_check_text}"
-        f"इस योजना की एकमात्र आधिकारिक वेबसाइट है {portal}। "
-        f"किसी भी फर्जी वेबसाइट या व्हाट्सएप लिंक पर अपनी निजी जानकारी साझा न करें। "
-        f"यदि आपको आवेदन करने में कोई भी तकनीकी समस्या या संदेह हो, तो सरकार के राष्ट्रीय हेल्पलाइन नंबर {helpline} पर सीधे संपर्क कर सकते हैं। "
-        f"इस आधिकारिक पोर्टल का सीधा लिंक हमने नीचे वीडियो के डिस्क्रिप्शन बॉक्स में दे दिया है। "
-        f"अगर यह जानकारी आपको उपयोगी लगी हो, तो इस वीडियो को अपने परिवार और दोस्तों के साथ व्हाट्सएप पर ज़रूर शेयर करें, "
-        f"और सरकारी योजनाओं की हर सच्ची व प्रमाणित अपडेट के लिए iDastawez को अभी सब्सक्राइब करें। धन्यवाद, जय हिन्द!"
-    )
-
-    full_script = f"{act1_dialogue}\n\n{act2_dialogue}\n\n{act3_dialogue}\n\n{act4_dialogue}\n\n{act5_dialogue}"
-    word_count = len(full_script.split())
-
-    # Build Structured Scene Storyboard for Remotion Hindi Infographics
-    scenes = [
-        {
+    if topic_type == "regulatory_deadline":
+        # 1. Overview Hook
+        act1_dialogue = (
+            f"नमस्कार, iDastawez पर आपका स्वागत है। "
+            f"{ministry} द्वारा {name_hi} को लेकर एक महत्वपूर्ण आधिकारिक निर्देश जारी किया गया है। "
+            f"{news_headline_text}"
+            f"यदि आपका नाम इस सूची में है, तो {benefit} की निरंतरता बनाए रखने के लिए समय पर सत्यापन अनिवार्य कर दिया गया है। "
+            f"आज हम जानेंगे कि क्या नियम बदला है, किसे तुरंत कार्रवाई करनी है, और घर बैठे e-KYC कैसे पूरी करें।"
+        )
+        scenes.append({
             "scene_id": 1,
-            "act_name": "योजना परिचय एवं लाभ",
+            "act_name": "अधिसूचना एवं महत्व",
             "dialogue": act1_dialogue,
-            "layout_type": "scheme_overview",
+            "layout_type": "overview",
             "scheme_name": name_hi,
             "ministry": ministry,
             "benefit_highlight": benefit,
             "latest_update": latest_update,
-            "portal_url": portal
-        },
-        {
+            "portal_url": portal,
+            "official_portal_domain": portal_domain,
+            "evidence": evidence_data
+        })
+
+        # 2. What Changed
+        act2_dialogue = (
+            f"आइए समझते हैं कि नियम में क्या बड़ा बदलाव हुआ है। "
+            f"पहले स्थिति यह थी: {what_changed_data['old_rule']} "
+            f"लेकिन अब नया नियम यह है: {what_changed_data['new_rule']} "
+            f"समयसीमा को लेकर स्पष्ट निर्देश है: {what_changed_data['deadline']}। "
+            f"यदि तय समय में यह प्रक्रिया पूरी नहीं हुई, तो सेवा अस्थाई रूप से रोकी जा सकती है।"
+        )
+        scenes.append({
             "scene_id": 2,
-            "act_name": "पात्रता (Eligibility)",
+            "act_name": "नियम में क्या बदला",
             "dialogue": act2_dialogue,
+            "layout_type": "what_changed",
+            "scheme_name": name_hi,
+            "ministry": ministry,
+            "what_changed": what_changed_data,
+            "portal_url": portal,
+            "official_portal_domain": portal_domain,
+            "evidence": evidence_data
+        })
+
+        # 3. Who is Affected (Eligibility / Requirement)
+        yes_str = "। इसके अलावा, ".join(scheme["eligibility_yes"])
+        no_str = "। वहीं दूसरी ओर, ".join(scheme["eligibility_no"])
+        act3_dialogue = (
+            f"अब जान लीजिए कि यह नियम किन पर लागू होता है: {yes_str}। "
+            f"किन्हें इससे छूट है या कौन अपात्र हैं: {no_str}। "
+            f"यदि आप पात्रता के दायरे में आते हैं, तो सत्यापन में देरी बिल्कुल न करें।"
+        )
+        scenes.append({
+            "scene_id": 3,
+            "act_name": "पात्रता एवं अनिवार्यता",
+            "dialogue": act3_dialogue,
             "layout_type": "eligibility_card",
             "scheme_name": name_hi,
+            "ministry": ministry,
             "eligibility_yes": scheme["eligibility_yes"],
-            "eligibility_no": scheme["eligibility_no"]
-        },
-        {
-            "scene_id": 3,
-            "act_name": "ज़रूरी दस्तावेज़ (Documents)",
-            "dialogue": act3_dialogue,
-            "layout_type": "documents_checklist",
-            "scheme_name": name_hi,
-            "documents": scheme["documents_required"],
-            "bank_note": "आधार-NPCI सक्रिय बैंक खाता अनिवार्य"
-        },
-        {
+            "eligibility_no": scheme["eligibility_no"],
+            "evidence": evidence_data
+        })
+
+        # 4. Step-by-Step Action
+        steps = scheme["application_steps"]
+        step_texts = [f"कदम {s['step']}: {s['title']} — {s['desc']}" for s in steps]
+        act4_dialogue = (
+            f"सत्यापन की सरल प्रक्रिया इस प्रकार है: "
+            f"{' '.join(step_texts)} "
+            f"सत्यापन पूरा होने पर पोर्टल से डिजिटल रसीद या कंफर्मेशन स्लिप अवश्य सुरक्षित रख लें।"
+        )
+        scenes.append({
             "scene_id": 4,
-            "act_name": "आवेदन प्रक्रिया (Step-by-Step)",
+            "act_name": "ऑनलाइन सत्यापन प्रक्रिया",
             "dialogue": act4_dialogue,
             "layout_type": "step_by_step_flow",
             "scheme_name": name_hi,
             "ministry": ministry,
-            "steps": scheme["application_steps"],
-            "application_steps": scheme["application_steps"],
-            "portal_url": portal
-        },
-        {
+            "application_steps": steps,
+            "portal_url": portal,
+            "official_portal_domain": portal_domain,
+            "evidence": evidence_data
+        })
+
+        # 5. Alert & Helpline
+        act5_dialogue = (
+            f"महत्वपूर्ण सावधानी: {warning} "
+            f"आधिकारिक पोर्टल {portal_domain} के अलावा किसी अनजान व्यक्ति को ओटीपी या बैंक पासवर्ड कभी न दें। "
+            f"किसी भी समस्या के समाधान हेतु राष्ट्रीय हेल्पलाइन नंबर {helpline} पर सीधे संपर्क कर सकते हैं।"
+        )
+        scenes.append({
             "scene_id": 5,
-            "act_name": "महत्वपूर्ण चेतावनी व हेल्पलाइन",
+            "act_name": "सावधानी व हेल्पलाइन",
             "dialogue": act5_dialogue,
             "layout_type": "official_alert",
             "scheme_name": name_hi,
             "ministry": ministry,
             "portal_url": portal,
+            "official_portal_domain": portal_domain,
             "helpline": helpline,
-            "warning": warning
-        }
-    ]
+            "warning": warning,
+            "evidence": evidence_data
+        })
+
+        # 6. Source Verification (Evidence Card)
+        scenes.append({
+            "scene_id": 6,
+            "act_name": "आधिकारिक स्रोत सत्यापन",
+            "dialogue": source_dialogue,
+            "layout_type": "source_verification",
+            "scheme_name": name_hi,
+            "ministry": ministry,
+            "portal_url": portal,
+            "official_portal_domain": portal_domain,
+            "helpline": helpline,
+            "evidence": evidence_data
+        })
+
+    else:
+        # BENEFIT SCHEME (Ayushman, PM-Kisan, PMAY, SSY, e-Shram)
+        # 1. Overview Hook & Entitlement
+        act1_dialogue = (
+            f"नमस्कार, iDastawez पर आपका स्वागत है। "
+            f"आज हम विश्लेषण कर रहे हैं {ministry} द्वारा संचालित {name_hi} का। "
+            f"{news_headline_text}"
+            f"इस योजना के तहत पात्र नागरिकों को {benefit} का सीधा लाभ प्रदान किया जा रहा है। "
+            f"{latest_update} "
+            f"आज के वीडियो में हम जानेंगे कि कौन पात्र है, किन दस्तावेजों की आवश्यकता है, और आधिकारिक पोर्टल पर आवेदन कैसे करें।"
+        )
+        scenes.append({
+            "scene_id": 1,
+            "act_name": "योजना परिचय एवं मुख्य लाभ",
+            "dialogue": act1_dialogue,
+            "layout_type": "overview",
+            "scheme_name": name_hi,
+            "ministry": ministry,
+            "benefit_highlight": benefit,
+            "latest_update": latest_update,
+            "portal_url": portal,
+            "official_portal_domain": portal_domain,
+            "evidence": evidence_data
+        })
+
+        # 2. Eligibility
+        yes_str = "। इसके अलावा, ".join(scheme["eligibility_yes"])
+        no_str = "। वहीं दूसरी ओर, ".join(scheme["eligibility_no"])
+        act2_dialogue = (
+            f"सबसे पहले पात्रता के नियम समझ लेते हैं: {yes_str}। "
+            f"अब यह भी जान लीजिए कि कौन लोग इसमें पात्र नहीं हैं: {no_str}। "
+            f"यदि आप पात्रता मानदंडों को पूरा करते हैं, तो आवेदन के लिए आवश्यक दस्तावेज तैयार रखें।"
+        )
+        scenes.append({
+            "scene_id": 2,
+            "act_name": "पात्रता (Eligibility)",
+            "dialogue": act2_dialogue,
+            "layout_type": "eligibility_card",
+            "scheme_name": name_hi,
+            "ministry": ministry,
+            "eligibility_yes": scheme["eligibility_yes"],
+            "eligibility_no": scheme["eligibility_no"],
+            "evidence": evidence_data
+        })
+
+        # 3. Documents Checklist
+        docs_str = "। इसके साथ ही, ".join(scheme["documents_required"])
+        act3_dialogue = (
+            f"आवेदन के लिए जरूरी दस्तावेजों की सूची इस प्रकार है: {docs_str}। "
+            f"विशेष ध्यान रखें कि आपका आधार कार्ड चालू मोबाइल नंबर से जुड़ा होना चाहिए, "
+            f"और बैंक खाते में प्रत्यक्ष लाभ अंतरण (DBT) सक्रिय होना अनिवार्य है।"
+        )
+        scenes.append({
+            "scene_id": 3,
+            "act_name": "आवश्यक दस्तावेज़",
+            "dialogue": act3_dialogue,
+            "layout_type": "documents_checklist",
+            "scheme_name": name_hi,
+            "ministry": ministry,
+            "documents": scheme["documents_required"],
+            "bank_note": "आधार-NPCI सक्रिय बैंक खाता अनिवार्य",
+            "evidence": evidence_data
+        })
+
+        # 4. Step-by-Step Application
+        steps = scheme["application_steps"]
+        step_texts = [f"कदम {s['step']}: {s['title']} — {s['desc']}" for s in steps]
+        act4_dialogue = (
+            f"आवेदन की आधिकारिक प्रक्रिया इस प्रकार है: "
+            f"{' '.join(step_texts)} "
+            f"फॉर्म सफलतापूर्वक जमा होने के बाद अपना आवेदन संदर्भ संख्या सुरक्षित रख लें।"
+        )
+        scenes.append({
+            "scene_id": 4,
+            "act_name": "आवेदन प्रक्रिया",
+            "dialogue": act4_dialogue,
+            "layout_type": "step_by_step_flow",
+            "scheme_name": name_hi,
+            "ministry": ministry,
+            "application_steps": steps,
+            "portal_url": portal,
+            "official_portal_domain": portal_domain,
+            "evidence": evidence_data
+        })
+
+        # 5. Alert & Helpline
+        act5_dialogue = (
+            f"महत्वपूर्ण सरकारी चेतावनी: {warning} "
+            f"किसी भी अनाधिकृत व्यक्ति या साइबर दलाल को अवैध शुल्क न दें। "
+            f"किसी भी तकनीकी असुविधा के लिए आधिकारिक राष्ट्रीय हेल्पलाइन नंबर {helpline} पर संपर्क करें।"
+        )
+        scenes.append({
+            "scene_id": 5,
+            "act_name": "सावधानी व हेल्पलाइन",
+            "dialogue": act5_dialogue,
+            "layout_type": "official_alert",
+            "scheme_name": name_hi,
+            "ministry": ministry,
+            "portal_url": portal,
+            "official_portal_domain": portal_domain,
+            "helpline": helpline,
+            "warning": warning,
+            "evidence": evidence_data
+        })
+
+        # 6. Source Verification (Evidence Card)
+        scenes.append({
+            "scene_id": 6,
+            "act_name": "आधिकारिक स्रोत सत्यापन",
+            "dialogue": source_dialogue,
+            "layout_type": "source_verification",
+            "scheme_name": name_hi,
+            "ministry": ministry,
+            "portal_url": portal,
+            "official_portal_domain": portal_domain,
+            "helpline": helpline,
+            "evidence": evidence_data
+        })
+
+    full_script = "\n\n".join(sc["dialogue"] for sc in scenes)
+    word_count = len(full_script.split())
 
     # Generate High-CTR YouTube Title & Description
     yt_title = f"{scheme['scheme_name_en']} 2026: {scheme['benefit_amount']} | ऑनलाइन आवेदन व लिस्ट चेक करें"

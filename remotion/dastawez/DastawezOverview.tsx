@@ -1,204 +1,247 @@
 import React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { DastawezHeader } from "./DastawezHeader";
+import { EvidenceMetadata } from "./types";
 
-interface Props {
+interface DastawezOverviewProps {
   schemeName: string;
   ministry?: string;
   benefitHighlight?: string;
   latestUpdate?: string;
   portalUrl?: string;
+  officialPortalDomain?: string;
   urgencyBadge?: string;
   category?: string;
+  evidence?: EvidenceMetadata;
+  currentActIndex?: number;
+  totalActs?: number;
 }
 
-export const DastawezOverview: React.FC<Props> = ({
+export const DastawezOverview: React.FC<DastawezOverviewProps> = ({
   schemeName,
   ministry,
   benefitHighlight,
   latestUpdate,
   portalUrl,
+  officialPortalDomain,
   urgencyBadge,
   category,
+  evidence,
+  currentActIndex = 1,
+  totalActs = 6,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const titleSpring = spring({ frame, fps, delay: 5, config: { damping: 14 } });
-  const benefitSpring = spring({ frame, fps, delay: 15, config: { damping: 12, stiffness: 90 } });
-  const updateSpring = spring({ frame, fps, delay: 25, config: { damping: 14 } });
+  // Gentle continuous Ken Burns camera push-in (eliminates static video feel)
+  const cameraScale = interpolate(frame, [0, 900], [1.0, 1.03], {
+    extrapolateRight: "clamp",
+  });
+
+  // Timed Sequential Reveals (Every 5-12 seconds):
+  // Beat 1: Ministry Announcement & Headline (0s+)
+  const beat1Spring = spring({ frame, fps, delay: 5, config: { damping: 14, stiffness: 100 } });
+
+  // Beat 2: Big Benefit / Entitlement Card (frame 35+)
+  const beat2Spring = spring({ frame, fps, delay: 35, config: { damping: 14, stiffness: 90 } });
+
+  // Beat 3: Latest Official Directive & Portal Anchor (frame 75+)
+  const beat3Spring = spring({ frame, fps, delay: 75, config: { damping: 14, stiffness: 95 } });
+
+  const domain =
+    officialPortalDomain ||
+    (portalUrl ? portalUrl.replace("https://", "").replace("http://", "").split("/")[0] : "gov.in");
 
   return (
     <div
       style={{
         width: "100%",
         height: "100%",
-        background: "radial-gradient(circle at 50% 20%, #0f2b48 0%, #081426 60%, #030a14 100%)",
+        background: "radial-gradient(circle at 50% 25%, #0a1530 0%, #060b18 60%, #03050a 100%)",
         position: "relative",
         overflow: "hidden",
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
-      {/* Top Header */}
-      <DastawezHeader ministry={ministry} category={category} schemeName={schemeName} />
-
-      {/* Main Content Layout */}
+      {/* Background Subtle Tech Blueprint Grid */}
       <div
         style={{
           position: "absolute",
-          top: 140,
-          bottom: 40,
-          left: 56,
-          right: 56,
+          inset: 0,
+          backgroundImage:
+            "radial-gradient(rgba(59, 130, 246, 0.12) 1px, transparent 1px), radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px)",
+          backgroundSize: "40px 40px, 80px 80px",
+          pointerEvents: "none",
+          opacity: 0.6,
+        }}
+      />
+
+      {/* Top Header with Chapter Progress */}
+      <DastawezHeader
+        ministry={ministry}
+        category={category}
+        schemeName={schemeName}
+        currentActIndex={currentActIndex}
+        totalActs={totalActs}
+        actTitle="अधिसूचना एवं मुख्य बिंदु"
+        portalDomain={domain}
+      />
+
+      {/* Main Dynamic Viewport */}
+      <div
+        style={{
+          position: "absolute",
+          top: 145,
+          bottom: 110,
+          left: 64,
+          right: 64,
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          gap: 28,
+          gap: 22,
+          transform: `scale(${cameraScale})`,
         }}
       >
-        {/* Urgency / Category Pill */}
+        {/* Beat 1: Notification Badge & Ministry Tag */}
         <div
           style={{
             display: "inline-flex",
             alignItems: "center",
             gap: 12,
-            background: "linear-gradient(90deg, rgba(249, 115, 22, 0.25) 0%, rgba(249, 115, 22, 0.05) 100%)",
-            borderLeft: "5px solid #f97316",
-            padding: "10px 24px",
-            borderRadius: "0 12px 12px 0",
+            background: "rgba(37, 99, 235, 0.14)",
+            border: "1px solid rgba(59, 130, 246, 0.5)",
+            padding: "8px 22px",
+            borderRadius: 100,
             width: "fit-content",
-            transform: `translateX(${(1 - titleSpring) * -40}px)`,
-            opacity: titleSpring,
+            transform: `translateY(${(1 - beat1Spring) * -20}px)`,
+            opacity: beat1Spring,
           }}
         >
-          <span style={{ fontSize: 18, fontWeight: 800, color: "#fb923c", letterSpacing: 0.5 }}>
-            {urgencyBadge || "📢 आधिकारिक सरकारी अधिसूचना 2026"}
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#38bdf8", boxShadow: "0 0 8px #38bdf8" }} />
+          <span style={{ fontSize: 16, fontWeight: 800, color: "#93c5fd", letterSpacing: 0.6 }}>
+            {urgencyBadge || "आधिकारिक सरकारी अधिसूचना 2026"}
           </span>
         </div>
 
-        {/* Big Scheme Title */}
+        {/* Scheme Title */}
         <h1
           style={{
-            fontSize: 58,
+            fontSize: 52,
             fontWeight: 900,
-            lineHeight: 1.25,
+            lineHeight: 1.22,
             color: "#ffffff",
             margin: 0,
             maxWidth: 1600,
-            textShadow: "0 4px 20px rgba(0, 0, 0, 0.6)",
-            transform: `translateY(${(1 - titleSpring) * 30}px)`,
-            opacity: titleSpring,
+            textShadow: "0 4px 20px rgba(0, 0, 0, 0.7)",
+            transform: `translateY(${(1 - beat1Spring) * 20}px)`,
+            opacity: beat1Spring,
           }}
         >
           {schemeName}
         </h1>
 
-        {/* Two-Column Showcase: Benefit + Latest Official Decision */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: 32, marginTop: 10 }}>
-          {/* Benefit Card */}
+        {/* Dynamic Two-Column Card Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: 28, marginTop: 6 }}>
+          {/* Beat 2: Big Benefit Reveal Card */}
           <div
             style={{
-              background: "linear-gradient(145deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 78, 59, 0.25) 100%)",
-              border: "2px solid rgba(52, 211, 153, 0.4)",
+              background: "linear-gradient(145deg, rgba(30, 58, 138, 0.4) 0%, rgba(10, 18, 36, 0.9) 100%)",
+              border: "2px solid rgba(59, 130, 246, 0.65)",
               borderRadius: 24,
-              padding: "36px 32px",
+              padding: "28px 32px",
+              boxShadow: "0 18px 45px rgba(0, 0, 0, 0.7), 0 0 25px rgba(37, 99, 235, 0.25)",
               display: "flex",
               flexDirection: "column",
               justifyContent: "space-between",
-              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.4)",
-              transform: `scale(${benefitSpring})`,
-              opacity: benefitSpring,
+              gap: 16,
+              transform: `translateX(${(1 - beat2Spring) * -30}px)`,
+              opacity: beat2Spring,
             }}
           >
             <div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#6ee7b7", textTransform: "uppercase", letterSpacing: 1 }}>
-                🎯 मुख्य लाभ / आर्थिक सहायता
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#60a5fa", textTransform: "uppercase", letterSpacing: 1 }}>
+                निर्धारित आर्थिक सहायता / मुख्य लाभ
               </div>
               <div
                 style={{
-                  fontSize: 50,
+                  fontSize: 40,
                   fontWeight: 900,
                   color: "#ffffff",
-                  marginTop: 14,
-                  lineHeight: 1.2,
-                  textShadow: "0 0 30px rgba(52, 211, 153, 0.5)",
+                  lineHeight: 1.25,
+                  marginTop: 10,
+                  textShadow: "0 2px 15px rgba(0,0,0,0.5)",
                 }}
               >
-                {benefitHighlight || "₹5,00,000 मुफ्त इलाज"}
+                {benefitHighlight || "सीधा लाभ बैंक खाते में (DBT)"}
               </div>
             </div>
 
             <div
               style={{
-                marginTop: 24,
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
-                gap: 12,
-                fontSize: 18,
-                color: "#a7f3d0",
-                fontWeight: 600,
+                gap: 8,
+                background: "rgba(15, 23, 42, 0.7)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                borderRadius: 10,
+                padding: "8px 14px",
+                width: "fit-content",
               }}
             >
-              <span>🔒 100% DBT / सीधे अस्पताल में कैशलेस सुविधा</span>
+              <span style={{ fontSize: 16 }}>🛡️</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#cbd5e1" }}>
+                100% आधिकारिक नियम अनुसार सुनिश्चित
+              </span>
             </div>
           </div>
 
-          {/* Latest Decision / News Card */}
+          {/* Beat 3: Latest Official Directive & Portal Anchor */}
           <div
             style={{
-              background: "rgba(15, 23, 42, 0.75)",
-              backdropFilter: "blur(16px)",
-              border: "1px solid rgba(255, 255, 255, 0.14)",
+              background: "rgba(10, 18, 36, 0.85)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
               borderRadius: 24,
-              padding: "36px 36px",
+              padding: "28px 32px",
+              boxShadow: "0 16px 40px rgba(0, 0, 0, 0.6)",
               display: "flex",
               flexDirection: "column",
               justifyContent: "space-between",
-              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.4)",
-              transform: `translateY(${(1 - updateSpring) * 30}px)`,
-              opacity: updateSpring,
+              gap: 16,
+              transform: `translateX(${(1 - beat3Spring) * 30}px)`,
+              opacity: beat3Spring,
             }}
           >
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#f97316" }} />
-                <span style={{ fontSize: 16, fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: 1 }}>
-                  ताज़ा आधिकारिक फैसला / कैबिनेट निर्देश
-                </span>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>
+                नवीनतम सरकारी निर्देश एवं अद्यतन
               </div>
-              <p
-                style={{
-                  fontSize: 26,
-                  fontWeight: 600,
-                  color: "#e2e8f0",
-                  lineHeight: 1.5,
-                  marginTop: 16,
-                  marginBottom: 0,
-                }}
-              >
-                {latestUpdate || "आधिकारिक पोर्टल पर नई गाइडलाइन जारी कर दी गई है। सभी पात्र नागरिक तुरंत अपना e-KYC पूरा करें।"}
-              </p>
+              <div style={{ fontSize: 23, fontWeight: 700, color: "#f1f5f9", lineHeight: 1.5, marginTop: 8 }}>
+                {latestUpdate || "आधिकारिक सार्वजनिक दिशा-निर्देश जारी किए गए हैं।"}
+              </div>
             </div>
 
-            {/* Official Portal Pill */}
-            {portalUrl && (
-              <div
-                style={{
-                  marginTop: 20,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 12,
-                  background: "rgba(255, 255, 255, 0.06)",
-                  padding: "10px 20px",
-                  borderRadius: 14,
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  width: "fit-content",
-                }}
-              >
-                <span style={{ fontSize: 16, color: "#94a3b8" }}>पोर्टल:</span>
-                <span style={{ fontSize: 18, fontWeight: 700, color: "#38bdf8" }}>{portalUrl}</span>
+            {/* Official Domain Confirmation */}
+            <div
+              style={{
+                background: "rgba(15, 23, 42, 0.8)",
+                border: "1px solid rgba(59, 130, 246, 0.3)",
+                borderRadius: 12,
+                padding: "12px 18px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 18 }}>🏛️</span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: "#93c5fd" }}>
+                  सत्यापित पोर्टल: {domain}
+                </span>
               </div>
-            )}
+              <span style={{ fontSize: 13, color: "#64748b", fontWeight: 600 }}>
+                सरकारी अधिकृत
+              </span>
+            </div>
           </div>
         </div>
       </div>
