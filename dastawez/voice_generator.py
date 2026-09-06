@@ -30,13 +30,24 @@ DEFAULT_PITCH = "+0Hz"
 
 def clean_hindi_for_tts(text: str) -> str:
     """
-    Normalizes symbols, acronyms, and numbers into phonetically clear Hindi words
-    so edge-tts pronounces them flawlessly without stuttering.
+    Normalizes symbols, acronyms, and numbers into phonetically clear Hindi/Hinglish words
+    so edge-tts pronounces them flawlessly without stuttering or robotic cadence.
     """
-    # Clean whitespace
+    # 1. Clean brand name pronunciation: iDastawez -> आई दस्तावेज़
+    text = re.sub(r"@?iDastawez\b", "आई दस्तावेज़", text, flags=re.IGNORECASE)
+    text = re.sub(r"\bi-Dastawez\b", "आई दस्तावेज़", text, flags=re.IGNORECASE)
+
+    # 2. Strip parenthetical duplicates/acronyms like (PMGKAY), (Ration Card Copy), (MoHFW), (ट्यूशन फीस)
+    # This prevents the TTS from awkwardly reading Hindi followed immediately by its English translation.
+    text = re.sub(r"\s*\([^)]*\)", "", text)
+
+    # 3. Clean any trailing English news slugs like " - bihar top news... - Jagran"
+    text = re.split(r'\s+-\s+[a-zA-Z]{3,}', text)[0]
+
+    # 4. Clean whitespace
     text = re.sub(r"\s+", " ", text).strip()
 
-    # Acronym phonetic expansions in Devanagari
+    # 5. Acronym phonetic expansions in Devanagari
     acronym_map = [
         (r"\be-KYC\b", "ई-केवाईसी"),
         (r"\bE-KYC\b", "ई-केवाईसी"),
@@ -53,13 +64,18 @@ def clean_hindi_for_tts(text: str) -> str:
         (r"\bCGHS\b", "सीजीएचएस"),
         (r"\bECHS\b", "ईसीएचएस"),
         (r"\bCSC\b", "सीएससी केंद्र"),
-        (r"\bURL\b", "वेबसाइट लिंक"),
+        (r"\bURL\b", "वेबसाइट"),
         (r"\bID\b", "आईडी"),
+        (r"\bgov\.in\b", "जीओवी डॉट इन"),
+        (r"\bnic\.in\b", "एनआईसी डॉट इन"),
     ]
     for pattern, repl in acronym_map:
         text = re.sub(pattern, repl, text, flags=re.IGNORECASE)
 
-    # Convert common Rupee representations
+    # 6. Slashes between alternatives: "1967 / 1800" -> "1967 या 1800"
+    text = re.sub(r"(\d+)\s*/\s*(\d+)", r"\1 या \2", text)
+
+    # 7. Convert common Rupee representations
     text = re.sub(r"₹\s*5,00,000", "पाँच लाख रुपये", text)
     text = re.sub(r"₹\s*6,000", "छह हज़ार रुपये", text)
     text = re.sub(r"₹\s*2,000", "दो हज़ार रुपये", text)
@@ -67,10 +83,10 @@ def clean_hindi_for_tts(text: str) -> str:
     text = re.sub(r"₹\s*1,000", "एक हज़ार रुपये", text)
     text = re.sub(r"₹\s*(\d+)", r"\1 रुपये", text)
 
-    # Convert percentages
+    # 8. Convert percentages
     text = re.sub(r"(\d+)%", r"\1 प्रतिशत", text)
 
-    # Ensure natural micro-pauses after transitions
+    # 9. Ensure natural micro-pauses after transitions
     text = text.replace("—", ", ")
     text = text.replace("--", ", ")
     text = text.replace(":", " -")

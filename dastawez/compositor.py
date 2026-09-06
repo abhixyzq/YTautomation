@@ -202,22 +202,23 @@ def build_daily_dastawez_video(
         if url:
             yt_bundle["uploaded_url"] = url
 
-    # 8. Record in Anti-Duplication History Engine
-    try:
-        from dastawez.history_tracker import record_topic_published
-        record_topic_published(
-            scheme_id=selected_scheme["id"],
-            scheme_name=selected_scheme["scheme_name_hi"],
-            episode_folder=os.path.basename(episode_dir),
-            youtube_id=yt_bundle.get("uploaded_url"),
-            metadata={
-                "title": script_data["title"],
-                "portal_url": selected_scheme.get("portal_url"),
-                "ministry": selected_scheme.get("ministry")
-            }
-        )
-    except Exception as e:
-        print(f"[History Engine Warning] Failed to log episode: {e}")
+    # 8. Record in Anti-Duplication History Engine (only when rendered or uploaded)
+    if render_video or auto_upload:
+        try:
+            from dastawez.history_tracker import record_topic_published
+            record_topic_published(
+                scheme_id=selected_scheme["id"],
+                scheme_name=selected_scheme["scheme_name_hi"],
+                episode_folder=os.path.basename(episode_dir),
+                youtube_id=yt_bundle.get("uploaded_url"),
+                metadata={
+                    "title": script_data["title"],
+                    "portal_url": selected_scheme.get("portal_url"),
+                    "ministry": selected_scheme.get("ministry")
+                }
+            )
+        except Exception as e:
+            print(f"[History Engine Warning] Failed to log episode: {e}")
 
     print("\n" + "="*70)
     print("🎉 iDastawez Episode Pipeline Completed Successfully!")
