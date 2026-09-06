@@ -111,7 +111,8 @@ def build_daily_dastawez_video(
         with open(thumb_props_path, "w", encoding="utf-8") as f:
             json.dump(thumb_props, f, ensure_ascii=False, indent=2)
 
-        thumb_cmd = f'npx remotion still DastawezThumbnail "{thumb_output_path}" --props="{thumb_props_path.replace("\\", "/")}"'
+        clean_thumb_props = thumb_props_path.replace("\\", "/")
+        thumb_cmd = f'npx remotion still remotion/index.ts DastawezThumbnail "{thumb_output_path}" --props="{clean_thumb_props}" --public-dir=public'
         try:
             subprocess.run(thumb_cmd, check=True, shell=True)
             if os.path.exists(thumb_output_path) and os.path.getsize(thumb_output_path) > 100:
@@ -125,7 +126,8 @@ def build_daily_dastawez_video(
     video_output_path = os.path.join(episode_dir, "final_explainer_1080p.mp4")
     if render_video:
         print("\n[Step 5] Rendering Full 1080p Hindi Video with Remotion...")
-        video_cmd = f'npx remotion render DastawezLandscape "{video_output_path}" --props="{remotion_props_path.replace("\\", "/")}" --concurrency=2'
+        clean_video_props = remotion_props_path.replace("\\", "/")
+        video_cmd = f'npx remotion render remotion/index.ts DastawezLandscape "{video_output_path}" --props="{clean_video_props}" --public-dir=public --concurrency=2'
         try:
             print(f"         Executing Remotion render ({round(total_duration_sec, 1)}s)...")
             subprocess.run(video_cmd, check=True, shell=True)
