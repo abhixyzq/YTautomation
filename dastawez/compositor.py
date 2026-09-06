@@ -111,14 +111,13 @@ def build_daily_dastawez_video(
         with open(thumb_props_path, "w", encoding="utf-8") as f:
             json.dump(thumb_props, f, ensure_ascii=False, indent=2)
 
-        thumb_cmd = [
-            "npx", "remotion", "still", "DastawezThumbnail",
-            thumb_output_path,
-            "--props", thumb_props_path.replace("\\", "/")
-        ]
+        thumb_cmd = f'npx remotion still DastawezThumbnail "{thumb_output_path}" --props="{thumb_props_path.replace("\\", "/")}"'
         try:
             subprocess.run(thumb_cmd, check=True, shell=True)
-            print(f"         ✓ Thumbnail saved: {thumb_output_path}")
+            if os.path.exists(thumb_output_path) and os.path.getsize(thumb_output_path) > 100:
+                print(f"         ✓ Thumbnail saved: {thumb_output_path} ({round(os.path.getsize(thumb_output_path)/1024, 1)} KB)")
+            else:
+                print(f"         [Thumbnail Warning] Render did not create valid file: {thumb_output_path}")
         except Exception as e:
             print(f"         [Thumbnail Warning] Render failed: {e}")
 
@@ -126,18 +125,18 @@ def build_daily_dastawez_video(
     video_output_path = os.path.join(episode_dir, "final_explainer_1080p.mp4")
     if render_video:
         print("\n[Step 5] Rendering Full 1080p Hindi Video with Remotion...")
-        video_cmd = [
-            "npx", "remotion", "render", "DastawezLandscape",
-            video_output_path,
-            "--props", remotion_props_path.replace("\\", "/"),
-            "--concurrency", "2"
-        ]
+        video_cmd = f'npx remotion render DastawezLandscape "{video_output_path}" --props="{remotion_props_path.replace("\\", "/")}" --concurrency=2'
         try:
             print(f"         Executing Remotion render ({round(total_duration_sec, 1)}s)...")
             subprocess.run(video_cmd, check=True, shell=True)
-            print(f"         ✓ Video successfully rendered: {video_output_path}")
+            if os.path.exists(video_output_path) and os.path.getsize(video_output_path) > 1000:
+                size_mb = round(os.path.getsize(video_output_path) / (1024 * 1024), 2)
+                print(f"         ✓ Video successfully rendered: {video_output_path} ({size_mb} MB)")
+            else:
+                raise RuntimeError(f"Video file missing or 0 bytes: {video_output_path}")
         except Exception as e:
-            print(f"         [Video Render Warning] Render failed: {e}")
+            print(f"         [Video Render Error] Render failed: {e}")
+            raise
 
     # 6. Save Complete YouTube Metadata Bundle
     yt_meta_path = os.path.join(episode_dir, "youtube_upload_metadata.json")
@@ -157,7 +156,9 @@ def build_daily_dastawez_video(
         json.dump(yt_bundle, f, ensure_ascii=False, indent=2)
 
     # 7. Optional Automatic Upload to @iDastawez
-    if auto_upload and os.path.exists(video_output_path):
+    if auto_upload:
+        if not os.path.exists(video_output_path):
+            raise FileNotFoundError(f"Cannot upload to YouTube: Video file not found at {video_output_path}")
         from dastawez.youtube_uploader import upload_dastawez_long_video
         print("\n[Step 6] Uploading directly to @iDastawez on YouTube...")
         first_comment = (

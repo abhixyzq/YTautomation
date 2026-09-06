@@ -67,6 +67,8 @@ jobs:
         run: |
           echo "$CLIENT_SECRET_JSON" > client_secret.json
           echo "$TOKEN_DASTAWEZ_JSON" > token_dastawez.json
+          echo "Verified credential files injected:"
+          ls -l client_secret.json token_dastawez.json
 
       - name: 🎬 Render iDastawez Explainer & Auto-Publish
         run: |

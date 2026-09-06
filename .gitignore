@@ -4,6 +4,7 @@
 .env
 client_secret.json
 token.json
+token_dastawez.json
 
 # Cache & Virtual Environments
 __pycache__/
