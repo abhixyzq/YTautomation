@@ -323,8 +323,11 @@ class ArticleCardRenderer:
         draw.rounded_rectangle([40, 36, 40 + badge_w, 82], radius=12, fill=(225, 29, 72, 235), outline=(255, 120, 150), width=2)
         draw.text((60, 48), source_badge, font=self.font_source, fill=(255, 255, 255))
 
-        # Date / Classification Tag
-        draw.text((width - 240, 50), "INVESTIGATIVE INTEL", font=self.font_source, fill=(160, 175, 200))
+        # Date / Classification Tag (Dynamically right-aligned with safe 45px margin)
+        tag_text = "INVESTIGATIVE INTEL"
+        tag_bb = draw.textbbox((0, 0), tag_text, font=self.font_source)
+        tag_w = tag_bb[2] - tag_bb[0]
+        draw.text((width - tag_w - 45, 50), tag_text, font=self.font_source, fill=(160, 175, 200))
 
         # Headline
         words = headline.split()
@@ -428,24 +431,48 @@ class ChapterBumperRenderer:
         draw.rounded_rectangle([bx, center_y - 170, bx + bw, center_y - 116], radius=16, fill=(225, 29, 72, 235), outline=(255, 120, 150), width=2)
         draw.text((bx + 28, center_y - 156), badge_text, font=self.font_pill, fill=(255, 255, 255))
 
-        # Title (Upper case, bold, centered)
+        # Title (Upper case, bold, centered with word-wrapping to prevent screen edge cutoff)
         t_clean = chapter_title.upper()
-        t_bb = draw.textbbox((0, 0), t_clean, font=self.font_huge)
-        t_w = t_bb[2] - t_bb[0]
-        tx = (width - t_w) // 2
-        draw.text((tx, center_y - 70), t_clean, font=self.font_huge, fill=(255, 255, 255))
+        t_words = t_clean.split()
+        t_lines = []
+        curr_t = []
+        for w in t_words:
+            curr_t.append(w)
+            bb = draw.textbbox((0, 0), " ".join(curr_t), font=self.font_huge)
+            if (bb[2] - bb[0]) > (width - 160):
+                curr_t.pop()
+                if curr_t:
+                    t_lines.append(" ".join(curr_t))
+                curr_t = [w]
+        if curr_t:
+            t_lines.append(" ".join(curr_t))
+        if not t_lines:
+            t_lines = [t_clean]
+
+        line_h = 80
+        total_th = len(t_lines) * line_h
+        start_ty = center_y - (total_th // 2) - 25
+
+        max_line_w = 0
+        for idx, tline in enumerate(t_lines):
+            t_bb = draw.textbbox((0, 0), tline, font=self.font_huge)
+            t_w = t_bb[2] - t_bb[0]
+            max_line_w = max(max_line_w, t_w)
+            tx = max(40, (width - t_w) // 2)
+            draw.text((tx, start_ty + (idx * line_h)), tline, font=self.font_huge, fill=(255, 255, 255))
 
         # Cyan / Gold Accent Line
-        lw = min(t_w + 80, width - 400)
+        lw = min(max_line_w + 80, width - 400)
         lx = (width - lw) // 2
-        draw.line([(lx, center_y + 35), (lx + lw, center_y + 35)], fill=(0, 229, 255), width=4)
+        line_y = start_ty + total_th + 15
+        draw.line([(lx, line_y), (lx + lw, line_y)], fill=(0, 229, 255), width=4)
 
         # Subtitle
         s_clean = subtitle.upper()
         s_bb = draw.textbbox((0, 0), s_clean, font=self.font_sub)
         s_w = s_bb[2] - s_bb[0]
-        sx = (width - s_w) // 2
-        draw.text((sx, center_y + 60), s_clean, font=self.font_sub, fill=(255, 215, 0))
+        sx = max(40, (width - s_w) // 2)
+        draw.text((sx, line_y + 25), s_clean, font=self.font_sub, fill=(255, 215, 0))
 
         return img
 
@@ -596,6 +623,11 @@ def build_long_video(
     # 1. Normalize scene layouts and fill defaults for all high-IQ explainer layouts
     for sc in all_scenes:
         l_type = sc.get("layout_type", "fullscreen_broll")
+        # Direct video start: convert any chapter_bumper to fullscreen_broll with cinematic visuals
+        if l_type == "chapter_bumper":
+            sc["layout_type"] = "fullscreen_broll"
+            l_type = "fullscreen_broll"
+
         if l_type == "splitscreen_code":
             sc["layout_type"] = "blueprint_schematic"
             l_type = "blueprint_schematic"
@@ -929,10 +961,13 @@ def build_long_video(
                 alpha = int(210 * progress)
                 draw.line([(0, y), (width, y)], fill=(0, 0, 0, alpha))
 
-            # Top-Left Broadcast Live Pill
-            draw.rounded_rectangle([50, 40, 360, 85], radius=12, fill=(225, 29, 72, 230), outline=(255, 120, 150), width=2)
-            font_badge = ImageFont.truetype(FONT_PATH_BOLD, 22) if FONT_PATH_BOLD else ImageFont.load_default()
-            draw.text((72, 52), "● SPECIAL REPORT: TECH SATIRE", font=font_badge, fill=(255, 255, 255))
+            # Top-Left Broadcast Live Pill (Dynamically sized with high-IQ investigative branding)
+            badge_text = "● FORENSIC INVESTIGATION"
+            font_badge = ImageFont.truetype(FONT_PATH_BOLD, 20) if FONT_PATH_BOLD else ImageFont.load_default()
+            b_bb = draw.textbbox((0, 0), badge_text, font=font_badge)
+            b_w = (b_bb[2] - b_bb[0]) + 44
+            draw.rounded_rectangle([50, 40, 50 + b_w, 85], radius=12, fill=(225, 29, 72, 230), outline=(255, 120, 150), width=2)
+            draw.text((72, 52), badge_text, font=font_badge, fill=(255, 255, 255))
 
         # -------------------------------------------------------------
         # CAPTIONS OVERLAY (Lower-Third, only outside bumper cards)

@@ -79,12 +79,8 @@ export const TechShow: React.FC<TechShowProps> = ({
       }}
     >
       {/* 1. Dynamic Layout Rendering */}
-      {layoutType === "chapter_bumper" && (
-        <ChapterBumper
-          chapterNo={activeScene?.chapter_id || 1}
-          chapterTitle={activeScene?.chapter_title || "CHAPTER"}
-          subtitle={activeScene?.chapter_subtitle || ""}
-        />
+      {(layoutType === "chapter_bumper" || layoutType === "fullscreen_broll") && (
+        <CinematicBroll brollPath={resolvedBroll} />
       )}
 
       {layoutType === "splitscreen_article" && (
@@ -147,14 +143,8 @@ export const TechShow: React.FC<TechShowProps> = ({
         />
       )}
 
-      {layoutType === "fullscreen_broll" && (
-        <CinematicBroll brollPath={resolvedBroll} />
-      )}
-
-      {/* 2. Kinetic Captions Overlay (Lower third, outside bumper cards) */}
-      {layoutType !== "chapter_bumper" && (
-        <KineticCaptions phrases={phrases} currentTime={currentTime} />
-      )}
+      {/* 2. Kinetic Captions Overlay (Lower third) */}
+      <KineticCaptions phrases={phrases} currentTime={currentTime} />
 
       {/* 3. Audio Tracks */}
       {resolvedAudio && <Audio src={resolvedAudio} />}

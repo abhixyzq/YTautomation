@@ -224,9 +224,9 @@ def upload_long_video_to_youtube(
 
     # 2. Comprehensive High-Volume Tags Matrix
     default_push_tags = [
-        "TechNews", "Software Engineering", "Coding", "Silicon Valley",
-        "System Architecture", "Programming", "AI", "Cloud Computing",
-        "Tech Satire", "Developer Comedy", "Computer Science", "Tech 2026"
+        "Software Engineering", "Computer Science", "System Architecture",
+        "Science Explainer", "Engineering Deep Dive", "Veritasium Style",
+        "Deep Dive Documentary", "Physics", "Cybersecurity", "Tech 2026"
     ]
     if tags:
         combined_tags = list(dict.fromkeys(tags + default_push_tags))[:25]

@@ -8,7 +8,7 @@ interface CinematicBrollProps {
 
 export const CinematicBroll: React.FC<CinematicBrollProps> = ({
   brollPath,
-  badgeText = "● SPECIAL REPORT: TECH SATIRE",
+  badgeText = "● FORENSIC INVESTIGATION",
 }) => {
   const frame = useCurrentFrame();
 
@@ -83,6 +83,9 @@ export const CinematicBroll: React.FC<CinematicBrollProps> = ({
           letterSpacing: "2px",
           textTransform: "uppercase",
           boxShadow: "0 6px 20px rgba(0, 0, 0, 0.6)",
+          whiteSpace: "nowrap",
+          display: "inline-flex",
+          alignItems: "center",
         }}
       >
         {badgeText}

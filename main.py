@@ -43,8 +43,8 @@ def print_banner(mode: str = "short"):
     if mode == "long":
         banner = """
 ========================================================================
-   LATE-NIGHT TECH SATIRE & DEEP-DIVE SHOW (16:9 BROADCAST 1080P)
-   Architecture: John Oliver + Fireship + Vox (5 Episodic Chapters)
+   MIND-BENDING VISUAL EXPLAINER & DEEP DIVE (16:9 BROADCAST 1080P)
+   Architecture: Veritasium + Lemmino + Think School (High-IQ Deep Dives)
 ========================================================================
 """
     else:

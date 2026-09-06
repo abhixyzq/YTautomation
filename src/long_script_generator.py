@@ -78,14 +78,14 @@ ABSOLUTE PRIORITIES:
    - Act 3: The Breaking Point / Forensic Autopsy (The historic catastrophe, timeline of events, the cascading chain of failures).
    - Act 4: The Paradigm Shift & Uncomfortable Reality (The philosophical conclusion, systemic fragility, provocative open question).
 3. VISUAL STORYBOARD LAYOUTS (MUST USE RICH VISUAL METAPHORS):
-   - 'chapter_bumper': Cinematic act title card with sub-bass impact.
+   - 'fullscreen_broll': 16:9 4K archival, laboratory, or cinematic footage with lower-third kinetic captions.
    - 'blueprint_schematic': CAD technical wireframe blueprint with telemetry parameters.
    - 'kinetic_flowchart': Step-by-step causal logic chain (Step 1 -> Step 2 -> Step 3).
    - 'visual_analogy': Split card comparing abstract tech vs real-world physical metaphor with takeaway.
    - 'data_timeline_matrix': Chronological timeline autopsy of the disaster/breakthrough with severity badges.
    - 'splitscreen_stat': 3D metric counter with context and percentage change.
    - 'splitscreen_article': Floating verified source citation / declassified document.
-   - 'fullscreen_broll': 16:9 4K archival, laboratory, or cinematic footage.
+   (IMPORTANT: Do NOT generate full-screen chapter bumper cards or title card pauses. The video must start DIRECTLY at 00:00 with immersive footage and narrative visuals).
 
 OUTPUT STRICT JSON ONLY (no markdown backticks, no trailing commas):
 {{
@@ -102,7 +102,7 @@ OUTPUT STRICT JSON ONLY (no markdown backticks, no trailing commas):
       "scenes": [
         {{
           "dialogue": "Spoken narration opening the paradox...",
-          "layout_type": "chapter_bumper",
+          "layout_type": "fullscreen_broll",
           "broll_query": "deep space dark telemetry glowing grid",
           "sfx": "whoosh"
         }},
@@ -195,8 +195,8 @@ def generate_procedural_long_script(story: Dict[str, Any], duration_minutes: int
     # -------------------------------------------------------------
     act1_scenes = [
         {
-            "dialogue": f"Act One: The Impossible Paradox. To understand {title.lower()}, we must begin with a contradiction that modern science took decades to confront.",
-            "layout_type": "chapter_bumper",
+            "dialogue": f"To understand {title.lower()}, we must begin with a contradiction that modern science took decades to confront.",
+            "layout_type": "fullscreen_broll",
             "broll_query": "deep space dark telemetry glowing grid",
             "sfx": "whoosh"
         },
@@ -251,8 +251,8 @@ def generate_procedural_long_script(story: Dict[str, Any], duration_minutes: int
     # -------------------------------------------------------------
     act2_scenes = [
         {
-            "dialogue": "Act Two: First Principles. When complex technology confuses us, the solution is never more jargon—it is finding the right physical analogy.",
-            "layout_type": "chapter_bumper",
+            "dialogue": "When complex technology confuses us, the solution is never more jargon—it is finding the right physical analogy.",
+            "layout_type": "fullscreen_broll",
             "broll_query": "cinematic physics lab laser beam optics",
             "sfx": "whoosh"
         },
@@ -312,8 +312,8 @@ def generate_procedural_long_script(story: Dict[str, Any], duration_minutes: int
     # -------------------------------------------------------------
     act3_scenes = [
         {
-            "dialogue": "Act Three: The Breaking Point. Theory is mathematically pristine, but when pushed to its operational limit, the system met its breaking point.",
-            "layout_type": "chapter_bumper",
+            "dialogue": "Theory is mathematically pristine, but when pushed to its operational limit, even the most rigorously tested system meets its breaking point.",
+            "layout_type": "fullscreen_broll",
             "broll_query": "dark industrial telemetry warning lights flashing red",
             "sfx": "whoosh"
         },
@@ -371,8 +371,8 @@ def generate_procedural_long_script(story: Dict[str, Any], duration_minutes: int
     # -------------------------------------------------------------
     act4_scenes = [
         {
-            "dialogue": "Act Four: The Paradigm Shift. What does this reveal about the fragile technological web supporting our modern world?",
-            "layout_type": "chapter_bumper",
+            "dialogue": "What does this catastrophe reveal about the fragile technological web supporting our modern world?",
+            "layout_type": "fullscreen_broll",
             "broll_query": "earth from orbit night glowing city lights digital network",
             "sfx": "whoosh"
         },

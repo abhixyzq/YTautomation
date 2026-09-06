@@ -5,17 +5,17 @@ import { TechShowProps } from "./types";
 import { Thumbnail, ThumbnailProps } from "./Thumbnail";
 
 const defaultProps: TechShowProps = {
-  title: "Silicon Valley Satire Show",
+  title: "High-IQ Tech Explainer",
   duration: 60,
   audio_path: "",
   ambient_path: "",
   scenes: [
     {
-      dialogue: "Welcome back, software survivors.",
-      layout_type: "chapter_bumper",
+      dialogue: "In modern computing, the most catastrophic failures begin with a single overlooked assumption.",
+      layout_type: "fullscreen_broll",
       chapter_id: 1,
-      chapter_title: "Cold Open Roast",
-      chapter_subtitle: "The Billion Dollar Blunder",
+      chapter_title: "The Impossible Paradox",
+      chapter_subtitle: "The Mathematical Limit",
       start: 0,
       end: 4,
     },
