@@ -2,6 +2,7 @@
 iDastawez - Latest Government Updates & Anti-Fake Fact-Check Tracker
 Priority Engine: Ensures 100% authentic, real-time verified government announcements.
 Filters out clickbait, scam forwards, and unverified social media rumors.
+Integrates live Sarkari Result trends and Anti-Duplication History Engine.
 """
 
 import os
@@ -14,6 +15,9 @@ import urllib.parse
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+
+from dastawez.sarkari_scraper import match_sarkari_trends_with_schemes, fetch_all_sarkari_trends
+from dastawez.history_tracker import is_topic_covered, get_covered_topics
 
 if hasattr(sys.stdout, "reconfigure"):
     try:
@@ -56,7 +60,6 @@ def fetch_live_scheme_news(scheme_name: str, max_items: int = 5, days_back: int 
     Fetches real-time verified news and announcements for a specific scheme from Google News Hindi.
     """
     ctx = _get_ssl_context()
-    # Strip complex symbols for cleaner RSS query
     clean_term = re.sub(r"[^\w\s-]", "", scheme_name).strip()
     query = f"{clean_term} when:{days_back}d"
     encoded_q = urllib.parse.quote(query)
@@ -105,26 +108,46 @@ def fetch_live_scheme_news(scheme_name: str, max_items: int = 5, days_back: int 
                 break
                 
     except Exception as e:
-        print(f"[Tracker Warning] News fetch failed for {scheme_name}: {e}")
+        pass
         
     return verified_items
 
 
-def enrich_and_prioritize_schemes(schemes_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def enrich_and_prioritize_schemes(
+    schemes_list: List[Dict[str, Any]], 
+    filter_covered: bool = True,
+    cooldown_days: int = 60
+) -> List[Dict[str, Any]]:
     """
     Ranks schemes by highest priority based on:
-    1. Freshness (real-time news mentions in the last 7 days)
-    2. Active deadline or mandatory e-KYC requirement
-    3. Public impact score (number of citizens directly affected)
+    1. Sarkari Result live trending presence (+40 pts)
+    2. Active deadline or mandatory e-KYC requirement (+30 pts)
+    3. Freshness (real-time news mentions in the last 7 days, +10 pts each)
+    4. Senior citizen / farmer / universal impact (+20 pts)
+    5. Anti-Duplication: Filters or deprioritizes topics already covered in history.
     """
     ranked = []
     
-    print("\n[iDastawez Priority Engine] Scanning official updates & verifying authenticity...")
-    
+    print("\n[iDastawez Priority Engine] 🔍 Scanning Sarkari Result & Live Portals...")
+    sarkari_matches = {}
+    try:
+        s_data = match_sarkari_trends_with_schemes(schemes_list)
+        sarkari_matches = s_data.get("matched_schemes", {})
+        if sarkari_matches:
+            print(f"  ✓ Found {len(sarkari_matches)} scheme(s) actively trending on SarkariResult.com!")
+    except Exception as e:
+        print(f"  [Warning] Sarkari Result scan skipped: {e}")
+
     for scheme in schemes_list:
         scheme_copy = dict(scheme)
+        scheme_id = scheme["id"]
         scheme_name = scheme.get("scheme_name_hi", "")
-        # Choose optimal search phrase
+        
+        # Check Anti-Duplication History
+        already_covered = is_topic_covered(scheme_id, scheme_name, cooldown_days=cooldown_days)
+        scheme_copy["is_covered"] = already_covered
+
+        # Choose optimal search phrase for live news
         search_terms = []
         if "आयुष्मान" in scheme_name:
             search_terms = ["आयुष्मान कार्ड", "Ayushman Vay Vandana"]
@@ -156,6 +179,12 @@ def enrich_and_prioritize_schemes(schemes_list: List[Dict[str, Any]]) -> List[Di
         # Calculate priority score
         score = 50  # Base score
         
+        # Sarkari Result Trending Boost
+        sarkari_trends = sarkari_matches.get(scheme_id, [])
+        scheme_copy["sarkari_trends"] = sarkari_trends
+        if sarkari_trends:
+            score += 40
+            
         # Boost for active e-KYC / Deadline / Penalty
         desc_text = scheme.get("latest_official_update", "") + " " + scheme.get("benefit_summary", "")
         if any(w in desc_text for w in ["e-KYC", "ई-केवाईसी", "अंतिम तिथि", "अनिवार्य", "डेडलाइन"]):
@@ -173,7 +202,6 @@ def enrich_and_prioritize_schemes(schemes_list: List[Dict[str, Any]]) -> List[Di
             latest_headline = live_news[0]["title"]
             scheme_copy["latest_news_headline"] = latest_headline
             
-            # Check if any live news is fact-checking a viral rumor
             fact_checks = [n for n in live_news if n["is_fact_check"]]
             if fact_checks:
                 score += 15
@@ -186,28 +214,19 @@ def enrich_and_prioritize_schemes(schemes_list: List[Dict[str, Any]]) -> List[Di
         if "वरिष्ठ नागरिक" in scheme_name or "किसान" in scheme_name or "राशन" in scheme_name:
             score += 20
             
-        scheme_copy["priority_score"] = score
+        # Handle already covered status
+        if already_covered:
+            scheme_copy["priority_score"] = -999  # Deprioritize so it won't be picked
+            status_tag = "⛔ [ALREADY COVERED - SKIPPED]"
+        else:
+            scheme_copy["priority_score"] = score
+            status_tag = f"✨ [FRESH] Score: {score}"
+            
+        sarkari_tag = f" | SarkariResult: 🔥 {len(sarkari_trends)}" if sarkari_trends else ""
+        print(f"  {status_tag} {scheme_name[:34]}...{sarkari_tag} (News: {len(live_news)})")
+        
         ranked.append(scheme_copy)
-        print(f"  ✓ {scheme_name[:38]}... -> Score: {score} (Live News: {len(live_news)})")
         
     # Sort descending by priority score
     ranked.sort(key=lambda x: x["priority_score"], reverse=True)
     return ranked
-
-
-if __name__ == "__main__":
-    from dastawez.topics import VERIFIED_GOVT_SCHEMES
-    
-    ranked_schemes = enrich_and_prioritize_schemes(VERIFIED_GOVT_SCHEMES)
-    print("\n" + "="*70)
-    print("🏆 TOP 3 PRIORITY TOPICS FOR TODAY'S VIDEO (100% VERIFIED & LATEST)")
-    print("="*70)
-    for i, s in enumerate(ranked_schemes[:3], 1):
-        print(f"\n#{i} [{s['priority_score']} pts] {s['scheme_name_hi']}")
-        print(f"    मंत्रालय: {s['ministry']}")
-        print(f"    पोर्टल: {s['portal_url']}")
-        print(f"    बैज: {s.get('urgency_badge')}")
-        if s.get("latest_news_headline"):
-            print(f"    ताज़ा खबर: {s['latest_news_headline']}")
-        if s.get("fact_check_alert"):
-            print(f"    🚨 फैक्ट-चेक अलर्ट: {s['fact_check_alert']}")

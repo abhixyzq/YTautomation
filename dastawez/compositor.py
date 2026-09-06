@@ -35,6 +35,7 @@ def build_daily_dastawez_video(
     render_thumbnail: bool = True,
     auto_upload: bool = False,
     privacy_status: str = "public",
+    force: bool = False
 ) -> Dict[str, Any]:
     """
     Executes the complete daily episode pipeline:
@@ -53,11 +54,11 @@ def build_daily_dastawez_video(
         matching = [s for s in VERIFIED_GOVT_SCHEMES if s["id"] == target_scheme_id]
         if not matching:
             raise ValueError(f"Scheme ID {target_scheme_id} not found in verified registry.")
-        ranked_schemes = enrich_and_prioritize_schemes(matching)
+        ranked_schemes = enrich_and_prioritize_schemes(matching, filter_covered=not force)
         selected_scheme = ranked_schemes[0]
     else:
         # Automatic top-priority selection based on live news & active e-KYC deadlines
-        ranked_schemes = enrich_and_prioritize_schemes(VERIFIED_GOVT_SCHEMES)
+        ranked_schemes = enrich_and_prioritize_schemes(VERIFIED_GOVT_SCHEMES, filter_covered=not force)
         selected_scheme = ranked_schemes[0]
 
     scheme_id = selected_scheme["id"]
@@ -187,7 +188,7 @@ def build_daily_dastawez_video(
         first_comment = (
             f"📌 आधिकारिक पोर्टल: {selected_scheme['portal_url']}\n"
             f"📞 राष्ट्रीय हेल्पलाइन: {selected_scheme['helpline']}\n"
-            f"⚠️ किसी भी दलाल को शुल्क न दें, यह योजना 100% निःशुल्क है।"
+            f"⚠️ किसी भी दलाल को शुल्क न दें, यह योजना पूर्णतः निःशुल्क है।"
         )
         url = upload_dastawez_long_video(
             video_path=video_output_path,
@@ -200,6 +201,23 @@ def build_daily_dastawez_video(
         )
         if url:
             yt_bundle["uploaded_url"] = url
+
+    # 8. Record in Anti-Duplication History Engine
+    try:
+        from dastawez.history_tracker import record_topic_published
+        record_topic_published(
+            scheme_id=selected_scheme["id"],
+            scheme_name=selected_scheme["scheme_name_hi"],
+            episode_folder=os.path.basename(episode_dir),
+            youtube_id=yt_bundle.get("uploaded_url"),
+            metadata={
+                "title": script_data["title"],
+                "portal_url": selected_scheme.get("portal_url"),
+                "ministry": selected_scheme.get("ministry")
+            }
+        )
+    except Exception as e:
+        print(f"[History Engine Warning] Failed to log episode: {e}")
 
     print("\n" + "="*70)
     print("🎉 iDastawez Episode Pipeline Completed Successfully!")
