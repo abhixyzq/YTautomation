@@ -32,10 +32,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg fonts-dejavu-core fonts-liberation fonts-noto-color-emoji
 
+      - name: ⚙️ Set up Node.js 20 for Remotion Engine
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
       - name: 📦 Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: 📦 Install Remotion Node Dependencies
+        run: npm ci
 
       - name: 🔐 Securely Inject Secrets & OAuth Credentials
         env:

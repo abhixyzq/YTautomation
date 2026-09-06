@@ -196,7 +196,8 @@ def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: st
             logger.error("No tech stories found.")
             return None
         fresh = filter_previously_published_stories(stories) or stories
-        story = fresh[0]
+        import random
+        story = random.choice(fresh[:min(3, len(fresh))])
 
     logger.info(f"Lead Topic: [{story.get('source')}] {story.get('title')}")
 

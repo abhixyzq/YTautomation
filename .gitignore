@@ -19,6 +19,7 @@ temp/
 assets/broll_cache/
 *.mp4
 *.mp3
+*TEMP_MPY*.mp4
 
 # Node / Remotion
 node_modules/
