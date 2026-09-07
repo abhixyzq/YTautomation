@@ -69,9 +69,10 @@ export const DastawezShow: React.FC<DastawezShowProps> = ({
       style={{
         width: 1920,
         height: 1080,
-        background: "#030a14",
+        background: "radial-gradient(ellipse at 50% 20%, #e0f2fe 0%, #f8fafc 55%, #f1f5f9 100%)",
         position: "relative",
         overflow: "hidden",
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
       {/* Background Ambient Audio */}
@@ -112,8 +113,8 @@ export const DastawezShow: React.FC<DastawezShowProps> = ({
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
-                    opacity: 0.16,
-                    filter: "brightness(0.65) contrast(1.15) saturate(1.2)",
+                    opacity: 0.18,
+                    filter: "brightness(1.05) contrast(1.1) saturate(1.15)",
                   }}
                   loop
                   muted
@@ -122,7 +123,7 @@ export const DastawezShow: React.FC<DastawezShowProps> = ({
                   style={{
                     position: "absolute",
                     inset: 0,
-                    background: "radial-gradient(circle at 50% 30%, rgba(3, 10, 20, 0.4) 0%, rgba(3, 6, 12, 0.85) 100%)",
+                    background: "radial-gradient(ellipse at 50% 20%, rgba(224, 242, 254, 0.55) 0%, rgba(248, 250, 252, 0.75) 60%, rgba(241, 245, 249, 0.9) 100%)",
                   }}
                 />
               </div>

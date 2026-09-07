@@ -29,37 +29,14 @@ export const DastawezWhatChanged: React.FC<DastawezWhatChangedProps> = ({
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const entrance = spring({
-    frame,
-    fps,
-    delay: 4,
-    config: { damping: 14, stiffness: 100 },
+  const cameraScale = interpolate(frame, [0, 900], [1.0, 1.025], {
+    extrapolateRight: "clamp",
   });
 
-  // Timed sequential micro-states:
-  // Beat 1: Old Rule (frame 10+)
-  const oldRuleSpring = spring({
-    frame,
-    fps,
-    delay: 10,
-    config: { damping: 14, stiffness: 90 },
-  });
-
-  // Beat 2: New Rule (frame 35+)
-  const newRuleSpring = spring({
-    frame,
-    fps,
-    delay: 35,
-    config: { damping: 14, stiffness: 90 },
-  });
-
-  // Beat 3: Deadline Box (frame 70+)
-  const deadlineSpring = spring({
-    frame,
-    fps,
-    delay: 70,
-    config: { damping: 14, stiffness: 95 },
-  });
+  // Timed sequential reveals:
+  const oldRuleSpring = spring({ frame, fps, delay: 5, config: { damping: 14, stiffness: 90 } });
+  const newRuleSpring = spring({ frame, fps, delay: 25, config: { damping: 14, stiffness: 90 } });
+  const deadlineSpring = spring({ frame, fps, delay: 50, config: { damping: 14, stiffness: 95 } });
 
   const domain =
     officialPortalDomain ||
@@ -74,25 +51,11 @@ export const DastawezWhatChanged: React.FC<DastawezWhatChangedProps> = ({
       style={{
         width: "100%",
         height: "100%",
-        background: "radial-gradient(circle at 50% 25%, #081329 0%, #050a14 60%, #02050a 100%)",
         position: "relative",
         overflow: "hidden",
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
-      {/* Background Subtle Tech Blueprint Grid */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage:
-            "radial-gradient(rgba(59, 130, 246, 0.12) 1px, transparent 1px), radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px)",
-          backgroundSize: "40px 40px, 80px 80px",
-          pointerEvents: "none",
-          opacity: 0.6,
-        }}
-      />
-
       {/* Top Header */}
       <DastawezHeader
         ministry={ministry}
@@ -100,179 +63,181 @@ export const DastawezWhatChanged: React.FC<DastawezWhatChangedProps> = ({
         schemeName={schemeName}
         currentActIndex={currentActIndex}
         totalActs={totalActs}
-        actTitle="नियम में क्या बदलाव हुआ"
+        actTitle="नियम में क्या बदला (नया बनाम पुराना)"
         portalDomain={domain}
       />
 
-      {/* Main Content Layout */}
+      {/* Main Content Stage */}
       <div
         style={{
           position: "absolute",
-          top: 150,
+          top: 130,
           bottom: 110,
           left: 64,
           right: 64,
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          gap: 24,
-          transform: `scale(${interpolate(frame, [0, 900], [1.0, 1.03], { extrapolateRight: "clamp" })})`,
+          gap: 22,
+          transform: `scale(${cameraScale})`,
         }}
       >
-        {/* Section Badge */}
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 12,
-            background: "rgba(220, 38, 38, 0.12)",
-            border: "1px solid rgba(239, 68, 68, 0.4)",
-            padding: "8px 22px",
-            borderRadius: 100,
-            width: "fit-content",
-            transform: `translateY(${(1 - entrance) * -20}px)`,
-            opacity: entrance,
-          }}
-        >
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#f87171", letterSpacing: 0.8 }}>
-            आधिकारिक संशोधन 2026 | OFFICIAL REGULATORY UPDATE
+        {/* Section Heading Pill */}
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+          <span
+            style={{
+              background: "rgba(2, 132, 199, 0.1)",
+              border: "1px solid rgba(2, 132, 199, 0.3)",
+              color: "#0369a1",
+              fontSize: 14,
+              fontWeight: 800,
+              padding: "6px 18px",
+              borderRadius: 100,
+              textTransform: "uppercase",
+              letterSpacing: 0.6,
+            }}
+          >
+            ⚖️ नियमों में आधिकारिक बदलाव
+          </span>
+          <span style={{ fontSize: 26, fontWeight: 900, color: "#0f172a" }}>
+            पहले क्या था और अब क्या नया नियम लागू हुआ है?
           </span>
         </div>
 
-        {/* Title */}
-        <h1
-          style={{
-            fontSize: 46,
-            fontWeight: 900,
-            color: "#ffffff",
-            margin: 0,
-            lineHeight: 1.25,
-            textShadow: "0 4px 20px rgba(0, 0, 0, 0.6)",
-            transform: `translateY(${(1 - entrance) * 20}px)`,
-            opacity: entrance,
-          }}
-        >
-          पहले क्या नियम था vs अब नया नियम क्या है?
-        </h1>
-
-        {/* Side-by-Side Comparison Matrix */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 28 }}>
-          {/* Left: Old Rule Card (Muted, Slate) */}
+        {/* Side-by-Side Comparison Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 26 }}>
+          {/* Old Rule Card (Rose / Crimson Glass) */}
           <div
             style={{
-              background: "rgba(15, 23, 42, 0.75)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: 22,
-              padding: "26px 30px",
-              boxShadow: "0 14px 35px rgba(0, 0, 0, 0.5)",
+              background: "rgba(254, 242, 242, 0.92)",
+              border: "1.5px solid rgba(248, 113, 113, 0.4)",
+              borderRadius: 24,
+              padding: "28px 32px",
+              boxShadow: "0 14px 36px rgba(239, 68, 68, 0.06)",
               display: "flex",
               flexDirection: "column",
-              gap: 14,
-              transform: `translateX(${(1 - oldRuleSpring) * -30}px)`,
+              gap: 16,
+              transform: `translateX(${(1 - oldRuleSpring) * -25}px)`,
               opacity: oldRuleSpring,
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div
+              <span
                 style={{
-                  background: "rgba(148, 163, 184, 0.2)",
-                  borderRadius: 8,
-                  padding: "4px 12px",
-                  fontSize: 14,
+                  background: "#fee2e2",
+                  color: "#b91c1c",
+                  fontSize: 13,
                   fontWeight: 800,
-                  color: "#94a3b8",
+                  padding: "5px 14px",
+                  borderRadius: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
                 }}
               >
-                पहले की व्यवस्था (OLD RULE)
-              </div>
+                <span>✕</span> पहले का पुराना नियम
+              </span>
             </div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: "#cbd5e1", lineHeight: 1.5 }}>
+            <div style={{ fontSize: 23, fontWeight: 700, color: "#334155", lineHeight: 1.5 }}>
               {oldRule}
-            </div>
-            <div style={{ fontSize: 14, color: "#64748b", marginTop: "auto" }}>
-              * पूर्व में लागू नियमों के अनुसार
             </div>
           </div>
 
-          {/* Right: New Official Rule (Vibrant Cobalt Blue & Stark White) */}
+          {/* New Rule Card (Mint / Emerald Glass) */}
           <div
             style={{
-              background: "linear-gradient(145deg, rgba(30, 58, 138, 0.35) 0%, rgba(10, 18, 36, 0.9) 100%)",
-              border: "2px solid rgba(59, 130, 246, 0.65)",
-              borderRadius: 22,
-              padding: "26px 30px",
-              boxShadow: "0 18px 45px rgba(0, 0, 0, 0.7), 0 0 25px rgba(37, 99, 235, 0.25)",
+              background: "linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 253, 244, 0.92) 100%)",
+              border: "2.5px solid rgba(16, 185, 129, 0.6)",
+              borderRadius: 24,
+              padding: "28px 32px",
+              boxShadow: "0 18px 45px rgba(16, 185, 129, 0.12), 0 0 25px rgba(16, 185, 129, 0.08)",
               display: "flex",
               flexDirection: "column",
-              gap: 14,
-              transform: `translateX(${(1 - newRuleSpring) * 30}px)`,
+              gap: 16,
+              transform: `translateX(${(1 - newRuleSpring) * 25}px)`,
               opacity: newRuleSpring,
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div
+              <span
                 style={{
-                  background: "rgba(37, 99, 235, 0.3)",
-                  border: "1px solid rgba(59, 130, 246, 0.8)",
+                  background: "#d1fae5",
+                  color: "#047857",
+                  fontSize: 13,
+                  fontWeight: 800,
+                  padding: "5px 14px",
                   borderRadius: 8,
-                  padding: "4px 14px",
-                  fontSize: 14,
-                  fontWeight: 900,
-                  color: "#60a5fa",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
                 }}
               >
-                ✓ नया आधिकारिक नियम 2026 (NEW DIRECTIVE)
-              </div>
+                <span>✓</span> अब 2026 का नया नियम
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#059669" }}>
+                (लागू एवं अनिवार्य)
+              </span>
             </div>
-            <div style={{ fontSize: 25, fontWeight: 800, color: "#ffffff", lineHeight: 1.5 }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: "#064e3b", lineHeight: 1.5 }}>
               {newRule}
-            </div>
-            <div style={{ fontSize: 14, color: "#93c5fd", marginTop: "auto", fontWeight: 600 }}>
-              * आधिकारिक मंत्रालय अधिसूचना अनुसार लागू
             </div>
           </div>
         </div>
 
-        {/* Bottom Urgency & Deadline Banner */}
+        {/* Bottom Saffron Deadline Banner */}
         <div
           style={{
-            background: "rgba(15, 23, 42, 0.9)",
-            borderLeft: "6px solid #ef4444",
-            borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRight: "1px solid rgba(255, 255, 255, 0.1)",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "0 18px 18px 0",
-            padding: "18px 28px",
+            background: "rgba(255, 247, 237, 0.95)",
+            border: "1.5px solid rgba(249, 115, 22, 0.45)",
+            borderRadius: 20,
+            padding: "18px 26px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            boxShadow: "0 10px 30px rgba(249, 115, 22, 0.08)",
             transform: `translateY(${(1 - deadlineSpring) * 20}px)`,
             opacity: deadlineSpring,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <span style={{ fontSize: 26 }}>⏳</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                background: "linear-gradient(135deg, #ea580c 0%, #f97316 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 22,
+                color: "#ffffff",
+                boxShadow: "0 4px 12px rgba(249, 115, 22, 0.3)",
+              }}
+            >
+              ⏰
+            </div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: "#f87171", textTransform: "uppercase" }}>
-                कार्रवाई एवं समयसीमा (DEADLINE)
+              <div style={{ fontSize: 12, fontWeight: 800, color: "#9a3412", textTransform: "uppercase", letterSpacing: 0.8 }}>
+                अंतिम तिथि एवं जरूरी निर्देश (Official Deadline)
               </div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: "#ffffff", marginTop: 2 }}>
+              <div style={{ fontSize: 19, fontWeight: 800, color: "#7c2d12", marginTop: 2 }}>
                 {deadline}
               </div>
             </div>
           </div>
+
           <div
             style={{
-              background: "rgba(220, 38, 38, 0.2)",
-              border: "1px solid rgba(239, 68, 68, 0.5)",
+              background: "#ffffff",
+              border: "1px solid rgba(249, 115, 22, 0.3)",
+              padding: "8px 16px",
               borderRadius: 10,
-              padding: "6px 16px",
-              fontSize: 14,
-              fontWeight: 800,
-              color: "#fca5a5",
+              fontSize: 13,
+              fontWeight: 700,
+              color: "#ea580c",
             }}
           >
-            लापरवाही न बरतें
+            समय पर पूरा न होने पर सेवा रुक सकती है
           </div>
         </div>
       </div>

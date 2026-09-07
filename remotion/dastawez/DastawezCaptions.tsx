@@ -42,15 +42,15 @@ export const DastawezCaptions: React.FC<DastawezCaptionsProps> = ({
         zIndex: 90,
       }}
     >
-      {/* Frosted Dark Glass Pill with High-Contrast Typography */}
+      {/* Luminous Frosted Glass Pill with High-Contrast Typography */}
       <div
         style={{
-          background: "rgba(6, 11, 22, 0.92)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          border: "1px solid rgba(59, 130, 246, 0.4)",
-          boxShadow: "0 12px 36px rgba(0, 0, 0, 0.8), 0 0 20px rgba(37, 99, 235, 0.2)",
-          borderRadius: 20,
+          background: "rgba(255, 255, 255, 0.94)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          border: "1px solid rgba(2, 132, 199, 0.35)",
+          boxShadow: "0 14px 38px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(2, 132, 199, 0.08)",
+          borderRadius: 24,
           padding: "12px 32px",
           display: "flex",
           flexDirection: "row",
@@ -59,32 +59,32 @@ export const DastawezCaptions: React.FC<DastawezCaptionsProps> = ({
           maxWidth: 1400,
         }}
       >
-        {/* Subtle CC Badge */}
+        {/* GovTech Blue CC Badge */}
         <div
           style={{
-            background: "rgba(37, 99, 235, 0.25)",
-            border: "1px solid rgba(59, 130, 246, 0.6)",
-            borderRadius: 6,
-            padding: "2px 8px",
+            background: "linear-gradient(135deg, #1d4ed8, #0284c7)",
+            borderRadius: 8,
+            padding: "4px 10px",
             fontSize: 13,
-            fontWeight: 800,
-            color: "#60a5fa",
+            fontWeight: 900,
+            color: "#ffffff",
             letterSpacing: 1,
+            boxShadow: "0 2px 8px rgba(29, 78, 216, 0.3)",
           }}
         >
           CC
         </div>
 
-        {/* Phrase Words with Clean Active Emphasis */}
+        {/* Phrase Words with Clean Spoken Emphasis */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
           {activePhrase.words.map((w, idx) => {
             const isSpoken = w.start <= effectiveTime && effectiveTime <= w.end;
-            const color = isSpoken ? "#fde047" : "#ffffff";
-            const scale = isSpoken ? 1.05 : 1.0;
-            const weight = isSpoken ? 800 : 700;
+            const color = isSpoken ? "#ea580c" : "#1e293b";
+            const scale = isSpoken ? 1.08 : 1.0;
+            const weight = isSpoken ? 900 : 700;
             const textShadow = isSpoken
-              ? "0 0 16px rgba(253, 224, 71, 0.6)"
-              : "0 2px 6px rgba(0, 0, 0, 0.8)";
+              ? "0 2px 10px rgba(234, 88, 12, 0.25)"
+              : "none";
 
             return (
               <span
@@ -99,6 +99,9 @@ export const DastawezCaptions: React.FC<DastawezCaptionsProps> = ({
                   fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
                   transition: "all 0.08s ease-out",
                   letterSpacing: 0.3,
+                  background: isSpoken ? "rgba(255, 237, 213, 0.75)" : "transparent",
+                  padding: isSpoken ? "2px 8px" : "0px",
+                  borderRadius: 6,
                 }}
               >
                 {w.word}

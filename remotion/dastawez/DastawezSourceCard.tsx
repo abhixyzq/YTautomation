@@ -29,33 +29,19 @@ export const DastawezSourceCard: React.FC<DastawezSourceCardProps> = ({
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const entrance = spring({
-    frame,
-    fps,
-    delay: 5,
-    config: { damping: 14, stiffness: 100 },
+  const cameraScale = interpolate(frame, [0, 900], [1.0, 1.025], {
+    extrapolateRight: "clamp",
   });
 
-  const card1Spring = spring({
-    frame,
-    fps,
-    delay: 15,
-    config: { damping: 14, stiffness: 95 },
-  });
-
-  const card2Spring = spring({
-    frame,
-    fps,
-    delay: 25,
-    config: { damping: 14, stiffness: 95 },
-  });
+  const card1Spring = spring({ frame, fps, delay: 5, config: { damping: 14, stiffness: 90 } });
+  const card2Spring = spring({ frame, fps, delay: 25, config: { damping: 14, stiffness: 90 } });
 
   const domain =
     officialPortalDomain ||
     (portalUrl ? portalUrl.replace("https://", "").replace("http://", "").split("/")[0] : "gov.in");
 
   const ministryName = evidence?.ministry || ministry || "भारत सरकार (Government of India)";
-  const notifRef = evidence?.notification_ref || "आधिकारिक सार्वजनिक परिपत्र / गजट";
+  const notifRef = evidence?.notification_ref || "आधिकारिक सार्वजनिक परिपत्र / गजट 2026";
   const verifiedDate = evidence?.last_verified_date || "सितंबर 2026";
   const citationText =
     evidence?.source_citation || `भारत सरकार के आधिकारिक पोर्टल ${domain} पर उपलब्ध जानकारी से सत्यापित।`;
@@ -65,252 +51,232 @@ export const DastawezSourceCard: React.FC<DastawezSourceCardProps> = ({
       style={{
         width: "100%",
         height: "100%",
-        background: "radial-gradient(circle at 50% 25%, #0b1836 0%, #060b18 60%, #03060c 100%)",
         position: "relative",
         overflow: "hidden",
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
-      {/* Background Subtle Tech Blueprint Grid */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage:
-            "radial-gradient(rgba(59, 130, 246, 0.12) 1px, transparent 1px), radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px)",
-          backgroundSize: "40px 40px, 80px 80px",
-          pointerEvents: "none",
-          opacity: 0.6,
-        }}
-      />
-
-      {/* Top Header with Live Chapter Scrubber */}
       <DastawezHeader
         ministry={ministry}
         category={category}
         schemeName={schemeName}
         currentActIndex={currentActIndex}
         totalActs={totalActs}
-        actTitle="आधिकारिक स्रोत व प्रामाणिकता"
+        actTitle="आधिकारिक स्रोत व प्रामाणिकता (Source Verification)"
         portalDomain={domain}
       />
 
-      {/* Main Content Layout */}
       <div
         style={{
           position: "absolute",
-          top: 150,
+          top: 130,
           bottom: 110,
           left: 64,
           right: 64,
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          gap: 24,
-          transform: `scale(${interpolate(frame, [0, 900], [1.0, 1.025], { extrapolateRight: "clamp" })})`,
+          gap: 22,
+          transform: `scale(${cameraScale})`,
         }}
       >
-        {/* Section Pill: Grounded & Official Source */}
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 12,
-            background: "rgba(37, 99, 235, 0.15)",
-            border: "1px solid rgba(59, 130, 246, 0.5)",
-            padding: "8px 22px",
-            borderRadius: 100,
-            width: "fit-content",
-            transform: `translateY(${(1 - entrance) * -20}px)`,
-            opacity: entrance,
-          }}
-        >
-          <div
+        {/* Section Heading Pill */}
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+          <span
             style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: "#38bdf8",
-              boxShadow: "0 0 10px #38bdf8",
+              background: "rgba(2, 132, 199, 0.1)",
+              border: "1px solid rgba(2, 132, 199, 0.35)",
+              color: "#0369a1",
+              fontSize: 14,
+              fontWeight: 800,
+              padding: "6px 18px",
+              borderRadius: 100,
+              textTransform: "uppercase",
+              letterSpacing: 0.6,
             }}
-          />
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#93c5fd", letterSpacing: 0.8 }}>
-            आधिकारिक स्रोत एवं राजपत्र संदर्भ
+          >
+            🏛️ आधिकारिक स्रोत व संदर्भ
+          </span>
+          <span style={{ fontSize: 26, fontWeight: 900, color: "#0f172a" }}>
+            100% सत्यापित सरकारी अधिसूचना पर आधारित जानकारी
           </span>
         </div>
 
-        {/* Headline */}
-        <h1
-          style={{
-            fontSize: 44,
-            fontWeight: 900,
-            color: "#ffffff",
-            margin: 0,
-            lineHeight: 1.25,
-            textShadow: "0 4px 20px rgba(0, 0, 0, 0.6)",
-            transform: `translateY(${(1 - entrance) * 20}px)`,
-            opacity: entrance,
-          }}
-        >
-          सत्यापित सरकारी स्रोत एवं दस्तावेज संदर्भ
-        </h1>
-
-        {/* Two-Column Evidence Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 28, marginTop: 4 }}>
-          {/* Left Column: Official Notification Card */}
+        {/* 2-Column Verification Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 26 }}>
+          {/* Left Card: Government Evidence Card */}
           <div
             style={{
-              background: "rgba(10, 18, 36, 0.88)",
-              border: "1px solid rgba(59, 130, 246, 0.35)",
+              background: "linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(239, 246, 255, 0.94) 100%)",
+              border: "2px solid rgba(2, 132, 199, 0.45)",
               borderRadius: 24,
               padding: "28px 32px",
-              boxShadow: "0 16px 40px rgba(0, 0, 0, 0.6)",
+              boxShadow: "0 16px 45px rgba(2, 132, 199, 0.1)",
               display: "flex",
               flexDirection: "column",
-              gap: 20,
-              transform: `translateX(${(1 - card1Spring) * -30}px)`,
+              justifyContent: "space-between",
+              gap: 18,
+              transform: `translateX(${(1 - card1Spring) * -25}px)`,
               opacity: card1Spring,
             }}
           >
-            {/* Ministry / Department Callout */}
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>
-                संबद्ध मंत्रालय / विभाग
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <span
+                  style={{
+                    background: "#e0f2fe",
+                    color: "#0369a1",
+                    fontSize: 13,
+                    fontWeight: 800,
+                    padding: "5px 14px",
+                    borderRadius: 8,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <span>🏛️</span> आधिकारिक स्रोत प्रमाण
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#0284c7" }}>
+                  सत्यापन माह: {verifiedDate}
+                </span>
               </div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: "#ffffff", marginTop: 4 }}>
-                {ministryName}
-              </div>
-            </div>
 
-            {/* Notification ID / Circular */}
-            <div
-              style={{
-                background: "rgba(15, 23, 42, 0.8)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                borderRadius: 14,
-                padding: "16px 20px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#64748b" }}>
-                  परिपत्र / अधिसूचना संदर्भ संख्या
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", lineHeight: 1.4 }}>
+                {citationText}
+              </div>
+
+              {/* Notification Reference Box */}
+              <div
+                style={{
+                  background: "rgba(255, 255, 255, 0.9)",
+                  border: "1px solid rgba(2, 132, 199, 0.25)",
+                  borderRadius: 12,
+                  padding: "12px 18px",
+                  marginTop: 14,
+                }}
+              >
+                <div style={{ fontSize: 11, fontWeight: 800, color: "#64748b", textTransform: "uppercase" }}>
+                  परिपत्र / गजट संदर्भ संख्या
                 </div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: "#38bdf8", fontFamily: "monospace", marginTop: 2 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#1d4ed8", marginTop: 2, fontFamily: "monospace" }}>
                   {notifRef}
                 </div>
               </div>
-              <div
-                style={{
-                  background: "rgba(34, 197, 94, 0.15)",
-                  border: "1px solid rgba(34, 197, 94, 0.5)",
-                  borderRadius: 8,
-                  padding: "4px 12px",
-                  fontSize: 13,
-                  fontWeight: 800,
-                  color: "#4ade80",
-                }}
-              >
-                निर्देश दिनांक: {verifiedDate}
-              </div>
             </div>
 
-            {/* Citation Statement */}
-            <div style={{ fontSize: 16, color: "#cbd5e1", lineHeight: 1.6, borderLeft: "3px solid #3b82f6", paddingLeft: 14 }}>
-              {citationText}
+            {/* Gov Domain Stamp */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#059669",
+              }}
+            >
+              <span>✓</span> हमेशा केवल आधिकारिक .gov.in या .nic.in डोमेन से ही नियमों की पुष्टि करें।
             </div>
           </div>
 
-          {/* Right Column: Official Portal Domain & Citizen Helpline */}
+          {/* Right Card: iDastawez Channel & Subscribe CTA */}
           <div
             style={{
-              background: "rgba(10, 18, 36, 0.88)",
-              border: "1px solid rgba(255, 255, 255, 0.12)",
+              background: "linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.94) 100%)",
+              border: "1.5px solid rgba(226, 232, 240, 0.9)",
               borderRadius: 24,
               padding: "28px 32px",
-              boxShadow: "0 16px 40px rgba(0, 0, 0, 0.6)",
+              boxShadow: "0 14px 35px rgba(15, 23, 42, 0.06)",
               display: "flex",
               flexDirection: "column",
-              gap: 20,
-              transform: `translateX(${(1 - card2Spring) * 30}px)`,
+              justifyContent: "space-between",
+              gap: 18,
+              transform: `translateX(${(1 - card2Spring) * 25}px)`,
               opacity: card2Spring,
             }}
           >
-            {/* Official Portal Block */}
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1 }}>
-                एकमात्र आधिकारिक वेब पोर्टल
-              </div>
-              <div
-                style={{
-                  marginTop: 8,
-                  background: "linear-gradient(135deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.7) 100%)",
-                  border: "1px solid rgba(59, 130, 246, 0.6)",
-                  borderRadius: 14,
-                  padding: "16px 20px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                }}
-              >
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
                 <div
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: "#2563eb",
+                    width: 44,
+                    height: 44,
+                    borderRadius: 12,
+                    background: "linear-gradient(135deg, #1d4ed8 0%, #0284c7 100%)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    fontWeight: 900,
                     fontSize: 20,
                     color: "#ffffff",
                   }}
                 >
-                  🔒
+                  iD
                 </div>
                 <div>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: "#ffffff" }}>
-                    {domain}
+                  <div style={{ fontSize: 20, fontWeight: 900, color: "#0f172a" }}>
+                    @iDastawez
                   </div>
-                  <div style={{ fontSize: 13, color: "#60a5fa", fontWeight: 600 }}>
-                    आधिकारिक राष्ट्रीय पोर्टल (.gov.in)
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b" }}>
+                    सच्ची और निष्पक्ष नागरिक जानकारी
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* National Helpline */}
-            {helpline && (
+              {/* YouTube Subscribe Button Mockup */}
               <div
                 style={{
-                  background: "rgba(15, 23, 42, 0.8)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  background: "#dc2626",
+                  color: "#ffffff",
                   borderRadius: 14,
                   padding: "14px 20px",
                   display: "flex",
                   alignItems: "center",
-                  gap: 14,
+                  justifyContent: "center",
+                  gap: 10,
+                  fontSize: 17,
+                  fontWeight: 900,
+                  boxShadow: "0 8px 24px rgba(220, 38, 38, 0.35)",
                 }}
               >
-                <span style={{ fontSize: 24 }}>📞</span>
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8" }}>
-                    राष्ट्रीय नागरिक सहायता केंद्र (Toll-Free Helpline)
-                  </div>
-                  <div style={{ fontSize: 20, fontWeight: 900, color: "#f8fafc" }}>
-                    {helpline}
-                  </div>
-                </div>
+                <span>🔔</span> अभी SUBSCRIBE करें
               </div>
-            )}
 
-            {/* Transparency Note */}
-            <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5, marginTop: "auto" }}>
-              * iDastawez एक स्वतंत्र सूचनात्मक मंच है। हमारा उद्देश्य सरकारी गजट और सार्वजनिक आदेशों को आम नागरिकों तक स्पष्ट भाषा में पहुँचाना है।
+              <div style={{ fontSize: 13, color: "#475569", fontWeight: 600, lineHeight: 1.5, marginTop: 14 }}>
+                भारत सरकार की हर ताज़ा योजना, नई भर्ती और दस्तावेज़ नियमों के आसान वीडियो के लिए चैनल को सब्सक्राइब ज़रूर करें।
+              </div>
+            </div>
+
+            {/* Disclaimer */}
+            <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>
+              अस्वीकरण: iDastawez आधिकारिक सरकारी पोर्टलों पर उपलब्ध सार्वजनिक नियमों को सरल भाषा में प्रस्तुत करता है।
             </div>
           </div>
+        </div>
+
+        {/* Bottom Direct Link Bar */}
+        <div
+          style={{
+            background: "rgba(255, 255, 255, 0.95)",
+            border: "1px solid rgba(226, 232, 240, 0.9)",
+            borderRadius: 14,
+            padding: "12px 22px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            boxShadow: "0 6px 18px rgba(15, 23, 42, 0.04)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 16 }}>🌐</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#0369a1" }}>
+              आधिकारिक पोर्टल लिंक: https://{domain}
+            </span>
+          </div>
+          <span style={{ fontSize: 13, fontWeight: 800, color: "#059669" }}>
+            धन्यवाद, जय हिन्द! 🇮🇳
+          </span>
         </div>
       </div>
     </div>

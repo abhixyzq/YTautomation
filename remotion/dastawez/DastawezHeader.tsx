@@ -37,20 +37,20 @@ export const DastawezHeader: React.FC<DastawezHeaderProps> = ({
     <div
       style={{
         position: "absolute",
-        top: 30,
+        top: 28,
         left: 64,
         right: 64,
-        height: 76,
+        height: 74,
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         padding: "0 28px",
-        background: "rgba(7, 13, 26, 0.88)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderRadius: 18,
-        border: "1px solid rgba(59, 130, 246, 0.28)",
-        boxShadow: "0 12px 30px rgba(0, 0, 0, 0.6)",
+        background: "rgba(255, 255, 255, 0.92)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+        borderRadius: 20,
+        border: "1px solid rgba(226, 232, 240, 0.95)",
+        boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.03)",
         transform: `translateY(${(1 - entrance) * -30}px)`,
         opacity,
         zIndex: 50,
@@ -63,33 +63,46 @@ export const DastawezHeader: React.FC<DastawezHeaderProps> = ({
           {/* Logo Monogram */}
           <div
             style={{
-              width: 42,
-              height: 42,
-              borderRadius: 10,
-              background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #38bdf8 100%)",
+              width: 44,
+              height: 44,
+              borderRadius: 12,
+              background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 60%, #0284c7 100%)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontWeight: 900,
               fontSize: 20,
               color: "#ffffff",
-              boxShadow: "0 0 15px rgba(37, 99, 235, 0.4)",
+              boxShadow: "0 4px 14px rgba(37, 99, 235, 0.35)",
+              position: "relative",
             }}
           >
             iD
+            <span
+              style={{
+                position: "absolute",
+                top: -2,
+                right: -2,
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: "#f97316",
+                border: "2px solid #ffffff",
+              }}
+            />
           </div>
           <div>
-            <div style={{ fontSize: 19, fontWeight: 900, color: "#ffffff", letterSpacing: 0.5 }}>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "#0f172a", letterSpacing: 0.2 }}>
               iDastawez
             </div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", letterSpacing: 0.4, textTransform: "uppercase" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", letterSpacing: 0.5, textTransform: "uppercase" }}>
               नागरिक सूचना एवं सरकारी नियम
             </div>
           </div>
         </div>
 
         {/* Vertical Divider */}
-        <div style={{ width: 1, height: 28, background: "rgba(255, 255, 255, 0.15)" }} />
+        <div style={{ width: 1, height: 28, background: "rgba(203, 213, 225, 0.8)" }} />
 
         {/* Official Portal Chip */}
         {portalDomain && (
@@ -98,14 +111,14 @@ export const DastawezHeader: React.FC<DastawezHeaderProps> = ({
               display: "flex",
               alignItems: "center",
               gap: 8,
-              background: "rgba(37, 99, 235, 0.15)",
-              border: "1px solid rgba(59, 130, 246, 0.4)",
-              borderRadius: 8,
-              padding: "4px 12px",
+              background: "rgba(2, 132, 199, 0.08)",
+              border: "1px solid rgba(2, 132, 199, 0.25)",
+              borderRadius: 10,
+              padding: "5px 14px",
             }}
           >
-            <span style={{ fontSize: 12 }}>🌐</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#93c5fd" }}>
+            <span style={{ fontSize: 13 }}>🏛️</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#0369a1" }}>
               {portalDomain}
             </span>
           </div>
@@ -129,11 +142,11 @@ export const DastawezHeader: React.FC<DastawezHeaderProps> = ({
                   height: 8,
                   borderRadius: 4,
                   background: isCurrent
-                    ? "#38bdf8"
+                    ? "#0284c7"
                     : isCompleted
-                    ? "#2563eb"
-                    : "rgba(255, 255, 255, 0.15)",
-                  boxShadow: isCurrent ? "0 0 10px rgba(56, 189, 248, 0.8)" : "none",
+                    ? "#10b981"
+                    : "rgba(203, 213, 225, 0.7)",
+                  boxShadow: isCurrent ? "0 2px 8px rgba(2, 132, 199, 0.4)" : "none",
                   transition: "all 0.3s ease",
                 }}
               />
@@ -144,20 +157,20 @@ export const DastawezHeader: React.FC<DastawezHeaderProps> = ({
         {/* Current Act Tag */}
         <div
           style={{
-            background: "rgba(15, 23, 42, 0.8)",
-            border: "1px solid rgba(255, 255, 255, 0.12)",
-            borderRadius: 8,
+            background: "rgba(241, 245, 249, 0.95)",
+            border: "1px solid rgba(203, 213, 225, 0.9)",
+            borderRadius: 10,
             padding: "5px 14px",
             display: "flex",
             alignItems: "center",
             gap: 8,
           }}
         >
-          <span style={{ fontSize: 12, fontWeight: 800, color: "#38bdf8" }}>
+          <span style={{ fontSize: 12, fontWeight: 800, color: "#0284c7" }}>
             भाग {currentActIndex}/{totalActs}
           </span>
           {actTitle && (
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>
               {actTitle}
             </span>
           )}
