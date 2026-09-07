@@ -256,6 +256,28 @@ def generate_scene_voiceovers(
     return result
 
 
+def generate_shorts_voiceover(
+    text: str,
+    output_path: str,
+    voice: str = DEFAULT_HINDI_VOICE,
+    rate: str = "+3%",
+    pitch: str = DEFAULT_PITCH
+) -> Dict[str, Any]:
+    """
+    Generates single continuous studio neural Hindi voiceover for 9:16 Shorts
+    and computes exact word-level timing offsets and punchy subtitle phrases.
+    """
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+    res = asyncio.run(_generate_audio_file(text, output_path, voice=voice, rate=rate, pitch=pitch))
+    abs_path = os.path.abspath(output_path).replace("\\", "/")
+    return {
+        "audio_path": abs_path,
+        "duration": res["duration"],
+        "word_timings": res["word_timings"],
+        "phrases": res["phrases"]
+    }
+
+
 if __name__ == "__main__":
     from dastawez.topics import VERIFIED_GOVT_SCHEMES
     from dastawez.script_generator import generate_dastawez_script

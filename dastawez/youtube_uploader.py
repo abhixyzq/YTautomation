@@ -232,5 +232,98 @@ def upload_dastawez_long_video(
     return video_url
 
 
+def upload_dastawez_short(
+    video_path: str,
+    title: str,
+    description: str,
+    tags: list = None,
+    privacy_status: str = "public",
+    first_comment: str = None
+) -> Optional[str]:
+    """
+    Uploads a 9:16 vertical Short to @iDastawez:
+    - Automatically guarantees #Shorts in title & description
+    - Isolated to 'token_dastawez.json'
+    - Category 27 (Education / Public Info)
+    """
+    if not os.path.exists(video_path):
+        logger.error(f"Video file not found: {video_path}")
+        return None
+
+    youtube = get_dastawez_youtube_service()
+    if not youtube:
+        logger.warning(f"Skipping upload. Short ready locally at: {video_path}")
+        return None
+
+    # Guarantee #Shorts is present in title
+    clean_title = title.strip()
+    if "#shorts" not in clean_title.lower():
+        clean_title = f"{clean_title[:85]} #Shorts"
+
+    default_tags = [
+        "Shorts", "iDastawez", "SarkariYojana", "GovernmentSchemes",
+        "eKYC", "AadhaarCard", "RationCard", "Yojana2026", "SarkariUpdate"
+    ]
+    combined_tags = list(dict.fromkeys((tags or []) + default_tags))[:30]
+
+    body = {
+        "snippet": {
+            "title": clean_title[:100],
+            "description": description.strip(),
+            "tags": combined_tags,
+            "categoryId": "27",
+            "defaultLanguage": "hi",
+            "defaultAudioLanguage": "hi"
+        },
+        "status": {
+            "privacyStatus": privacy_status.lower(),
+            "selfDeclaredMadeForKids": False
+        }
+    }
+
+    media = MediaFileUpload(
+        video_path,
+        chunksize=-1,
+        resumable=True,
+        mimetype="video/mp4"
+    )
+
+    logger.info(f"Uploading Short '{clean_title}' to @iDastawez as [{privacy_status.upper()}]...")
+    request = youtube.videos().insert(
+        part="snippet,status",
+        body=body,
+        media_body=media
+    )
+
+    response = None
+    while response is None:
+        status, response = request.next_chunk()
+        if status:
+            logger.info(f"Upload progress: {int(status.progress() * 100)}%")
+
+    video_id = response.get("id")
+    video_url = f"https://youtu.be/{video_id}"
+    logger.info(f"🎉 SHORT UPLOADED TO @iDastawez! Watch URL: {video_url}")
+
+    if first_comment:
+        try:
+            comment_body = {
+                "snippet": {
+                    "videoId": video_id,
+                    "topLevelComment": {
+                        "snippet": {
+                            "textOriginal": first_comment
+                        }
+                    }
+                }
+            }
+            youtube.commentThreads().insert(part="snippet", body=comment_body).execute()
+            logger.info("✓ Pinned comment posted successfully!")
+        except Exception as e:
+            logger.info(f"Comment note: {e}")
+
+    return video_url
+
+
 if __name__ == "__main__":
     verify_connected_channel()

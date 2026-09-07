@@ -12,6 +12,32 @@
         "portal_url": "https://nfsa.gov.in",
         "ministry": "उपभोक्ता मामले, खाद्य और सार्वजनिक वितरण मंत्रालय"
       }
+    },
+    {
+      "scheme_id": "auto_hdfc_bank_parivartan_ecss_scholarship_2026",
+      "scheme_name": "HDFC Bank Parivartan ECSS Scholarship 2026-27",
+      "published_at": "2026-09-07T05:59:17.119660+00:00",
+      "episode_folder": "20260907_auto_hdfc_bank_parivartan_ecss_scholarship_2026_short",
+      "youtube_id": null,
+      "metadata": {
+        "format": "shorts_9x16",
+        "title": "HDFC Bank Parivartan ECSS Scholarship 2026-27 2026: नया नियम व e-KYC | #Shorts #iDastawez",
+        "portal_url": "https://scholarships.gov.in",
+        "ministry": "शिक्षा मंत्रालय"
+      }
+    },
+    {
+      "scheme_id": "ration_card_ekyc_new_rules_2026",
+      "scheme_name": "राशन कार्ड e-KYC एवं 'वन नेशन वन राशन कार्ड' नया नियम",
+      "published_at": "2026-09-07T06:02:50.399553+00:00",
+      "episode_folder": "20260907_ration_card_ekyc_new_rules_2026_short",
+      "youtube_id": null,
+      "metadata": {
+        "format": "shorts_9x16",
+        "title": "राशन कार्ड e-KYC एवं वन नेशन वन राशन कार्ड नया निय 2026: नया नियम व e-KYC | #Shorts #iDastawez",
+        "portal_url": "https://nfsa.gov.in",
+        "ministry": "उपभोक्ता मामले, खाद्य और सार्वजनिक वितरण मंत्रालय"
+      }
     }
   ]
 }

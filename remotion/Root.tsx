@@ -6,6 +6,7 @@ import { Thumbnail, ThumbnailProps } from "./Thumbnail";
 import { DastawezShow } from "./dastawez/DastawezShow";
 import { DastawezShowProps } from "./dastawez/types";
 import { DastawezThumbnail, DastawezThumbnailProps } from "./dastawez/DastawezThumbnail";
+import { DastawezShorts } from "./dastawez/DastawezShorts";
 
 const defaultProps: TechShowProps = {
   title: "High-IQ Tech Explainer",
@@ -165,6 +166,31 @@ export const Root: React.FC = () => {
         width={1280}
         height={720}
         defaultProps={defaultDastawezThumbProps as any}
+      />
+      <Composition
+        id="DastawezShorts"
+        component={DastawezShorts as any}
+        durationInFrames={30 * 40}
+        fps={30}
+        width={1080}
+        height={1920}
+        calculateMetadata={async ({ props }) => {
+          const dastawezProps = props as any;
+          const dur = dastawezProps?.duration_seconds || 40;
+          return {
+            durationInFrames: Math.max(30, Math.ceil(dur * 30)),
+            props,
+          };
+        }}
+        defaultProps={{
+          title: "राशन कार्ड e-KYC 2026",
+          badge_text: "SARKARI ALERT // DEADLINE",
+          headline: "राशन कार्ड e-KYC नया नियम 2026",
+          portal_domain: "nfsa.gov.in",
+          ministry: "उपभोक्ता मामले एवं खाद्य विभाग",
+          duration_seconds: 40,
+          phrases: [],
+        } as any}
       />
     </>
   );

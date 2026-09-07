@@ -35,6 +35,8 @@ def main():
     parser.add_argument("--history", action="store_true", help="Show history of previously covered topics")
     parser.add_argument("--force", action="store_true", help="Allow rebuilding a topic even if previously covered")
     parser.add_argument("--connect-youtube", action="store_true", help="Authenticate and connect @iDastawez YouTube channel")
+    parser.add_argument("--shorts", action="store_true", help="Generate viral 9:16 vertical Short instead of long documentary")
+    parser.add_argument("--mode", type=str, default=None, choices=["short", "long"], help="Video format mode: 'short' (9:16) or 'long' (16:9)")
     parser.add_argument("--upload", action="store_true", help="Upload the rendered video directly to YouTube")
     parser.add_argument("--privacy", type=str, default="public", choices=["public", "unlisted", "private"], help="YouTube privacy status")
 
@@ -102,14 +104,26 @@ def main():
     if args.dry_run:
         render_video = False
 
-    build_daily_dastawez_video(
-        target_scheme_id=args.scheme,
-        render_video=render_video,
-        render_thumbnail=True,
-        auto_upload=args.upload,
-        privacy_status=args.privacy,
-        force=args.force
-    )
+    is_shorts_mode = args.shorts or (args.mode == "short")
+
+    if is_shorts_mode:
+        from dastawez.shorts_runner import build_daily_dastawez_short
+        build_daily_dastawez_short(
+            target_scheme_id=args.scheme,
+            render_video=render_video,
+            auto_upload=args.upload,
+            privacy_status=args.privacy,
+            force=args.force
+        )
+    else:
+        build_daily_dastawez_video(
+            target_scheme_id=args.scheme,
+            render_video=render_video,
+            render_thumbnail=True,
+            auto_upload=args.upload,
+            privacy_status=args.privacy,
+            force=args.force
+        )
 
 
 if __name__ == "__main__":
