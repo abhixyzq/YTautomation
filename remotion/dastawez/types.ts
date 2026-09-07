@@ -102,3 +102,29 @@ export interface DastawezThumbnailProps {
   rule_change_badge?: string;
 }
 
+export interface BackgroundClip {
+  start: number;
+  end: number;
+  video_path?: string;
+  image_path?: string;
+  query?: string;
+  narration_part?: string;
+}
+
+export interface DastawezShortsProps {
+  title?: string;
+  badge_text?: string;
+  badge_bg_color?: string;
+  badge_border_color?: string;
+  headline?: string;
+  portal_domain?: string;
+  ministry?: string;
+  audio_path?: string;
+  duration_seconds?: number;
+  phrases?: Phrase[];
+  background_clips?: BackgroundClip[];
+  broll_video_path?: string;
+  official_image_path?: string;
+}
+
+

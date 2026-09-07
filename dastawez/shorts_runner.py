@@ -121,6 +121,32 @@ def build_daily_dastawez_short(
     portal_domain = script_data.get("portal_domain", "india.gov.in")
     ministry = script_data.get("ministry", "भारत सरकार")
 
+    # 3.4 Build Storyboard & Align Timings to Spoken Words
+    storyboard = script_data.get("storyboard")
+    if not storyboard or not isinstance(storyboard, list) or len(storyboard) < 3:
+        from dastawez.shorts_script_generator import build_dastawez_storyboard
+        storyboard = build_dastawez_storyboard(scheme=selected_scheme, script_data=script_data)
+
+    from dastawez.shorts_compositor import align_storyboard_to_word_timings
+    storyboard = align_storyboard_to_word_timings(
+        storyboard=storyboard,
+        word_timings=voice_data.get("word_timings", []),
+        total_duration=voice_data.get("duration", 40.0)
+    )
+
+    # 3.5 Fetch Dynamic Multi-Scene Background Video Cuts (Non-repeating per beat)
+    background_clips = []
+    try:
+        from dastawez.media_fetcher import fetch_shorts_background_clips
+        background_clips = fetch_shorts_background_clips(
+            scheme=selected_scheme,
+            storyboard=storyboard,
+            public_dest_dir="public/dastawez_media"
+        )
+        print(f"         ✓ Dynamic Background Cuts: {len(background_clips)} scenes sequenced.")
+    except Exception as e:
+        logger.warning(f"Error fetching dynamic shorts background clips: {e}")
+
     official_image_path = None
     broll_video_path = None
     try:
@@ -144,6 +170,7 @@ def build_daily_dastawez_short(
         "audio_path": rel_audio_path,
         "duration_seconds": voice_data.get("duration", 40),
         "phrases": voice_data.get("phrases", []),
+        "background_clips": background_clips,
         "official_image_path": official_image_path,
         "broll_video_path": broll_video_path
     }

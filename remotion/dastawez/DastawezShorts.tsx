@@ -7,24 +7,62 @@ import {
   useVideoConfig,
   interpolate,
   spring,
+  Sequence,
 } from "remotion";
-import { Phrase, WordTiming } from "./types";
+import { Phrase, WordTiming, BackgroundClip, DastawezShortsProps } from "./types";
 import { resolveMediaSrc } from "./DastawezShow";
 
-export interface DastawezShortsProps {
-  title?: string;
-  badge_text?: string;
-  badge_bg_color?: string;
-  badge_border_color?: string;
-  headline?: string;
-  portal_domain?: string;
-  ministry?: string;
-  audio_path?: string;
-  duration_seconds?: number;
-  phrases?: Phrase[];
-  broll_video_path?: string;
-  official_image_path?: string;
-}
+const ShortBackgroundClipItem: React.FC<{
+  videoSrc?: string | null;
+  imageSrc?: string | null;
+  durationInFrames: number;
+}> = ({ videoSrc, imageSrc, durationInFrames }) => {
+  const frame = useCurrentFrame();
+
+  // Fresh subtle Ken Burns push-in zoom for each individual scene cut
+  const clipZoom = interpolate(frame, [0, Math.max(1, durationInFrames)], [1.0, 1.07], {
+    extrapolateRight: "clamp",
+  });
+
+  // Smooth cross-fade transition
+  const opacity = interpolate(frame, [0, 4], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        opacity,
+        transform: `scale(${clipZoom})`,
+        transformOrigin: "center center",
+      }}
+    >
+      {videoSrc ? (
+        <Video
+          src={videoSrc}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          loop
+        />
+      ) : imageSrc ? (
+        <Img
+          src={imageSrc}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      ) : (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            background: "radial-gradient(ellipse at 50% 30%, #1e293b 0%, #0f172a 60%, #020617 100%)",
+          }}
+        />
+      )}
+    </div>
+  );
+};
 
 export const DastawezShorts: React.FC<DastawezShortsProps> = ({
   title = "सरकारी योजना नया नियम 2026",
@@ -37,6 +75,7 @@ export const DastawezShorts: React.FC<DastawezShortsProps> = ({
   audio_path,
   duration_seconds = 40,
   phrases = [],
+  background_clips = [],
   broll_video_path,
   official_image_path,
 }) => {
@@ -47,11 +86,6 @@ export const DastawezShorts: React.FC<DastawezShortsProps> = ({
   const resolvedAudio = resolveMediaSrc(audio_path);
   const resolvedBroll = resolveMediaSrc(broll_video_path);
   const resolvedImg = resolveMediaSrc(official_image_path);
-
-  // Slow Ken Burns zoom across timeline
-  const zoom = interpolate(frame, [0, durationInFrames], [1.0, 1.08], {
-    extrapolateRight: "clamp",
-  });
 
   // Entrance spring for top UI cards
   const enterSpring = spring({
@@ -76,33 +110,35 @@ export const DastawezShorts: React.FC<DastawezShortsProps> = ({
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans Devanagari', sans-serif",
       }}
     >
-      {/* 1. Fullscreen B-Roll Video / Image with continuous zoom */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          transform: `scale(${zoom})`,
-          transformOrigin: "center center",
-        }}
-      >
-        {resolvedBroll ? (
-          <Video
-            src={resolvedBroll}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            loop
-          />
-        ) : resolvedImg ? (
-          <Img
-            src={resolvedImg}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
+      {/* 1. Dynamic Multi-Scene Background Video/Image Cuts */}
+      <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+        {background_clips && background_clips.length > 0 ? (
+          background_clips.map((clip, idx) => {
+            const fromFrame = Math.round(clip.start * fps);
+            const durFrames = Math.max(1, Math.round((clip.end - clip.start) * fps));
+            const vSrc = resolveMediaSrc(clip.video_path);
+            const iSrc = resolveMediaSrc(clip.image_path);
+
+            return (
+              <Sequence
+                key={idx}
+                from={fromFrame}
+                durationInFrames={durFrames}
+                layout="none"
+              >
+                <ShortBackgroundClipItem
+                  videoSrc={vSrc}
+                  imageSrc={iSrc}
+                  durationInFrames={durFrames}
+                />
+              </Sequence>
+            );
+          })
         ) : (
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              background: "radial-gradient(ellipse at 50% 30%, #1e293b 0%, #0f172a 60%, #020617 100%)",
-            }}
+          <ShortBackgroundClipItem
+            videoSrc={resolvedBroll}
+            imageSrc={resolvedImg}
+            durationInFrames={durationInFrames}
           />
         )}
       </div>

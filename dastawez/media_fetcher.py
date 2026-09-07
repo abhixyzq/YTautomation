@@ -423,6 +423,100 @@ def assign_scene_visual_media(scheme: Dict[str, Any], scenes: List[Dict[str, Any
     return scenes
 
 
+def fetch_shorts_background_clips(
+    scheme: Dict[str, Any],
+    storyboard: List[Dict[str, Any]],
+    public_dest_dir: str = "public/dastawez_media"
+) -> List[Dict[str, Any]]:
+    """
+    Fetches and sequences distinct topic-matched video and image background clips
+    for each scene in a 9:16 vertical Short, ensuring the background changes dynamically
+    every 3-5 seconds rather than staying static.
+    """
+    from datetime import datetime
+    from src.broll_downloader import fetch_broll_clip
+
+    abs_dest_dir = os.path.abspath(public_dest_dir)
+    os.makedirs(abs_dest_dir, exist_ok=True)
+
+    today_str = datetime.now().strftime("%Y%m%d")
+    scheme_id = scheme.get("id", "scheme")
+    used_clip_ids = set()
+
+    # Get scheme official Wikimedia image if available
+    scheme_img = None
+    try:
+        scheme_img = fetch_wikimedia_image(scheme.get("scheme_name_hi", ""), public_dest_dir=public_dest_dir)
+    except Exception as e:
+        logger.debug(f"Official image fetch error: {e}")
+
+    # Fallback cached videos from assets/broll_cache if API returns empty
+    cached_portrait_videos = []
+    cached_landscape_videos = []
+    if os.path.exists("assets/broll_cache"):
+        all_cached = [
+            os.path.join("assets/broll_cache", f)
+            for f in os.listdir("assets/broll_cache")
+            if f.endswith(".mp4") and os.path.getsize(os.path.join("assets/broll_cache", f)) > 100000
+        ]
+        cached_portrait_videos = [f for f in all_cached if "portrait" in os.path.basename(f)]
+        cached_landscape_videos = [f for f in all_cached if "landscape" in os.path.basename(f) or "pex" in os.path.basename(f)]
+
+    background_clips = []
+
+    for idx, sc in enumerate(storyboard):
+        start = float(sc.get("start", 0.0))
+        end = float(sc.get("end", start + 4.0))
+        query = sc.get("visual_query", "official government office")
+
+        rel_video_path = None
+        rel_image_path = None
+
+        # Try to fetch fresh B-roll via Pexels
+        clip_path = None
+        try:
+            clip_path = fetch_broll_clip(query=query, unique_tag=f"sc_{idx}", exclude_ids=used_clip_ids, orientation="portrait")
+            if not clip_path or not os.path.exists(clip_path):
+                clip_path = fetch_broll_clip(query=query, unique_tag=f"sc_land_{idx}", exclude_ids=used_clip_ids, orientation="landscape")
+        except Exception as e:
+            logger.debug(f"Pexels fetch for query '{query}' failed: {e}")
+
+        # If Pexels didn't return a file, pick from our high-quality cached video pool
+        if not clip_path or not os.path.exists(clip_path):
+            pool = cached_portrait_videos if cached_portrait_videos else cached_landscape_videos
+            if pool:
+                # Pick rotating distinct clip so each scene gets a different video
+                clip_path = pool[idx % len(pool)]
+
+        # If we have a video clip, copy to public/dastawez_media for Remotion
+        if clip_path and os.path.exists(clip_path):
+            clip_filename = f"short_{today_str}_{scheme_id}_sc_{idx}_{os.path.basename(clip_path)}"
+            dest_clip_path = os.path.join(abs_dest_dir, clip_filename)
+            try:
+                if not os.path.exists(dest_clip_path):
+                    shutil.copy2(clip_path, dest_clip_path)
+                rel_video_path = f"dastawez_media/{clip_filename}"
+            except Exception as e:
+                logger.warning(f"Failed to copy broll clip to public dir: {e}")
+                rel_video_path = clip_path.replace("\\", "/")
+
+        # In scene 0 or 1, or if video is unavailable, attach official Wikimedia photo as fallback
+        if (idx == 0 or not rel_video_path) and scheme_img and scheme_img.get("public_path"):
+            rel_image_path = scheme_img.get("public_path")
+
+        background_clips.append({
+            "start": round(start, 2),
+            "end": round(end, 2),
+            "video_path": rel_video_path,
+            "image_path": rel_image_path,
+            "query": query,
+            "narration_part": sc.get("narration_part", "")
+        })
+
+    logger.info(f"Successfully provisioned {len(background_clips)} dynamic background visual cuts for Short.")
+    return background_clips
+
+
 if __name__ == "__main__":
     from dastawez.topics import VERIFIED_GOVT_SCHEMES
     sample = VERIFIED_GOVT_SCHEMES[0]  # Ayushman
