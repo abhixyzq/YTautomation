@@ -72,28 +72,53 @@ def generate_fallback_shorts_script(scheme: Dict[str, Any]) -> Dict[str, Any]:
     portal_domain = scheme.get("official_portal_domain", portal_url.replace("https://", "").replace("http://", "").split("/")[0])
     benefit = clean_hindi_text(scheme.get("benefit_amount", scheme.get("benefit_summary", "सरकारी सहायता")))
 
+    from dastawez.topic_engine.distiller import distill_topic_context
+    dist = distill_topic_context(scheme)
+
+    name_hi = clean_hindi_text(dist.get("scheme_name_hi", scheme.get("scheme_name_hi", "सरकारी योजना 2026")))
+    ministry = clean_hindi_text(dist.get("ministry", scheme.get("ministry", "संबंधित सरकारी विभाग")))
+    portal_domain = dist.get("official_portal_domain", scheme.get("official_portal_domain", "india.gov.in"))
+    benefit = clean_hindi_text(dist.get("benefit_amount", scheme.get("benefit_amount", "सरकारी सहायता")))
+    category = dist.get("category", "")
+    action_phrase = dist.get("action_phrase", "")
+
     what_changed = scheme.get("what_changed", {})
     deadline = what_changed.get("deadline", "समय पर पूरा करना अनिवार्य है")
     new_rule = what_changed.get("new_rule", "नया नियम लागू कर दिया गया है")
 
-    docs = scheme.get("documents_required", ["आधार कार्ड", "राशन कार्ड या बैंक पासबुक", "मोबाइल नंबर"])
+    docs = dist.get("documents", scheme.get("documents_required", ["आधार कार्ड", "बैंक पासबुक", "मोबाइल नंबर"]))
     docs_str = " और ".join(clean_hindi_text(d) for d in docs[:3])
 
-    # 1. Hook
-    if "राशन" in name_hi:
+    # 1. Category-specific natural scripts
+    if category == "toilet_subsidy" or "शौचालय" in name_hi:
+        hook = f"अगर आपके घर में अभी तक पक्का शौचालय नहीं बना है, तो सरकार की नई योजना से ₹12,000 की सहायता पाने के लिए ये अपडेट ध्यान से सुनिए!"
+        crisis = f"{ministry} ने नए दिशा-निर्देश जारी किए हैं। अब आधिकारिक पोर्टल {portal_domain} पर ऑनलाइन आवेदन प्रणाली शुरू हो गई है।"
+        action = f"पात्र नागरिक {docs_str} के साथ बिना किसी दलाल के सीधे मोबाइल से आवेदन कर सकते हैं।"
+    elif category == "ration_card" or "राशन" in name_hi:
         hook = "अगर आपके परिवार के पास राशन कार्ड है, तो ये एक जरूरी काम तुरंत निपटा लें वरना मुफ्त राशन बंद हो सकता है!"
-        crisis = f"सरकार ने राशन कार्ड के लिए नया नियम लागू कर दिया है। अब परिवार के हर एक सदस्य का सत्यापन अनिवार्य है, और {deadline}।"
-        action = f"इसके लिए आपको सिर्फ {docs_str} की ज़रूरत होगी। अपने नजदीकी राशन डीलर या CSC केंद्र पर जाकर e-KYC पूरा करें। इसके लिए कोई भी सरकारी फीस नहीं लगती।"
+        crisis = f"सरकार ने राशन कार्ड के लिए नया नियम लागू कर दिया है। परिवार के हर सदस्य का सत्यापन और e-KYC अनिवार्य कर दिया गया है।"
+        action = f"इसके लिए सिर्फ {docs_str} की ज़रूरत होगी। अपने नजदीकी राशन डीलर या CSC केंद्र पर जाकर e-KYC पूरा करें।"
+    elif category == "admit_card":
+        hook = f"अगर आपने {name_hi} के लिए आवेदन किया था, तो ध्यान दीजिए, एडमिट कार्ड और परीक्षा तिथि का आधिकारिक नोटिस जारी हो चुका है!"
+        crisis = f"भर्ती बोर्ड ने नया शेड्यूल जारी किया है। सभी उम्मीदवार {portal_domain} से अपना हॉल टिकट डाउनलोड कर सकते हैं।"
+        action = f"परीक्षा केंद्र पर अपना एडमिट कार्ड और मूल पहचान पत्र साथ ले जाना अनिवार्य है।"
+    elif category == "recruitment":
+        hook = f"सरकारी नौकरी की तैयारी कर रहे युवाओं के लिए बड़ी खुशखबरी! {name_hi} का नया नोटिफिकेशन जारी हो चुका है।"
+        crisis = f"{ministry} ने भर्ती प्रक्रिया शुरू कर दी है। अंतिम तिथि से पहले अपना ऑनलाइन आवेदन पूरा कर लें।"
+        action = f"पात्र उम्मीदवार {docs_str} के साथ आधिकारिक पोर्टल {portal_domain} पर ऑनलाइन फॉर्म भर सकते हैं।"
     elif "किसान" in name_hi:
-        hook = "पीएम किसान की अगली किस्त को लेकर सरकार ने नया अलर्ट जारी किया है!"
-        crisis = f"अगर आपने अभी तक बैंक खाते में आधार और NPCI लिंक नहीं कराया है, तो अगली किस्त खाते में नहीं आएगी। {deadline}।"
-        action = f"अपने नजदीकी बैंक शाखा या पोस्ट ऑफिस जाकर DBT सक्रिय करवाएं। दस्तावेज़ में सिर्फ {docs_str} चाहिए।"
+        hook = "पीएम किसान सम्मान निधि की अगली किस्त को लेकर सरकार ने नया अलर्ट जारी किया है!"
+        crisis = f"अगर आपने अभी तक बैंक खाते में आधार और NPCI लिंक नहीं कराया है, तो अगली किस्त खाते में नहीं आएगी।"
+        action = f"अपने नजदीकी बैंक शाखा या डाकघर जाकर DBT सक्रिय करवाएं। दस्तावेज़ में सिर्फ {docs_str} चाहिए।"
     else:
         hook = f"अगर आप {name_hi} का लाभ लेना चाहते हैं, तो सरकार का ये नया अपडेट ध्यान से सुनिए!"
-        crisis = f"{ministry} ने नए दिशा-निर्देश जारी किए हैं। {new_rule}।"
+        crisis = f"{ministry} ने नए दिशा-निर्देश जारी किए हैं। {new_rule}"
         action = f"पात्र नागरिक {docs_str} के साथ तुरंत आवेदन कर सकते हैं। इसके लिए किसी भी दलाल को पैसे देने की ज़रूरत नहीं है।"
 
     cta = f"पूरी सूची और ऑनलाइन स्टेटस चेक करने के लिए आधिकारिक पोर्टल {portal_domain} पर जाएं। सरकारी योजनाओं की 100% सही जानकारी के लिए iDastawez को अभी सब्सक्राइब करें!"
+
+    crisis = re.sub(r"[।\s]+$", "", crisis).strip() + "।"
+    action = re.sub(r"[।\s]+$", "", action).strip() + "।"
 
     full_script = f"{hook} {crisis} {action} {cta}"
 
@@ -103,8 +128,10 @@ def generate_fallback_shorts_script(scheme: Dict[str, Any]) -> Dict[str, Any]:
     if len(clean_short_title) > 50:
         clean_short_title = clean_short_title[:50]
 
+    year_suffix = "" if ("2026" in clean_short_title or "2025" in clean_short_title) else " 2026"
+
     base_script_data = {
-        "title": f"{clean_short_title} 2026: नया नियम व e-KYC | #Shorts #iDastawez",
+        "title": f"{clean_short_title}{year_suffix}: नया नियम व प्रक्रिया | #Shorts #iDastawez",
         "hook": hook,
         "crisis": crisis,
         "action": action,

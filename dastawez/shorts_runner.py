@@ -25,6 +25,9 @@ from dastawez.voice_generator import generate_shorts_voiceover
 from dastawez.shorts_compositor import build_dastawez_shorts_video
 from dastawez.history_tracker import record_topic_published, is_topic_covered
 
+import shutil
+import subprocess
+
 logger = logging.getLogger("dastawez.shorts_runner")
 if not logger.handlers:
     h = logging.StreamHandler()
@@ -39,7 +42,8 @@ def build_daily_dastawez_short(
     render_video: bool = True,
     auto_upload: bool = False,
     privacy_status: str = "public",
-    force: bool = False
+    force: bool = False,
+    engine: str = "remotion"
 ) -> Dict[str, Any]:
     """
     Executes the end-to-end daily Shorts pipeline for @iDastawez.
@@ -91,15 +95,92 @@ def build_daily_dastawez_short(
     )
     print(f"         ✓ Voiceover Ready: {voice_data['duration']}s | Spoken Words: {len(voice_data['word_timings'])}")
 
+    # 3.5 Prepare Remotion Props & Sync Audio to public/
+    public_dir = os.path.abspath("public")
+    public_audio_dir = os.path.join(public_dir, "dastawez_audio")
+    os.makedirs(public_audio_dir, exist_ok=True)
+
+    public_audio_filename = f"{today_str}_{scheme_id}_short.mp3"
+    public_audio_dest = os.path.join(public_audio_dir, public_audio_filename)
+    try:
+        shutil.copy2(audio_path, public_audio_dest)
+        rel_audio_path = f"dastawez_audio/{public_audio_filename}"
+    except Exception as e:
+        logger.warning(f"Could not copy audio to public dir: {e}")
+        rel_audio_path = audio_path
+
+    # Format badge colors for Remotion CSS
+    bg_col = script_data.get("badge_bg_color", [220, 38, 38, 235])
+    border_col = script_data.get("badge_border_color", [254, 202, 202])
+    if isinstance(bg_col, (list, tuple)):
+        badge_bg_str = f"rgba({bg_col[0]}, {bg_col[1]}, {bg_col[2]}, {round(bg_col[3]/255, 2) if len(bg_col) > 3 else 0.92})"
+    else:
+        badge_bg_str = str(bg_col)
+
+    if isinstance(border_col, (list, tuple)):
+        badge_border_str = f"rgba({border_col[0]}, {border_col[1]}, {border_col[2]}, 0.85)"
+    else:
+        badge_border_str = str(border_col)
+
+    portal_domain = script_data.get("portal_domain", "india.gov.in")
+    ministry = script_data.get("ministry", "भारत सरकार")
+
+    official_image_path = None
+    broll_video_path = None
+    try:
+        from dastawez.media_fetcher import get_topic_visual_bundle
+        media_bundle = get_topic_visual_bundle(selected_scheme)
+        if media_bundle.get("official_image"):
+            official_image_path = media_bundle["official_image"].get("public_path")
+        if media_bundle.get("broll_video"):
+            broll_video_path = media_bundle["broll_video"].get("public_path")
+    except Exception as e:
+        logger.debug(f"Media fetch warning: {e}")
+
+    remotion_props = {
+        "title": script_data["title"],
+        "badge_text": script_data.get("badge_text", "● SARKARI ALERT // OFFICIAL UPDATE"),
+        "badge_bg_color": badge_bg_str,
+        "badge_border_color": badge_border_str,
+        "headline": script_data.get("headline", selected_scheme.get("scheme_name_hi")),
+        "portal_domain": portal_domain,
+        "ministry": ministry,
+        "audio_path": rel_audio_path,
+        "duration_seconds": voice_data.get("duration", 40),
+        "phrases": voice_data.get("phrases", []),
+        "official_image_path": official_image_path,
+        "broll_video_path": broll_video_path
+    }
+    remotion_props_path = os.path.join(episode_dir, "remotion_shorts_props.json")
+    with open(remotion_props_path, "w", encoding="utf-8") as f:
+        json.dump(remotion_props, f, ensure_ascii=False, indent=2)
+
     # 4. 1080x1920 (9:16) Video Composition
     video_output_path = os.path.join(episode_dir, "final_short_1080p.mp4")
     if render_video:
-        print("\n[Step 4] Compositing 1080x1920 Vertical Short at 30 FPS...")
-        build_dastawez_shorts_video(
-            script_data=script_data,
-            voice_data=voice_data,
-            output_path=video_output_path
-        )
+        print(f"\n[Step 4] Compositing 1080x1920 Vertical Short ({engine} engine)...")
+        if engine == "remotion":
+            clean_props = remotion_props_path.replace("\\", "/")
+            render_cmd = f'npx remotion render remotion/index.ts DastawezShorts "{video_output_path}" --props="{clean_props}" --public-dir=public --concurrency=2'
+            try:
+                print("         Executing Remotion 9:16 render...")
+                subprocess.run(render_cmd, check=True, shell=True)
+                if not os.path.exists(video_output_path) or os.path.getsize(video_output_path) < 1000:
+                    raise RuntimeError("Remotion render did not create valid MP4")
+                print(f"         ✓ Remotion Short rendered: {video_output_path}")
+            except Exception as e:
+                logger.warning(f"Remotion render error: {e}. Falling back to MoviePy compositor...")
+                build_dastawez_shorts_video(
+                    script_data=script_data,
+                    voice_data=voice_data,
+                    output_path=video_output_path
+                )
+        else:
+            build_dastawez_shorts_video(
+                script_data=script_data,
+                voice_data=voice_data,
+                output_path=video_output_path
+            )
     else:
         print("\n[Step 4] (DRY-RUN MODE) Video render skipped. Script & Audio generated successfully.")
 

@@ -38,6 +38,32 @@
         "portal_url": "https://nfsa.gov.in",
         "ministry": "उपभोक्ता मामले, खाद्य और सार्वजनिक वितरण मंत्रालय"
       }
+    },
+    {
+      "scheme_id": "auto_bihar_sauchalay_yojana_2026",
+      "scheme_name": "बिहार ग्रामीण शौचालय योजना 2026",
+      "published_at": "2026-09-07T06:33:01.504400+00:00",
+      "episode_folder": "20260907_auto_bihar_sauchalay_yojana_2026_short",
+      "youtube_id": null,
+      "metadata": {
+        "format": "shorts_9x16",
+        "title": "बिहार ग्रामीण शौचालय योजना 2026 2026: नया नियम व e-KYC | #Shorts #iDastawez",
+        "portal_url": "https://bihar.gov.in",
+        "ministry": "बिहार सरकार आधिकारिक पोर्टल"
+      }
+    },
+    {
+      "scheme_id": "auto_bihar_dhaan_adhiprapti_2026",
+      "scheme_name": "धान अधिप्राप्ति के लिए 2026",
+      "published_at": "2026-09-07T06:39:50.371000+00:00",
+      "episode_folder": "20260907_auto_bihar_dhaan_adhiprapti_2026_short",
+      "youtube_id": null,
+      "metadata": {
+        "format": "shorts_9x16",
+        "title": "धान अधिप्राप्ति के लिए 2026: नया नियम व प्रक्रिया | #Shorts #iDastawez",
+        "portal_url": "https://pmkisan.gov.in",
+        "ministry": "कृषि एवं किसान कल्याण मंत्रालय"
+      }
     }
   ]
 }

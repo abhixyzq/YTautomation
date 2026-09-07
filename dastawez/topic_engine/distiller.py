@@ -108,7 +108,7 @@ def extract_clean_names(raw_title: str) -> Tuple[str, str, str]:
     return clean_hi.strip(), clean_en.strip(), short_name.strip()
 
 
-def distill_topic_context(raw_title: str, portal_domain: str = "india.gov.in") -> Dict[str, Any]:
+def distill_topic_context(topic_input: Any, portal_domain: str = "india.gov.in") -> Dict[str, Any]:
     """
     Analyzes the topic and generates tailored domain context:
     - benefit_amount
@@ -121,6 +121,12 @@ def distill_topic_context(raw_title: str, portal_domain: str = "india.gov.in") -
     - warning
     - helpline
     """
+    if isinstance(topic_input, dict):
+        raw_title = str(topic_input.get("title") or topic_input.get("scheme_name_hi") or topic_input.get("scheme_name") or topic_input.get("id") or "")
+        portal_domain = str(topic_input.get("official_portal_domain") or topic_input.get("portal_url", portal_domain)).replace("https://", "").replace("http://", "").split("/")[0]
+    else:
+        raw_title = str(topic_input or "")
+
     clean_hi, clean_en, short_name = extract_clean_names(raw_title)
     title_lower = (raw_title + " " + clean_hi + " " + clean_en).lower()
 
