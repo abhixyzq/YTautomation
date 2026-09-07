@@ -3,10 +3,6 @@ import { Composition, Still } from "remotion";
 import { TechShow } from "./TechShow";
 import { TechShowProps } from "./types";
 import { Thumbnail, ThumbnailProps } from "./Thumbnail";
-import { DastawezShow } from "./dastawez/DastawezShow";
-import { DastawezShowProps } from "./dastawez/types";
-import { DastawezThumbnail, DastawezThumbnailProps } from "./dastawez/DastawezThumbnail";
-import { DastawezShorts } from "./dastawez/DastawezShorts";
 
 const defaultProps: TechShowProps = {
   title: "High-IQ Tech Explainer",
@@ -81,37 +77,6 @@ const defaultThumbProps: ThumbnailProps = {
   accentColor: "#00f0ff",
 };
 
-const defaultDastawezProps: DastawezShowProps = {
-  title: "आयुष्मान भारत योजना 2026",
-  scheme_id: "ayushman_senior_citizen_2026",
-  category: "स्वास्थ्य एवं परिवार कल्याण मंत्रालय",
-  scenes: [
-    {
-      scene_id: 1,
-      act_name: "योजना परिचय एवं लाभ",
-      dialogue: "नमस्कार, iDastawez पर आपका स्वागत है।",
-      layout_type: "scheme_overview",
-      scheme_name: "आयुष्मान भारत - वरिष्ठ नागरिक ₹5 लाख मुफ्त इलाज योजना",
-      ministry: "स्वास्थ्य एवं परिवार कल्याण मंत्रालय (MoHFW)",
-      benefit_highlight: "₹5,00,000 प्रति वर्ष मुफ्त इलाज",
-      latest_update: "केंद्रीय कैबिनेट द्वारा 70 वर्ष से अधिक आयु के सभी बुजुर्गों के लिए नया आयुष्मान कार्ड जारी।",
-      portal_url: "https://beneficiary.nha.gov.in",
-      urgency_badge: "ताज़ा घोषणा 2026",
-      duration_seconds: 10,
-      duration_frames_30fps: 300,
-    },
-  ],
-};
-
-const defaultDastawezThumbProps: DastawezThumbnailProps = {
-  scheme_name: "आयुष्मान भारत वरिष्ठ नागरिक योजना 2026",
-  big_benefit: "₹5,00,000 मुफ्त इलाज",
-  urgency_badge: "70+ बुजुर्गों के लिए नया नियम",
-  portal_name: "beneficiary.nha.gov.in",
-  helpline: "14555",
-  rule_change_badge: "आधिकारिक कैबिनेट फैसला",
-};
-
 export const Root: React.FC = () => {
   return (
     <>
@@ -137,60 +102,6 @@ export const Root: React.FC = () => {
         width={1280}
         height={720}
         defaultProps={defaultThumbProps as any}
-      />
-
-      {/* iDastawez Compositions */}
-      <Composition
-        id="DastawezLandscape"
-        component={DastawezShow as any}
-        durationInFrames={30 * 210}
-        fps={30}
-        width={1920}
-        height={1080}
-        calculateMetadata={async ({ props }) => {
-          const dastawezProps = props as any;
-          const totalFrames = (dastawezProps?.scenes || []).reduce(
-            (acc: number, sc: any) => acc + (sc.duration_frames_30fps || Math.round((sc.duration_seconds || 5) * 30)),
-            0
-          );
-          return {
-            durationInFrames: Math.max(90, totalFrames || 300),
-            props,
-          };
-        }}
-        defaultProps={defaultDastawezProps as any}
-      />
-      <Still
-        id="DastawezThumbnail"
-        component={DastawezThumbnail as any}
-        width={1280}
-        height={720}
-        defaultProps={defaultDastawezThumbProps as any}
-      />
-      <Composition
-        id="DastawezShorts"
-        component={DastawezShorts as any}
-        durationInFrames={30 * 40}
-        fps={30}
-        width={1080}
-        height={1920}
-        calculateMetadata={async ({ props }) => {
-          const dastawezProps = props as any;
-          const dur = dastawezProps?.duration_seconds || 40;
-          return {
-            durationInFrames: Math.max(30, Math.ceil(dur * 30)),
-            props,
-          };
-        }}
-        defaultProps={{
-          title: "राशन कार्ड e-KYC 2026",
-          badge_text: "SARKARI ALERT // DEADLINE",
-          headline: "राशन कार्ड e-KYC नया नियम 2026",
-          portal_domain: "nfsa.gov.in",
-          ministry: "उपभोक्ता मामले एवं खाद्य विभाग",
-          duration_seconds: 40,
-          phrases: [],
-        } as any}
       />
     </>
   );
