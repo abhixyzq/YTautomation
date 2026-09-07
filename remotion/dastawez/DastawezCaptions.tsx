@@ -45,9 +45,7 @@ export const DastawezCaptions: React.FC<DastawezCaptionsProps> = ({
       {/* Luminous Frosted Dark Glass Pill with High-Contrast Typography */}
       <div
         style={{
-          background: "rgba(11, 17, 32, 0.88)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
+          background: "rgba(11, 17, 32, 0.96)",
           border: "1.5px solid rgba(56, 189, 248, 0.35)",
           boxShadow: "0 16px 42px rgba(0, 0, 0, 0.65), 0 0 20px rgba(56, 189, 248, 0.15)",
           borderRadius: 24,

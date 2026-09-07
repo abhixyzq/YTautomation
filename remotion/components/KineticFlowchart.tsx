@@ -122,16 +122,16 @@ export const KineticFlowchart: React.FC<KineticFlowchartProps> = ({
 
           let borderColor = "rgba(255, 255, 255, 0.12)";
           let accentColor = "#94a3b8";
-          let bgCard = "rgba(13, 21, 38, 0.7)";
+          let bgCard = "rgba(13, 21, 38, 0.95)";
 
           if (isCritical) {
             borderColor = "#ef4444";
             accentColor = "#ef4444";
-            bgCard = "rgba(239, 68, 68, 0.12)";
+            bgCard = "rgba(35, 14, 22, 0.95)";
           } else if (isActive) {
             borderColor = "#00f0ff";
             accentColor = "#00f0ff";
-            bgCard = "rgba(0, 240, 255, 0.12)";
+            bgCard = "rgba(8, 30, 45, 0.95)";
           }
 
           return (
@@ -141,7 +141,6 @@ export const KineticFlowchart: React.FC<KineticFlowchartProps> = ({
                 style={{
                   flex: 1,
                   background: bgCard,
-                  backdropFilter: "blur(20px)",
                   border: `2px solid ${borderColor}`,
                   borderRadius: "20px",
                   padding: "24px 20px",

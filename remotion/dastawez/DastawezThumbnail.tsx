@@ -96,9 +96,7 @@ export const DastawezThumbnail: React.FC<DastawezThumbnailProps> = ({
       {/* Center Punch: Giant Bold Benefit & Scheme on Luminous Glass Card */}
       <div
         style={{
-          background: "rgba(255, 255, 255, 0.94)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
+          background: "#ffffff",
           border: "1.5px solid rgba(2, 132, 199, 0.3)",
           borderRadius: 24,
           padding: "32px 42px",
@@ -158,8 +156,7 @@ export const DastawezThumbnail: React.FC<DastawezThumbnailProps> = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          background: "rgba(255, 255, 255, 0.92)",
-          backdropFilter: "blur(16px)",
+          background: "#ffffff",
           borderRadius: 18,
           padding: "14px 28px",
           border: "1px solid rgba(2, 132, 199, 0.25)",

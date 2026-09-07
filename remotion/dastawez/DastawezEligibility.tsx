@@ -105,9 +105,7 @@ export const DastawezEligibility: React.FC<DastawezEligibilityProps> = ({
           style={{
             transform: `translateY(${(1 - yesSpring) * 30}px)`,
             opacity: yesSpring,
-            background: "rgba(11, 17, 32, 0.88)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
+            background: "rgba(11, 17, 32, 0.96)",
             border: "2px solid rgba(16, 185, 129, 0.5)",
             borderRadius: 24,
             padding: "32px 36px",
@@ -178,9 +176,7 @@ export const DastawezEligibility: React.FC<DastawezEligibilityProps> = ({
           style={{
             transform: `translateY(${(1 - noSpring) * 30}px)`,
             opacity: noSpring,
-            background: "rgba(11, 17, 32, 0.88)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
+            background: "rgba(11, 17, 32, 0.96)",
             border: "1.5px solid rgba(244, 63, 94, 0.4)",
             borderRadius: 24,
             padding: "32px 36px",

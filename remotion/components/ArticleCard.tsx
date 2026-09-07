@@ -93,9 +93,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           style={{
             width: "100%",
             maxHeight: "92%",
-            background: "rgba(13, 20, 36, 0.85)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
+            background: "rgba(13, 20, 36, 0.96)",
             border: "2px solid rgba(251, 191, 36, 0.6)",
             boxShadow: "0 20px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(251, 191, 36, 0.2)",
             borderRadius: "24px",

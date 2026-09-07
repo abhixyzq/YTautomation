@@ -205,8 +205,7 @@ export const BlueprintSchematic: React.FC<BlueprintSchematicProps> = ({
         {/* Specs Grid */}
         <div
           style={{
-            background: "rgba(11, 19, 36, 0.75)",
-            backdropFilter: "blur(20px)",
+            background: "rgba(11, 19, 36, 0.95)",
             border: "1px solid rgba(0, 240, 255, 0.25)",
             borderRadius: "16px",
             padding: "20px 24px",

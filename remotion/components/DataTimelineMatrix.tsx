@@ -137,8 +137,7 @@ export const DataTimelineMatrix: React.FC<DataTimelineMatrixProps> = ({
               key={idx}
               style={{
                 flex: 1,
-                background: "rgba(10, 16, 32, 0.8)",
-                backdropFilter: "blur(20px)",
+                background: "rgba(10, 16, 32, 0.95)",
                 border: `1.5px solid ${borderColor}`,
                 borderRadius: "20px",
                 padding: "24px 20px",

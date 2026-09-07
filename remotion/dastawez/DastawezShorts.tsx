@@ -203,9 +203,7 @@ export const DastawezShorts: React.FC<DastawezShortsProps> = ({
           right: 60,
           transform: `translateY(${(1 - enterSpring) * -20}px)`,
           opacity: enterSpring,
-          background: "rgba(15, 23, 42, 0.88)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
+          background: "rgba(15, 23, 42, 0.96)",
           border: "2px solid rgba(56, 189, 248, 0.5)",
           borderRadius: 28,
           padding: "26px 32px",
@@ -260,9 +258,7 @@ export const DastawezShorts: React.FC<DastawezShortsProps> = ({
         >
           <div
             style={{
-              background: "rgba(10, 15, 26, 0.88)",
-              backdropFilter: "blur(18px)",
-              WebkitBackdropFilter: "blur(18px)",
+              background: "rgba(10, 15, 26, 0.96)",
               border: "2px solid rgba(250, 204, 21, 0.7)",
               borderRadius: 24,
               padding: "16px 36px",

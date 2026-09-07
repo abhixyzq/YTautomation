@@ -121,8 +121,7 @@ export const VisualAnalogyCard: React.FC<VisualAnalogyCardProps> = ({
         <div
           style={{
             flex: 1,
-            background: "rgba(10, 18, 36, 0.75)",
-            backdropFilter: "blur(20px)",
+            background: "rgba(10, 18, 36, 0.95)",
             border: "2px solid rgba(0, 240, 255, 0.35)",
             borderRadius: "24px",
             padding: "36px 32px",
@@ -219,8 +218,7 @@ export const VisualAnalogyCard: React.FC<VisualAnalogyCardProps> = ({
         <div
           style={{
             flex: 1,
-            background: "rgba(22, 12, 38, 0.75)",
-            backdropFilter: "blur(20px)",
+            background: "rgba(22, 12, 38, 0.95)",
             border: "2px solid rgba(168, 85, 247, 0.45)",
             borderRadius: "24px",
             padding: "36px 32px",

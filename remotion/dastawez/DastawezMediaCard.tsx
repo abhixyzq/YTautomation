@@ -55,8 +55,7 @@ export const DastawezMediaCard: React.FC<DastawezMediaCardProps> = ({
           top: 12,
           left: 14,
           zIndex: 10,
-          background: "rgba(15, 23, 42, 0.82)",
-          backdropFilter: "blur(12px)",
+          background: "rgba(15, 23, 42, 0.94)",
           color: "#ffffff",
           fontSize: 12,
           fontWeight: 800,
@@ -141,8 +140,7 @@ export const DastawezMediaCard: React.FC<DastawezMediaCardProps> = ({
       {/* Bottom Integrated Frosted Glass Caption Bar */}
       <div
         style={{
-          background: "rgba(255, 255, 255, 0.94)",
-          backdropFilter: "blur(16px)",
+          background: "#ffffff",
           borderTop: "1px solid rgba(2, 132, 199, 0.2)",
           padding: "8px 16px",
           display: "flex",

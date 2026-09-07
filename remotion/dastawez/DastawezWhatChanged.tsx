@@ -98,16 +98,14 @@ export const DastawezWhatChanged: React.FC<DastawezWhatChangedProps> = ({
         {/* Left: Old Rule Card (Muted Amber/Red Glass) */}
         <div
           style={{
-            background: "rgba(11, 17, 32, 0.88)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
+            background: "rgba(11, 17, 32, 0.94)",
             border: "1.5px solid rgba(244, 63, 94, 0.35)",
             borderRadius: 24,
             padding: "32px 36px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            boxShadow: "0 20px 50px rgba(0, 0, 0, 0.6)",
+            boxShadow: "0 20px 50px rgba(0, 0, 0, 0.7)",
           }}
         >
           <div>
@@ -155,16 +153,14 @@ export const DastawezWhatChanged: React.FC<DastawezWhatChangedProps> = ({
         {/* Right: New Directive Card (Luminous Emerald/Cyan Glass) */}
         <div
           style={{
-            background: "rgba(11, 17, 32, 0.88)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
+            background: "rgba(11, 17, 32, 0.94)",
             border: "2px solid rgba(16, 185, 129, 0.5)",
             borderRadius: 24,
             padding: "32px 36px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            boxShadow: "0 24px 60px rgba(0, 0, 0, 0.65), 0 0 30px rgba(16, 185, 129, 0.15)",
+            boxShadow: "0 24px 60px rgba(0, 0, 0, 0.75), 0 0 30px rgba(16, 185, 129, 0.15)",
           }}
         >
           <div>
@@ -220,16 +216,14 @@ export const DastawezWhatChanged: React.FC<DastawezWhatChangedProps> = ({
         style={{
           transform: `translateY(${(1 - deadlineSpring) * 20}px)`,
           opacity: deadlineSpring,
-          background: "linear-gradient(90deg, rgba(225, 29, 72, 0.25) 0%, rgba(15, 23, 42, 0.92) 30%, rgba(15, 23, 42, 0.92) 70%, rgba(225, 29, 72, 0.25) 100%)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
+          background: "linear-gradient(90deg, rgba(225, 29, 72, 0.35) 0%, rgba(11, 17, 32, 0.96) 25%, rgba(11, 17, 32, 0.96) 75%, rgba(225, 29, 72, 0.35) 100%)",
           border: "1.5px solid rgba(244, 63, 94, 0.5)",
           borderRadius: 20,
           padding: "16px 36px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          boxShadow: "0 14px 40px rgba(0, 0, 0, 0.5)",
+          boxShadow: "0 14px 40px rgba(0, 0, 0, 0.7)",
           marginBottom: 50,
         }}
       >

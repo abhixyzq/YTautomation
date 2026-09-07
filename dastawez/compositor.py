@@ -173,7 +173,7 @@ def build_daily_dastawez_video(
     if render_video:
         print("\n[Step 5] Rendering Full 1080p Hindi Video with Remotion...")
         clean_video_props = remotion_props_path.replace("\\", "/")
-        video_cmd = f'npx remotion render remotion/index.ts DastawezLandscape "{video_output_path}" --props="{clean_video_props}" --public-dir=public --concurrency=2'
+        video_cmd = f'npx remotion render remotion/index.ts DastawezLandscape "{video_output_path}" --props="{clean_video_props}" --public-dir=public --concurrency=2 --gl=swangle --image-format=jpeg --jpeg-quality=85 --pixel-format=yuv420p'
         try:
             print(f"         Executing Remotion render ({round(total_duration_sec, 1)}s)...")
             subprocess.run(video_cmd, check=True, shell=True)

@@ -101,7 +101,11 @@ def render_remotion_video(props_dict: Dict[str, Any], output_path: str) -> bool:
         out_abs,
         f"--props={props_path}",
         "--public-dir=public",
-        "--concurrency=4"
+        "--concurrency=2",
+        "--gl=swangle",
+        "--image-format=jpeg",
+        "--jpeg-quality=85",
+        "--pixel-format=yuv420p"
     ]
 
     logger.info(f"Invoking Remotion render: {' '.join(cmd)}")

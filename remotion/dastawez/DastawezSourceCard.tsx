@@ -84,9 +84,7 @@ export const DastawezSourceCard: React.FC<DastawezSourceCardProps> = ({
         style={{
           transform: `translateY(${(1 - cardSpring) * 30}px)`,
           opacity: cardSpring,
-          background: "rgba(11, 17, 32, 0.9)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
+          background: "rgba(11, 17, 32, 0.96)",
           border: "2px solid rgba(56, 189, 248, 0.4)",
           borderRadius: 28,
           padding: "36px 44px",
@@ -171,9 +169,7 @@ export const DastawezSourceCard: React.FC<DastawezSourceCardProps> = ({
         style={{
           transform: `translateY(${(1 - ctaSpring) * 20}px)`,
           opacity: ctaSpring,
-          background: "linear-gradient(90deg, rgba(14, 165, 233, 0.25) 0%, rgba(15, 23, 42, 0.92) 25%, rgba(15, 23, 42, 0.92) 75%, rgba(14, 165, 233, 0.25) 100%)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
+          background: "linear-gradient(90deg, rgba(14, 165, 233, 0.25) 0%, rgba(15, 23, 42, 0.96) 25%, rgba(15, 23, 42, 0.96) 75%, rgba(14, 165, 233, 0.25) 100%)",
           border: "1.5px solid rgba(56, 189, 248, 0.5)",
           borderRadius: 20,
           padding: "16px 36px",

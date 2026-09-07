@@ -184,7 +184,7 @@ def build_daily_dastawez_short(
         print(f"\n[Step 4] Compositing 1080x1920 Vertical Short ({engine} engine)...")
         if engine == "remotion":
             clean_props = remotion_props_path.replace("\\", "/")
-            render_cmd = f'npx remotion render remotion/index.ts DastawezShorts "{video_output_path}" --props="{clean_props}" --public-dir=public --concurrency=2'
+            render_cmd = f'npx remotion render remotion/index.ts DastawezShorts "{video_output_path}" --props="{clean_props}" --public-dir=public --concurrency=2 --gl=swangle --image-format=jpeg --jpeg-quality=85 --pixel-format=yuv420p'
             try:
                 print("         Executing Remotion 9:16 render...")
                 subprocess.run(render_cmd, check=True, shell=True)

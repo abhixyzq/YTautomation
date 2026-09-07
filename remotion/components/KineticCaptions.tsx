@@ -39,9 +39,7 @@ export const KineticCaptions: React.FC<KineticCaptionsProps> = ({
       {/* Frosted Glass Subtitle Pill */}
       <div
         style={{
-          background: "rgba(10, 15, 26, 0.88)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
+          background: "rgba(10, 15, 26, 0.96)",
           border: "2px solid rgba(0, 235, 255, 0.4)",
           boxShadow: "0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 235, 255, 0.2)",
           borderRadius: "18px",

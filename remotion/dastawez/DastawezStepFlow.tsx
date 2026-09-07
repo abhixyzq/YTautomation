@@ -117,9 +117,7 @@ export const DastawezStepFlow: React.FC<DastawezStepFlowProps> = ({
               style={{
                 transform: `translateY(${(1 - stepSpring) * 35}px) scale(${stepSpring})`,
                 opacity: stepSpring,
-                background: "rgba(11, 17, 32, 0.88)",
-                backdropFilter: "blur(24px)",
-                WebkitBackdropFilter: "blur(24px)",
+                background: "rgba(11, 17, 32, 0.96)",
                 border: "2px solid rgba(56, 189, 248, 0.4)",
                 borderRadius: 24,
                 padding: "32px 28px",
@@ -179,9 +177,7 @@ export const DastawezStepFlow: React.FC<DastawezStepFlowProps> = ({
         style={{
           transform: `translateY(${(1 - bottomSpring) * 20}px)`,
           opacity: bottomSpring,
-          background: "rgba(15, 23, 42, 0.92)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
+          background: "rgba(15, 23, 42, 0.96)",
           border: "1.5px solid rgba(99, 102, 241, 0.5)",
           borderRadius: 20,
           padding: "16px 36px",

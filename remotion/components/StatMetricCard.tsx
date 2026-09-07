@@ -94,9 +94,7 @@ export const StatMetricCard: React.FC<StatMetricCardProps> = ({
         <div
           style={{
             width: "100%",
-            background: "rgba(12, 19, 36, 0.9)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
+            background: "rgba(12, 19, 36, 0.96)",
             border: "2px solid #00e5ff",
             boxShadow: "0 20px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 229, 255, 0.3)",
             borderRadius: "24px",
