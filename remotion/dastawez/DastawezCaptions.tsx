@@ -32,7 +32,7 @@ export const DastawezCaptions: React.FC<DastawezCaptionsProps> = ({
     <div
       style={{
         position: "absolute",
-        bottom: 50,
+        bottom: 20,
         left: 0,
         right: 0,
         display: "flex",
@@ -90,7 +90,7 @@ export const DastawezCaptions: React.FC<DastawezCaptionsProps> = ({
               <span
                 key={idx}
                 style={{
-                  fontSize: 32,
+                  fontSize: 28,
                   fontWeight: weight,
                   color,
                   textShadow,

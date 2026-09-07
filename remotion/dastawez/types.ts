@@ -27,6 +27,15 @@ export interface WhatChangedData {
   deadline?: string;
 }
 
+export interface SceneVisualMedia {
+  broll_video_path?: string;
+  official_image_path?: string;
+  official_image_title?: string;
+  attribution?: string;
+  media_type?: "image" | "video";
+  badge_label?: string;
+}
+
 export interface DastawezScene {
   scene_id: number;
   act_name: string;
@@ -51,6 +60,11 @@ export interface DastawezScene {
   urgency_badge?: string;
   eligibility_yes?: string[];
   eligibility_no?: string[];
+  target_groups?: string[];
+  priority_groups?: string[];
+  guidelines?: string[];
+  dos_and_donts?: string[];
+  verification_checklist?: string[];
   documents?: string[];
   bank_note?: string;
   application_steps?: Array<{
@@ -59,14 +73,10 @@ export interface DastawezScene {
     desc: string;
   }>;
   what_changed?: WhatChangedData;
+  why_changed?: string;
   evidence?: EvidenceMetadata;
   audio_path?: string;
-  visual_media?: {
-    broll_video_path?: string;
-    official_image_path?: string;
-    official_image_title?: string;
-    attribution?: string;
-  };
+  visual_media?: SceneVisualMedia;
   duration_seconds: number;
   duration_frames_30fps: number;
   phrases?: Phrase[];
@@ -80,12 +90,7 @@ export interface DastawezShowProps {
   scenes: DastawezScene[];
   ambient_audio_path?: string;
   evidence?: EvidenceMetadata;
-  visual_media?: {
-    broll_video_path?: string;
-    official_image_path?: string;
-    official_image_title?: string;
-    attribution?: string;
-  };
+  visual_media?: SceneVisualMedia;
 }
 
 export interface DastawezThumbnailProps {

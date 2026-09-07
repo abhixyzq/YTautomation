@@ -110,7 +110,7 @@ def build_daily_dastawez_video(
     print("\n[Step 3.5] Sourcing Official Photos (Wikimedia) & 1080p B-Roll (Pexels)...")
     visual_media_bundle = {}
     try:
-        from dastawez.media_fetcher import get_topic_visual_bundle
+        from dastawez.media_fetcher import get_topic_visual_bundle, assign_scene_visual_media
         media_bundle = get_topic_visual_bundle(selected_scheme)
         if media_bundle.get("official_image"):
             img_info = media_bundle["official_image"]
@@ -122,11 +122,14 @@ def build_daily_dastawez_video(
             broll_info = media_bundle["broll_video"]
             print(f"         ✓ Cinematic 1080p B-Roll: {broll_info.get('public_path')}")
             visual_media_bundle["broll_video_path"] = broll_info.get("public_path")
+
+        # Provision distinct media for each individual scene
+        remotion_scenes = assign_scene_visual_media(selected_scheme, remotion_scenes)
+        print(f"         ✓ Successfully provisioned visual media for {len(remotion_scenes)} scenes")
     except Exception as e:
         logger.warning(f"Could not load visual assets: {e}")
-
-    for sc in remotion_scenes:
-        sc["visual_media"] = visual_media_bundle
+        for sc in remotion_scenes:
+            sc["visual_media"] = visual_media_bundle
 
     remotion_props = {
       "title": script_data["title"],

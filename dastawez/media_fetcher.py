@@ -339,6 +339,90 @@ def get_topic_visual_bundle(scheme: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+SCENE_LAYOUT_VISUAL_MAP: Dict[str, Dict[str, Any]] = {
+    "scheme_overview": {
+        "wiki_queries": ["Ministry of Consumer Affairs Food and Public Distribution", "Krishi Bhavan New Delhi", "Government of India building"],
+        "broll_queries": ["government office paperwork", "digital services counter", "city hall government"]
+    },
+    "what_changed": {
+        "wiki_queries": ["The Gazette of India", "Official notification India document", "Secretariat Building New Delhi"],
+        "broll_queries": ["contract signing document", "official signature paper", "paperwork reading desk"]
+    },
+    "eligibility_card": {
+        "wiki_queries": ["Indian family village", "Indian senior citizen", "Public Distribution System India ration"],
+        "broll_queries": ["family smiling rural", "indian people community", "elderly person smiling"]
+    },
+    "documents_checklist": {
+        "wiki_queries": ["Aadhaar authentication India", "Indian passbook banking", "Identity card official document"],
+        "broll_queries": ["paperwork desk stamp", "documents folder files", "writing notes pen"]
+    },
+    "step_by_step_flow": {
+        "wiki_queries": ["Common Services Centre India", "Digital India kiosk", "Computer typing office"],
+        "broll_queries": ["laptop computer typing", "digital online application", "website browsing screen"]
+    },
+    "official_alert": {
+        "wiki_queries": ["Emblem of India bronze", "Cyber security warning desk", "North Block New Delhi"],
+        "broll_queries": ["security padlock lock", "call center helpline headset", "alert notification screen"]
+    },
+    "source_verification": {
+        "wiki_queries": ["Parliament House New Delhi", "Rashtrapati Bhavan New Delhi", "Ashoka Pillar Sarnath"],
+        "broll_queries": ["government building architecture", "national flag flying", "official library archives"]
+    }
+}
+
+
+def assign_scene_visual_media(scheme: Dict[str, Any], scenes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Ensures every single scene receives a dedicated, authentic visual media bundle (photo + B-roll).
+    Distributes distinct official Wikimedia Commons photos and Pexels/Pixabay video clips across slides.
+    """
+    global_bundle = get_topic_visual_bundle(scheme)
+    default_img = global_bundle.get("official_image")
+    default_broll = global_bundle.get("broll_video")
+
+    used_photos = set()
+    if default_img and default_img.get("public_path"):
+        used_photos.add(default_img["public_path"])
+
+    for sc in scenes:
+        layout = sc.get("layout_type", "scheme_overview")
+        queries_cfg = SCENE_LAYOUT_VISUAL_MAP.get(layout, SCENE_LAYOUT_VISUAL_MAP["scheme_overview"])
+
+        # Try to find a distinct Wikimedia photo for this scene's context
+        scene_img = None
+        for q in queries_cfg["wiki_queries"]:
+            candidate = fetch_wikimedia_image(q)
+            if candidate and candidate.get("public_path") not in used_photos:
+                scene_img = candidate
+                used_photos.add(candidate["public_path"])
+                break
+
+        # Fallback to default scheme image if scene-specific wasn't found
+        if not scene_img:
+            scene_img = default_img
+
+        # Scene B-Roll video
+        scene_broll = None
+        for bq in queries_cfg["broll_queries"]:
+            scene_broll = fetch_pexels_broll(bq, orientation="landscape")
+            if scene_broll:
+                break
+        if not scene_broll:
+            scene_broll = default_broll
+
+        scene_media = {}
+        if scene_img:
+            scene_media["official_image_path"] = scene_img.get("public_path")
+            scene_media["official_image_title"] = scene_img.get("title")
+            scene_media["attribution"] = scene_img.get("attribution", "Wikimedia Commons (Public Domain)")
+        if scene_broll:
+            scene_media["broll_video_path"] = scene_broll.get("public_path")
+
+        sc["visual_media"] = scene_media
+
+    return scenes
+
+
 if __name__ == "__main__":
     from dastawez.topics import VERIFIED_GOVT_SCHEMES
     sample = VERIFIED_GOVT_SCHEMES[0]  # Ayushman
