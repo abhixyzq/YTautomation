@@ -100,5 +100,11 @@
     "url": "https://github.com/zedeus/nitter/commit/1428b4c2b4246f92a7e5b2673438e5fb39fcc4a3",
     "source": "Hacker News",
     "published_at": "2026-09-07T05:11:06.220881"
+  },
+  {
+    "title": "Making a Python interpreter in 1024 bytes",
+    "url": "https://austinhenley.com/blog/python1024.html",
+    "source": "Hacker News",
+    "published_at": "2026-09-07T09:31:35.588943"
   }
 ]
