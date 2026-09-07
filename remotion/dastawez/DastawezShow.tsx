@@ -1,5 +1,5 @@
 import React from "react";
-import { Audio, Video, staticFile, Sequence } from "remotion";
+import { Audio, Video, staticFile, Sequence, useCurrentFrame, interpolate } from "remotion";
 import { DastawezShowProps } from "./types";
 import { DastawezOverview } from "./DastawezOverview";
 import { DastawezWhatChanged } from "./DastawezWhatChanged";
@@ -40,6 +40,55 @@ export const resolveMediaSrc = (path?: string) => {
   }
 };
 
+const LongVideoBackgroundClipItem: React.FC<{
+  videoSrc?: string;
+  durationInFrames: number;
+}> = ({ videoSrc, durationInFrames }) => {
+  const frame = useCurrentFrame();
+
+  // Subtle broadcast Ken Burns pan + zoom
+  const zoom = interpolate(frame, [0, Math.max(1, durationInFrames)], [1.0, 1.05], {
+    extrapolateRight: "clamp",
+  });
+  const panX = interpolate(frame, [0, Math.max(1, durationInFrames)], [0, -18], {
+    extrapolateRight: "clamp",
+  });
+
+  // Smooth cross-fade transition
+  const opacity = interpolate(frame, [0, 5], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        opacity,
+        overflow: "hidden",
+      }}
+    >
+      {videoSrc ? (
+        <Video
+          src={videoSrc}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            transform: `scale(${zoom}) translateX(${panX}px)`,
+            transformOrigin: "center center",
+          }}
+          loop
+          muted
+        />
+      ) : (
+        <div style={{ width: "100%", height: "100%", background: "#0b1120" }} />
+      )}
+    </div>
+  );
+};
+
 export const DastawezShow: React.FC<DastawezShowProps> = ({
   category,
   scenes = [],
@@ -69,10 +118,10 @@ export const DastawezShow: React.FC<DastawezShowProps> = ({
       style={{
         width: 1920,
         height: 1080,
-        background: "radial-gradient(ellipse at 50% 20%, #e0f2fe 0%, #f8fafc 55%, #f1f5f9 100%)",
+        backgroundColor: "#070b14",
         position: "relative",
         overflow: "hidden",
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans Devanagari', sans-serif",
       }}
     >
       {/* Background Ambient Audio */}
@@ -89,6 +138,8 @@ export const DastawezShow: React.FC<DastawezShowProps> = ({
         const officialImgTitle = scene.visual_media?.official_image_title || visual_media?.official_image_title;
         const officialImgAttr = scene.visual_media?.attribution || visual_media?.attribution;
 
+        const backgroundClips = scene.visual_media?.background_clips || [];
+
         return (
           <Sequence
             key={idx}
@@ -96,38 +147,62 @@ export const DastawezShow: React.FC<DastawezShowProps> = ({
             durationInFrames={durationInFrames}
             name={`Scene_${scene.scene_id}_${scene.act_name}`}
           >
-            {/* Cinematic Ambient B-Roll Video Layer (Subtle Movement Beneath UI) */}
-            {sceneBroll && (
+            {/* 1. 100% Fullscreen Cinematic Dynamic B-Roll Video Sequencer */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                overflow: "hidden",
+                zIndex: 0,
+                backgroundColor: "#070b14",
+              }}
+            >
+              {backgroundClips.length > 0 ? (
+                backgroundClips.map((clip, clipIdx) => {
+                  const clipFrom = Math.round(clip.start * 30);
+                  const clipDur = Math.max(1, Math.round((clip.end - clip.start) * 30));
+                  const clipSrc = resolveMediaSrc(clip.video_path);
+
+                  return (
+                    <Sequence
+                      key={clipIdx}
+                      from={clipFrom}
+                      durationInFrames={clipDur}
+                      layout="none"
+                    >
+                      <LongVideoBackgroundClipItem
+                        videoSrc={clipSrc}
+                        durationInFrames={clipDur}
+                      />
+                    </Sequence>
+                  );
+                })
+              ) : (
+                <LongVideoBackgroundClipItem
+                  videoSrc={sceneBroll}
+                  durationInFrames={durationInFrames}
+                />
+              )}
+
+              {/* Cinematic Vignette Overlay (Ensures HUD widgets and subtitles pop with 100% clarity) */}
               <div
                 style={{
                   position: "absolute",
                   inset: 0,
-                  overflow: "hidden",
-                  zIndex: 0,
+                  background:
+                    "linear-gradient(180deg, rgba(7, 11, 20, 0.78) 0%, rgba(7, 11, 20, 0.3) 30%, rgba(7, 11, 20, 0.45) 65%, rgba(7, 11, 20, 0.92) 100%)",
                   pointerEvents: "none",
                 }}
-              >
-                <Video
-                  src={sceneBroll}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    opacity: 0.18,
-                    filter: "brightness(1.05) contrast(1.1) saturate(1.15)",
-                  }}
-                  loop
-                  muted
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    background: "radial-gradient(ellipse at 50% 20%, rgba(224, 242, 254, 0.55) 0%, rgba(248, 250, 252, 0.75) 60%, rgba(241, 245, 249, 0.9) 100%)",
-                  }}
-                />
-              </div>
-            )}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  boxShadow: "inset 0 0 140px rgba(0, 0, 0, 0.8)",
+                  pointerEvents: "none",
+                }}
+              />
+            </div>
 
             {/* Audio Voiceover for Scene */}
             {resolvedSceneAudio && (

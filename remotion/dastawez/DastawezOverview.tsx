@@ -1,7 +1,8 @@
 import React from "react";
-import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { interpolate, spring, useCurrentFrame, useVideoConfig, Img, Video } from "remotion";
 import { EvidenceMetadata, SceneVisualMedia } from "./types";
-import { DastawezMediaCard } from "./DastawezMediaCard";
+import { DastawezTopHud } from "./DastawezTopHud";
+import { resolveMediaSrc } from "./DastawezShow";
 
 interface DastawezOverviewProps {
   schemeName: string;
@@ -25,7 +26,7 @@ interface DastawezOverviewProps {
 export const DastawezOverview: React.FC<DastawezOverviewProps> = ({
   schemeName,
   ministry,
-  benefitHighlight,
+  benefitHighlight = "सरकारी सहायता एवं लाभ",
   latestUpdate,
   portalUrl,
   officialPortalDomain,
@@ -43,474 +44,276 @@ export const DastawezOverview: React.FC<DastawezOverviewProps> = ({
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Subtle broadcast camera creep
-  const cameraScale = interpolate(frame, [0, 900], [1.0, 1.02], {
-    extrapolateRight: "clamp",
-  });
-
-  const beat1Spring = spring({ frame, fps, delay: 2, config: { damping: 14, stiffness: 110 } });
-  const beat2Spring = spring({ frame, fps, delay: 15, config: { damping: 14, stiffness: 95 } });
-  const beat3Spring = spring({ frame, fps, delay: 28, config: { damping: 14, stiffness: 95 } });
-
   const domain =
     officialPortalDomain ||
-    (portalUrl ? portalUrl.replace("https://", "").replace("http://", "").split("/")[0] : "gov.in");
+    (portalUrl ? portalUrl.replace("https://", "").replace("http://", "").split("/")[0] : "india.gov.in");
 
-  const imgPath = visualMedia?.official_image_path || officialImagePath;
-  const imgTitle = visualMedia?.official_image_title || officialImageTitle;
-  const vidPath = visualMedia?.broll_video_path || brollVideoPath;
-  const mediaAttr = visualMedia?.attribution || attribution;
+  const hudSpring = spring({ frame, fps, delay: 2, config: { damping: 14, stiffness: 120 } });
+  const cardSpring = spring({ frame, fps, delay: 10, config: { damping: 12, stiffness: 100 } });
+  const mediaSpring = spring({ frame, fps, delay: 18, config: { damping: 13, stiffness: 100 } });
+
+  const resolvedImg = resolveMediaSrc(visualMedia?.official_image_path || officialImagePath);
+  const resolvedVid = resolveMediaSrc(visualMedia?.broll_video_path || brollVideoPath);
+  const imgTitle = visualMedia?.official_image_title || officialImageTitle || "आधिकारिक रिकॉर्ड";
+  const mediaAttr = visualMedia?.attribution || attribution || "भारत सरकार (Public Domain)";
 
   return (
     <div
       style={{
-        width: 1920,
-        height: 1080,
+        width: "100%",
+        height: "100%",
         position: "relative",
-        overflow: "hidden",
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        padding: "36px 64px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        boxSizing: "border-box",
+        pointerEvents: "none",
+        zIndex: 10,
       }}
     >
-      {/* Full-Screen Content Container (Smart Space Utilization: Top 36px to Bottom 96px) */}
+      {/* 1. Sleek Top Meta HUD Bar */}
+      <div style={{ transform: `translateY(${(1 - hudSpring) * -20}px)`, opacity: hudSpring }}>
+        <DastawezTopHud
+          schemeName={schemeName}
+          domain={domain}
+          urgencyBadge={urgencyBadge}
+          ministry={ministry}
+          actIndex={currentActIndex}
+          totalActs={totalActs}
+          actTitle="योजना परिचय एवं मुख्य लाभ"
+        />
+      </div>
+
+      {/* 2. Floating Center-HUD Grid (Left: Hero Benefit Card, Right: Official Visual Card) */}
       <div
         style={{
-          position: "absolute",
-          top: 36,
-          bottom: 104,
-          left: 56,
-          right: 56,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          transform: `scale(${cameraScale})`,
+          display: "grid",
+          gridTemplateColumns: "1.25fr 1fr",
+          gap: 36,
+          alignItems: "center",
+          flex: 1,
+          marginTop: 20,
+          marginBottom: 60,
         }}
       >
-        {/* Sleek Integrated Top Meta-Bar (Replaces bulky navbar) */}
+        {/* Left: Floating Hero Benefit Card */}
         <div
           style={{
+            transform: `translateY(${(1 - cardSpring) * 30}px)`,
+            opacity: cardSpring,
+            background: "rgba(11, 17, 32, 0.88)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            border: "2px solid rgba(56, 189, 248, 0.4)",
+            borderRadius: 28,
+            padding: "36px 40px",
+            boxShadow: "0 24px 60px rgba(0, 0, 0, 0.65), 0 0 30px rgba(56, 189, 248, 0.15)",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            transform: `translateY(${(1 - beat1Spring) * -14}px)`,
-            opacity: beat1Spring,
+            flexDirection: "column",
+            gap: 20,
           }}
         >
-          {/* Left: Brand Monogram + Portal Domain + Urgency Badge */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div
+          {/* Tag Pill */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                background: "rgba(255, 255, 255, 0.94)",
+                background: "rgba(16, 185, 129, 0.2)",
+                border: "1.5px solid rgba(16, 185, 129, 0.6)",
+                color: "#34d399",
+                fontSize: 14,
+                fontWeight: 900,
                 padding: "6px 14px",
                 borderRadius: 12,
-                border: "1px solid rgba(2, 132, 199, 0.25)",
-                boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
+                letterSpacing: 0.8,
+                textTransform: "uppercase",
               }}
             >
-              <div
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 6,
-                  background: "linear-gradient(135deg, #ea580c, #f97316)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#fff",
-                  fontWeight: 900,
-                  fontSize: 13,
-                }}
-              >
-                द
-              </div>
-              <span style={{ fontSize: 15, fontWeight: 900, color: "#0f172a" }}>@iDastawez</span>
-            </div>
+              💰 मुख्य लाभ / सहायता राशि
+            </span>
+          </div>
 
+          {/* Glowing Big Metric */}
+          <div
+            style={{
+              fontSize: 54,
+              fontWeight: 900,
+              lineHeight: 1.1,
+              background: "linear-gradient(135deg, #34d399 0%, #38bdf8 50%, #ffffff 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              filter: "drop-shadow(0 4px 16px rgba(52, 211, 153, 0.35))",
+            }}
+          >
+            {benefitHighlight}
+          </div>
+
+          {/* Scheme Name Banner */}
+          <div
+            style={{
+              fontSize: 26,
+              fontWeight: 800,
+              color: "#f1f5f9",
+              lineHeight: 1.35,
+            }}
+          >
+            {schemeName}
+          </div>
+
+          {/* Action Chips */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 6 }}>
             <div
               style={{
+                background: "rgba(30, 41, 59, 0.8)",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                padding: "8px 16px",
+                borderRadius: 14,
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#93c5fd",
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
-                background: "rgba(238, 242, 255, 0.95)",
-                border: "1px solid rgba(99, 102, 241, 0.3)",
-                padding: "6px 14px",
-                borderRadius: 12,
-                fontSize: 13,
-                fontWeight: 800,
-                color: "#3730a3",
               }}
             >
-              <span>🏛️</span>
-              <span>{domain}</span>
+              <span>🌐</span>
+              <span>ऑनलाइन आवेदन प्रणाली</span>
             </div>
-
             <div
               style={{
-                background: "linear-gradient(135deg, #ea580c, #f97316)",
-                color: "#ffffff",
-                padding: "6px 14px",
-                borderRadius: 12,
-                fontSize: 13,
-                fontWeight: 800,
-                boxShadow: "0 2px 8px rgba(234, 88, 12, 0.3)",
+                background: "rgba(30, 41, 59, 0.8)",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                padding: "8px 16px",
+                borderRadius: 14,
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#86efac",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
               }}
             >
-              🚨 {urgencyBadge || "ताज़ा सरकारी अधिसूचना 2026"}
+              <span>✅</span>
+              <span>100% निःशुल्क प्रक्रिया</span>
             </div>
+            <div
+              style={{
+                background: "rgba(30, 41, 59, 0.8)",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                padding: "8px 16px",
+                borderRadius: 14,
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#fde047",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <span>⚠️</span>
+              <span>दलालों से सावधान</span>
+            </div>
+          </div>
+        </div>
 
-            {ministry && (
+        {/* Right: Floating Official Visual / Photo Card */}
+        <div
+          style={{
+            transform: `translateY(${(1 - mediaSpring) * 30}px)`,
+            opacity: mediaSpring,
+            background: "rgba(11, 17, 32, 0.88)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            border: "2px solid rgba(99, 102, 241, 0.4)",
+            borderRadius: 28,
+            overflow: "hidden",
+            boxShadow: "0 24px 60px rgba(0, 0, 0, 0.65)",
+            height: 380,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {/* Media Header */}
+          <div
+            style={{
+              padding: "12px 20px",
+              background: "rgba(15, 23, 42, 0.9)",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 16 }}>🏛️</span>
+              <span style={{ fontSize: 13, fontWeight: 800, color: "#cbd5e1" }}>
+                आधिकारिक सरकारी अभिलेख
+              </span>
+            </div>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#38bdf8",
+                background: "rgba(56, 189, 248, 0.15)",
+                padding: "3px 8px",
+                borderRadius: 6,
+              }}
+            >
+              सत्यापित
+            </span>
+          </div>
+
+          {/* Media Body */}
+          <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+            {resolvedImg ? (
+              <Img
+                src={resolvedImg}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : resolvedVid ? (
+              <Video
+                src={resolvedVid}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                loop
+                muted
+              />
+            ) : (
               <div
                 style={{
-                  background: "rgba(255, 255, 255, 0.9)",
-                  border: "1px solid rgba(2, 132, 199, 0.2)",
-                  padding: "6px 14px",
-                  borderRadius: 12,
-                  fontSize: 13,
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "radial-gradient(ellipse at 50% 50%, #1e293b, #0f172a)",
+                  color: "#64748b",
+                  fontSize: 16,
                   fontWeight: 700,
-                  color: "#0369a1",
                 }}
               >
-                {ministry}
+                भारत सरकार आधिकारिक पोर्टल अभिलेख
               </div>
             )}
           </div>
 
-          {/* Right: Step Indicator */}
+          {/* Attribution Footer */}
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              background: "rgba(255, 255, 255, 0.94)",
-              padding: "6px 16px",
-              borderRadius: 12,
-              border: "1px solid rgba(2, 132, 199, 0.2)",
-              boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
-            }}
-          >
-            <span style={{ fontSize: 13, fontWeight: 900, color: "#0284c7" }}>
-              भाग {currentActIndex}/{totalActs}
-            </span>
-            <span style={{ fontSize: 12, color: "#94a3b8" }}>•</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#334155" }}>
-              अधिसूचना एवं मुख्य बिंदु
-            </span>
-          </div>
-        </div>
-
-        {/* Master Scheme Title (Clear, Punchy, Full Width) */}
-        <div
-          style={{
-            marginTop: 10,
-            marginBottom: 10,
-            transform: `translateY(${(1 - beat1Spring) * 12}px)`,
-            opacity: beat1Spring,
-          }}
-        >
-          <h1
-            style={{
-              fontSize: 44,
-              fontWeight: 900,
-              lineHeight: 1.2,
-              color: "#0f172a",
-              margin: 0,
-              letterSpacing: "-0.5px",
-            }}
-          >
-            {schemeName}
-          </h1>
-        </div>
-
-        {/* 4-Card High-Density Broadcast Grid (Utilizing Full Canvas Width & Height) */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.2fr 1fr 1fr 1.15fr",
-            gap: 20,
-            flex: 1,
-            maxHeight: 570,
-            transform: `translateY(${(1 - beat2Spring) * 16}px)`,
-            opacity: beat2Spring,
-          }}
-        >
-          {/* Card 1: Primary Benefit & Financial Aid Card (Luminous Emerald) */}
-          <div
-            style={{
-              background: "linear-gradient(150deg, rgba(255, 255, 255, 0.96) 0%, rgba(240, 253, 244, 0.94) 100%)",
-              border: "2px solid rgba(16, 185, 129, 0.5)",
-              borderRadius: 22,
-              padding: "24px 26px",
-              boxShadow: "0 18px 40px rgba(15, 23, 42, 0.08), 0 0 16px rgba(16, 185, 129, 0.12)",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: "rgba(16, 185, 129, 0.15)",
-                  color: "#059669",
-                  padding: "4px 12px",
-                  borderRadius: 8,
-                  fontSize: 12,
-                  fontWeight: 900,
-                  letterSpacing: 0.5,
-                  textTransform: "uppercase",
-                }}
-              >
-                <span>💰</span>
-                <span>निर्धारित लाभ / आर्थिक सहायता</span>
-              </div>
-
-              <div
-                style={{
-                  fontSize: 34,
-                  fontWeight: 900,
-                  color: "#064e3b",
-                  lineHeight: 1.25,
-                  marginTop: 14,
-                  letterSpacing: -0.5,
-                }}
-              >
-                {benefitHighlight || "सीधा लाभ बैंक खाते में (DBT Transfer)"}
-              </div>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <div
-                style={{
-                  background: "rgba(255, 255, 255, 0.9)",
-                  border: "1px solid rgba(16, 185, 129, 0.3)",
-                  padding: "8px 12px",
-                  borderRadius: 10,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: "#047857",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                <span>⚡</span>
-                <span>100% सरकारी सब्सिडी | कोई बिचौलिया नहीं</span>
-              </div>
-              <div
-                style={{
-                  background: "rgba(238, 242, 255, 0.9)",
-                  border: "1px solid rgba(99, 102, 241, 0.25)",
-                  padding: "8px 12px",
-                  borderRadius: 10,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#3730a3",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                <span>🏦</span>
-                <span>Aadhaar Seeding / NPCI डायरेक्ट क्रेडिट</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Official Gazette Directive & Rule Change Card */}
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.95)",
-              border: "1.5px solid rgba(2, 132, 199, 0.3)",
-              borderRadius: 22,
-              padding: "24px 24px",
-              boxShadow: "0 14px 34px rgba(15, 23, 42, 0.06)",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: "rgba(2, 132, 199, 0.12)",
-                  color: "#0284c7",
-                  padding: "4px 12px",
-                  borderRadius: 8,
-                  fontSize: 12,
-                  fontWeight: 900,
-                  letterSpacing: 0.5,
-                }}
-              >
-                <span>📑</span>
-                <span>नवीनतम सरकारी निर्देश 2026</span>
-              </div>
-
-              <div
-                style={{
-                  fontSize: 20,
-                  fontWeight: 800,
-                  color: "#1e293b",
-                  lineHeight: 1.45,
-                  marginTop: 14,
-                }}
-              >
-                {latestUpdate || "योजना के नियमों में ताजा संशोधन जारी किया गया है।"}
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: "rgba(248, 250, 252, 0.95)",
-                border: "1px solid rgba(203, 213, 225, 0.8)",
-                padding: "10px 14px",
-                borderRadius: 10,
-                fontSize: 12,
-                color: "#475569",
-                fontWeight: 600,
-              }}
-            >
-              <div style={{ fontWeight: 800, color: "#0f172a" }}>राजपत्र संदर्भ:</div>
-              <div>{evidence?.notification_ref || "GOI-PUBLIC-NOTIF-2026"}</div>
-            </div>
-          </div>
-
-          {/* Card 3: Target Beneficiaries & Scope Card */}
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.95)",
-              border: "1.5px solid rgba(14, 165, 233, 0.3)",
-              borderRadius: 22,
-              padding: "24px 24px",
-              boxShadow: "0 14px 34px rgba(15, 23, 42, 0.06)",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: "rgba(249, 115, 22, 0.12)",
-                  color: "#c2410c",
-                  padding: "4px 12px",
-                  borderRadius: 8,
-                  fontSize: 12,
-                  fontWeight: 900,
-                  letterSpacing: 0.5,
-                }}
-              >
-                <span>👥</span>
-                <span>लक्षित लाभार्थी एवं क्षेत्र</span>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: "#059669", fontWeight: 900 }}>✓</span>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: "#1e293b" }}>
-                    पात्र परिवार एवं व्यक्तिगत कार्डधारक
-                  </span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: "#059669", fontWeight: 900 }}>✓</span>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: "#1e293b" }}>
-                    सभी राज्यों एवं केंद्र शासित प्रदेशों में प्रभावी
-                  </span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: "#059669", fontWeight: 900 }}>✓</span>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: "#1e293b" }}>
-                    समयबद्ध सत्यापन प्रक्रिया अनिवार्य
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: "#eff6ff",
-                border: "1px solid #bfdbfe",
-                padding: "8px 12px",
-                borderRadius: 10,
-                fontSize: 12,
-                fontWeight: 700,
-                color: "#1d4ed8",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-              }}
-            >
-              <span>🔒</span>
-              <span>अधिकृत पहचान पत्र द्वारा सत्यापन</span>
-            </div>
-          </div>
-
-          {/* Card 4: Dedicated Visual Media Card (Authentic Photo / Looping Video Frame) */}
-          <DastawezMediaCard
-            imagePath={imgPath}
-            videoPath={vidPath}
-            title={imgTitle || "आधिकारिक प्रशासनिक संदर्भ"}
-            attribution={mediaAttr || "Wikimedia / Govt Source"}
-            badgeLabel="🏛 आधिकारिक संदर्भ दृश्य"
-            mediaType="image"
-            style={{
-              height: "100%",
-            }}
-            fallbackIcon="🏛️"
-            fallbackTitle="भारत सरकार आधिकारिक पोर्टल अभिलेख"
-          />
-        </div>
-
-        {/* Bottom Full-Width Action Directive Strip */}
-        <div
-          style={{
-            marginTop: 14,
-            background: "rgba(255, 255, 255, 0.94)",
-            backdropFilter: "blur(16px)",
-            border: "1.5px solid rgba(2, 132, 199, 0.25)",
-            borderRadius: 16,
-            padding: "12px 24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.05)",
-            transform: `translateY(${(1 - beat3Spring) * 10}px)`,
-            opacity: beat3Spring,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 18 }}>💡</span>
-            <span style={{ fontSize: 15, fontWeight: 800, color: "#0f172a" }}>
-              नागरिक सहायता निर्देश: योजना की पूर्ण जानकारी व ऑनलाइन आवेदन केवल आधिकारिक पोर्टल{" "}
-              <span style={{ color: "#0284c7", fontWeight: 900 }}>https://{domain}</span> से ही करें।
-            </span>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              background: "rgba(16, 185, 129, 0.12)",
-              border: "1px solid rgba(16, 185, 129, 0.4)",
-              padding: "4px 12px",
-              borderRadius: 8,
+              padding: "10px 20px",
+              background: "rgba(15, 23, 42, 0.95)",
+              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
               fontSize: 12,
-              fontWeight: 800,
-              color: "#047857",
+              color: "#94a3b8",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            <span>✓</span>
-            <span>100% निःशुल्क सेवा</span>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "70%" }}>
+              {imgTitle}
+            </span>
+            <span style={{ color: "#64748b", fontSize: 11 }}>{mediaAttr}</span>
           </div>
         </div>
       </div>

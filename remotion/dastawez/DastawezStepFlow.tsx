@@ -1,7 +1,7 @@
 import React from "react";
-import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { EvidenceMetadata, SceneVisualMedia } from "./types";
-import { DastawezMediaCard } from "./DastawezMediaCard";
+import { DastawezTopHud } from "./DastawezTopHud";
 
 interface StepItem {
   step: number;
@@ -47,371 +47,175 @@ export const DastawezStepFlow: React.FC<DastawezStepFlowProps> = ({
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const cameraScale = interpolate(frame, [0, 900], [1.0, 1.02], {
-    extrapolateRight: "clamp",
-  });
-
-  const beat1Spring = spring({ frame, fps, delay: 2, config: { damping: 14, stiffness: 110 } });
-  const beat2Spring = spring({ frame, fps, delay: 14, config: { damping: 14, stiffness: 95 } });
-  const beat3Spring = spring({ frame, fps, delay: 28, config: { damping: 14, stiffness: 95 } });
-
-  const activeSteps = applicationSteps || steps || [
-    { step: 1, title: "आधिकारिक पोर्टल खोलें", desc: "पोर्टल पर जाकर नया पंजीकरण या लॉगिन विकल्प चुनें।" },
-    { step: 2, title: "आधार e-KYC सत्यापन", desc: "आधार नंबर और मोबाइल OTP द्वारा ऑनलाइन सत्यापन पूरा करें।" },
-    { step: 3, title: "फॉर्म एवं दस्तावेज सबमिट", desc: "पात्रता विवरण दर्ज करें और आवश्यक कागजात अपलोड करें।" },
-    { step: 4, title: "रसीद एवं स्टेटस चेक", desc: "सफलतापूर्वक सबमिट होने के बाद अपनी आवेदन रसीद सुरक्षित रख लें।" },
-  ];
-
   const domain =
     officialPortalDomain ||
-    (portalUrl ? portalUrl.replace("https://", "").replace("http://", "").split("/")[0] : "gov.in");
+    (portalUrl ? portalUrl.replace("https://", "").replace("http://", "").split("/")[0] : "india.gov.in");
 
-  // Determine active step based on frame progression
-  const activeStepIdx = Math.min(activeSteps.length - 1, Math.floor(frame / 50));
+  const hudSpring = spring({ frame, fps, delay: 2, config: { damping: 14, stiffness: 120 } });
+  const bottomSpring = spring({ frame, fps, delay: 18, config: { damping: 12, stiffness: 100 } });
 
-  const imgPath = visualMedia?.official_image_path || officialImagePath;
-  const imgTitle = visualMedia?.official_image_title || officialImageTitle;
-  const vidPath = visualMedia?.broll_video_path || brollVideoPath;
-  const mediaAttr = visualMedia?.attribution || attribution;
+  const defaultSteps: StepItem[] = [
+    { step: 1, title: "आधिकारिक पोर्टल खोलें", desc: `${domain} पर जाकर रजिस्ट्रेशन विकल्प चुनें` },
+    { step: 2, title: "e-KYC व फॉर्म भरें", desc: "आधार OTP और ज़रूरी दस्तावेज़ विवरण सबमिट करें" },
+    { step: 3, title: "पावती रसीद प्राप्त करें", desc: "आवेदन रसीद डाउनलोड कर स्टेटस ट्रैक करें" },
+  ];
+
+  const rawSteps = applicationSteps || steps || defaultSteps;
+  const flowSteps = rawSteps.slice(0, 3);
 
   return (
     <div
       style={{
-        width: 1920,
-        height: 1080,
+        width: "100%",
+        height: "100%",
         position: "relative",
-        overflow: "hidden",
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        padding: "36px 64px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        boxSizing: "border-box",
+        pointerEvents: "none",
+        zIndex: 10,
       }}
     >
-      {/* Full-Screen Container */}
+      {/* 1. Top Meta HUD */}
+      <div style={{ transform: `translateY(${(1 - hudSpring) * -20}px)`, opacity: hudSpring }}>
+        <DastawezTopHud
+          schemeName={schemeName}
+          domain={domain}
+          urgencyBadge="ऑनलाइन आवेदन प्रक्रिया"
+          ministry={ministry}
+          actIndex={currentActIndex}
+          totalActs={totalActs}
+          actTitle="आवेदन कैसे करें?"
+        />
+      </div>
+
+      {/* 2. Floating 3-Step Process Ribbon */}
       <div
         style={{
-          position: "absolute",
-          top: 36,
-          bottom: 104,
-          left: 56,
-          right: 56,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          transform: `scale(${cameraScale})`,
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 28,
+          flex: 1,
+          marginTop: 30,
+          marginBottom: 30,
+          alignItems: "center",
         }}
       >
-        {/* Sleek Integrated Top Meta-Bar */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            transform: `translateY(${(1 - beat1Spring) * -14}px)`,
-            opacity: beat1Spring,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {flowSteps.map((s, idx) => {
+          const stepSpring = spring({
+            frame,
+            fps,
+            delay: 6 + idx * 5,
+            config: { damping: 12, stiffness: 110 },
+          });
+
+          return (
             <div
+              key={idx}
               style={{
+                transform: `translateY(${(1 - stepSpring) * 35}px) scale(${stepSpring})`,
+                opacity: stepSpring,
+                background: "rgba(11, 17, 32, 0.88)",
+                backdropFilter: "blur(24px)",
+                WebkitBackdropFilter: "blur(24px)",
+                border: "2px solid rgba(56, 189, 248, 0.4)",
+                borderRadius: 24,
+                padding: "32px 28px",
                 display: "flex",
-                alignItems: "center",
-                gap: 8,
-                background: "rgba(255, 255, 255, 0.94)",
-                padding: "6px 14px",
-                borderRadius: 12,
-                border: "1px solid rgba(2, 132, 199, 0.25)",
-                boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                height: 260,
+                boxShadow: "0 20px 50px rgba(0, 0, 0, 0.65), 0 0 20px rgba(56, 189, 248, 0.15)",
+                boxSizing: "border-box",
               }}
             >
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                  <span
+                    style={{
+                      background: "linear-gradient(135deg, #0284c7, #2563eb)",
+                      color: "#ffffff",
+                      fontSize: 14,
+                      fontWeight: 900,
+                      padding: "6px 14px",
+                      borderRadius: 10,
+                      letterSpacing: 0.8,
+                    }}
+                  >
+                    चरण {idx + 1}
+                  </span>
+                  <span style={{ fontSize: 24 }}>{idx === 0 ? "🌐" : idx === 1 ? "📝" : "📄"}</span>
+                </div>
+
+                <div style={{ fontSize: 24, fontWeight: 900, color: "#f8fafc", lineHeight: 1.25, marginBottom: 10 }}>
+                  {s.title}
+                </div>
+
+                <div style={{ fontSize: 16, fontWeight: 600, color: "#94a3b8", lineHeight: 1.45 }}>
+                  {s.desc}
+                </div>
+              </div>
+
               <div
                 style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 6,
-                  background: "linear-gradient(135deg, #ea580c, #f97316)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#fff",
-                  fontWeight: 900,
-                  fontSize: 13,
+                  fontSize: 12,
+                  color: "#38bdf8",
+                  fontWeight: 800,
+                  borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+                  paddingTop: 10,
                 }}
               >
-                द
+                ✔ आधिकारिक पोर्टल पर उपलब्ध
               </div>
-              <span style={{ fontSize: 15, fontWeight: 900, color: "#0f172a" }}>@iDastawez</span>
             </div>
+          );
+        })}
+      </div>
 
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                background: "rgba(238, 242, 255, 0.95)",
-                border: "1px solid rgba(99, 102, 241, 0.3)",
-                padding: "6px 14px",
-                borderRadius: 12,
-                fontSize: 13,
-                fontWeight: 800,
-                color: "#3730a3",
-              }}
-            >
-              <span>🏛️</span>
-              <span>{domain}</span>
+      {/* 3. Floating Official Portal Link Ribbon */}
+      <div
+        style={{
+          transform: `translateY(${(1 - bottomSpring) * 20}px)`,
+          opacity: bottomSpring,
+          background: "rgba(15, 23, 42, 0.92)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          border: "1.5px solid rgba(99, 102, 241, 0.5)",
+          borderRadius: 20,
+          padding: "16px 36px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          boxShadow: "0 14px 40px rgba(0, 0, 0, 0.55)",
+          marginBottom: 50,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <span style={{ fontSize: 22 }}>👉</span>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#a5b4fc", textTransform: "uppercase" }}>
+              आधिकारिक पोर्टल वेबसाइट (OFFICIAL PORTAL)
             </div>
-
-            <div
-              style={{
-                background: "rgba(2, 132, 199, 0.12)",
-                border: "1px solid rgba(2, 132, 199, 0.3)",
-                color: "#0369a1",
-                padding: "6px 14px",
-                borderRadius: 12,
-                fontSize: 13,
-                fontWeight: 800,
-              }}
-            >
-              💻 ऑनलाइन आवेदन चरण 2026
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              background: "rgba(255, 255, 255, 0.94)",
-              padding: "6px 16px",
-              borderRadius: 12,
-              border: "1px solid rgba(2, 132, 199, 0.2)",
-              boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
-            }}
-          >
-            <span style={{ fontSize: 13, fontWeight: 900, color: "#0284c7" }}>
-              भाग {currentActIndex}/{totalActs}
-            </span>
-            <span style={{ fontSize: 12, color: "#94a3b8" }}>•</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#334155" }}>
-              आवेदन प्रक्रिया (Step-by-Step Flow)
-            </span>
-          </div>
-        </div>
-
-        {/* Browser Mockup Header Bar */}
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.95)",
-            border: "1px solid rgba(203, 213, 225, 0.8)",
-            borderRadius: 16,
-            padding: "10px 20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 6px 20px rgba(15, 23, 42, 0.04)",
-            marginTop: 8,
-            marginBottom: 8,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#ef4444" }} />
-            <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#f59e0b" }} />
-            <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#10b981" }} />
-          </div>
-
-          <div
-            style={{
-              background: "rgba(241, 245, 249, 0.95)",
-              border: "1px solid rgba(203, 213, 225, 0.7)",
-              borderRadius: 10,
-              padding: "5px 18px",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              minWidth: 420,
-              justifyContent: "center",
-            }}
-          >
-            <span style={{ fontSize: 13 }}>🔒</span>
-            <span style={{ fontSize: 13, fontWeight: 800, color: "#0369a1" }}>
+            <div style={{ fontSize: 22, fontWeight: 900, color: "#38bdf8" }}>
               https://{domain}
-            </span>
-            <span style={{ fontSize: 10, fontWeight: 900, background: "#d1fae5", color: "#065f46", padding: "1px 6px", borderRadius: 4 }}>
-              SECURE
-            </span>
-          </div>
-
-          <div style={{ fontSize: 12, fontWeight: 800, color: "#64748b" }}>
-            100% ऑनलाइन नागरिक पोर्टल
+            </div>
           </div>
         </div>
 
-        {/* Grid: 4 Step Cards across Left/Center + Dedicated Visual Media Card on Right */}
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "1.9fr 0.9fr",
-            gap: 20,
-            flex: 1,
-            maxHeight: 570,
-            transform: `translateY(${(1 - beat2Spring) * 16}px)`,
-            opacity: beat2Spring,
+            background: "rgba(16, 185, 129, 0.2)",
+            border: "1px solid rgba(16, 185, 129, 0.6)",
+            color: "#6ee7b7",
+            padding: "8px 20px",
+            borderRadius: 14,
+            fontSize: 14,
+            fontWeight: 800,
           }}
         >
-          {/* Left Column: 4 Progressive Step Cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-            {activeSteps.slice(0, 4).map((item, idx) => {
-              const isCurrent = idx === activeStepIdx;
-              const isCompleted = idx < activeStepIdx;
-
-              return (
-                <div
-                  key={idx}
-                  style={{
-                    background: isCurrent
-                      ? "linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(239, 246, 255, 0.95) 100%)"
-                      : "rgba(255, 255, 255, 0.92)",
-                    border: isCurrent
-                      ? "2.5px solid #0284c7"
-                      : isCompleted
-                      ? "1.5px solid rgba(16, 185, 129, 0.5)"
-                      : "1.5px solid rgba(226, 232, 240, 0.9)",
-                    borderRadius: 20,
-                    padding: "20px 20px",
-                    boxShadow: isCurrent
-                      ? "0 16px 36px rgba(2, 132, 199, 0.16), 0 0 16px rgba(2, 132, 199, 0.1)"
-                      : "0 8px 24px rgba(15, 23, 42, 0.05)",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                    transition: "all 0.3s ease",
-                  }}
-                >
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                      <div
-                        style={{
-                          width: 38,
-                          height: 38,
-                          borderRadius: 10,
-                          background: isCurrent
-                            ? "linear-gradient(135deg, #1d4ed8 0%, #0284c7 100%)"
-                            : isCompleted
-                            ? "linear-gradient(135deg, #059669 0%, #10b981 100%)"
-                            : "rgba(241, 245, 249, 0.9)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 16,
-                          fontWeight: 900,
-                          color: isCurrent || isCompleted ? "#ffffff" : "#64748b",
-                          boxShadow: isCurrent ? "0 4px 12px rgba(2, 132, 199, 0.3)" : "none",
-                        }}
-                      >
-                        {isCompleted ? "✓" : idx + 1}
-                      </div>
-
-                      {isCurrent ? (
-                        <span
-                          style={{
-                            background: "#e0f2fe",
-                            color: "#0369a1",
-                            fontSize: 11,
-                            fontWeight: 800,
-                            padding: "3px 10px",
-                            borderRadius: 6,
-                          }}
-                        >
-                          सक्रिय चरण
-                        </span>
-                      ) : isCompleted ? (
-                        <span
-                          style={{
-                            background: "#d1fae5",
-                            color: "#047857",
-                            fontSize: 11,
-                            fontWeight: 800,
-                            padding: "3px 8px",
-                            borderRadius: 6,
-                          }}
-                        >
-                          पूर्ण
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", lineHeight: 1.35 }}>
-                      {item.title}
-                    </div>
-
-                    <div style={{ fontSize: 15, fontWeight: 600, color: "#475569", lineHeight: 1.45, marginTop: 8 }}>
-                      {item.desc}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      height: 4,
-                      borderRadius: 2,
-                      background: isCurrent ? "#0284c7" : isCompleted ? "#10b981" : "rgba(226, 232, 240, 0.8)",
-                      marginTop: 12,
-                    }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Right Column: Dedicated Visual Media Card (Portal Walkthrough Video or Document Photo) */}
-          <DastawezMediaCard
-            imagePath={imgPath}
-            videoPath={vidPath}
-            title={imgTitle || "डिजिटल आवेदन एवं पोर्टल प्रक्रिया"}
-            attribution={mediaAttr || "Wikimedia / Govt Source"}
-            badgeLabel="🎥 पोर्टल लाइव प्रोसेस"
-            mediaType="video"
-            style={{
-              height: "100%",
-            }}
-            fallbackIcon="💻"
-            fallbackTitle="आधिकारिक डिजिटल सेवा पोर्टल"
-          />
-        </div>
-
-        {/* Bottom Directive Bar */}
-        <div
-          style={{
-            marginTop: 14,
-            background: "rgba(255, 255, 255, 0.94)",
-            backdropFilter: "blur(16px)",
-            border: "1.5px solid rgba(2, 132, 199, 0.25)",
-            borderRadius: 16,
-            padding: "12px 24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.05)",
-            transform: `translateY(${(1 - beat3Spring) * 10}px)`,
-            opacity: beat3Spring,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 18 }}>💡</span>
-            <span style={{ fontSize: 15, fontWeight: 800, color: "#0f172a" }}>
-              ऑनलाइन फॉर्म सबमिट करने के बाद अपना एप्लीकेशन आईडी व पावती रसीद (Acknowledgement Receipt) सुरक्षित डाउनलोड करें।
-            </span>
-          </div>
-
-          <div
-            style={{
-              background: "#eff6ff",
-              border: "1px solid #bfdbfe",
-              padding: "4px 12px",
-              borderRadius: 8,
-              fontSize: 12,
-              fontWeight: 800,
-              color: "#1d4ed8",
-            }}
-          >
-            ✓ 100% ऑनलाइन प्रक्रिया
-          </div>
+          ✅ 100% निःशुल्क ऑनलाइन आवेदन
         </div>
       </div>
     </div>

@@ -11,10 +11,12 @@ All assets are automatically downloaded, optimized, cached, and synchronized int
 
 import os
 import re
+import math
 import random
 import shutil
 import logging
 import requests
+from datetime import datetime
 from typing import Dict, Any, Optional, List
 from dotenv import load_dotenv
 
@@ -371,20 +373,103 @@ SCENE_LAYOUT_VISUAL_MAP: Dict[str, Dict[str, Any]] = {
 }
 
 
+def build_scene_background_clips(
+    scheme: Dict[str, Any],
+    scene: Dict[str, Any],
+    scene_idx: int,
+    used_clip_ids: set,
+    public_dest_dir: str = "public/dastawez_broll"
+) -> List[Dict[str, Any]]:
+    """
+    Generates 2 to 4 dynamic non-repeating 1080p landscape background video cuts
+    for a long-video scene/Act, perfectly timed to the Act duration.
+    """
+    from src.broll_downloader import fetch_broll_clip
+    abs_dest_dir = os.path.abspath(public_dest_dir)
+    os.makedirs(abs_dest_dir, exist_ok=True)
+
+    today_str = datetime.now().strftime("%Y%m%d")
+    scheme_id = scheme.get("id", "scheme")
+    duration = float(scene.get("duration_seconds", 36.0))
+    layout = scene.get("layout_type", "scheme_overview")
+    queries_cfg = SCENE_LAYOUT_VISUAL_MAP.get(layout, SCENE_LAYOUT_VISUAL_MAP["scheme_overview"])
+    broll_queries = queries_cfg.get("broll_queries", ["government office", "official document", "computer website"])
+
+    # Determine number of cuts (e.g. roughly every 9-14 seconds)
+    num_cuts = max(2, min(4, int(math.ceil(duration / 12.0))))
+    cut_dur = duration / num_cuts
+
+    # Find cached landscape clips for fallback
+    cached_landscape = []
+    if os.path.exists(BROLL_CACHE_DIR):
+        cached_landscape = [
+            os.path.join(BROLL_CACHE_DIR, f)
+            for f in os.listdir(BROLL_CACHE_DIR)
+            if f.endswith(".mp4") and os.path.getsize(os.path.join(BROLL_CACHE_DIR, f)) > 100000
+        ]
+        land_preferred = [f for f in cached_landscape if "landscape" in f or "pex" in f]
+        if land_preferred:
+            cached_landscape = land_preferred
+
+    clips = []
+    for cut_idx in range(num_cuts):
+        start_t = round(cut_idx * cut_dur, 2)
+        end_t = round(duration if cut_idx == num_cuts - 1 else (cut_idx + 1) * cut_dur, 2)
+        q = broll_queries[cut_idx % len(broll_queries)]
+
+        # Try to download or retrieve fresh clip with exclude_ids
+        clip_path = None
+        try:
+            clip_path = fetch_broll_clip(query=q, unique_tag=f"sc_{scene_idx}_cut_{cut_idx}", exclude_ids=used_clip_ids, orientation="landscape")
+        except Exception as e:
+            logger.debug(f"Pexels broll fetch error for '{q}': {e}")
+
+        # Fallback to local cached pool
+        if not clip_path or not os.path.exists(clip_path):
+            available = [f for f in cached_landscape if os.path.basename(f) not in used_clip_ids]
+            if not available:
+                available = cached_landscape
+            if available:
+                clip_path = available[(scene_idx * 3 + cut_idx) % len(available)]
+                used_clip_ids.add(os.path.basename(clip_path))
+
+        rel_path = None
+        if clip_path and os.path.exists(clip_path):
+            pub_filename = f"long_{today_str}_{scheme_id}_sc{scene_idx}_c{cut_idx}_{os.path.basename(clip_path)}"
+            pub_dest = os.path.join(abs_dest_dir, pub_filename)
+            try:
+                if not os.path.exists(pub_dest):
+                    shutil.copy2(clip_path, pub_dest)
+                rel_path = f"dastawez_broll/{pub_filename}"
+            except Exception as e:
+                logger.warning(f"Could not copy long broll clip: {e}")
+                rel_path = clip_path.replace("\\", "/")
+
+        clips.append({
+            "start": start_t,
+            "end": end_t,
+            "video_path": rel_path,
+            "query": q
+        })
+
+    return clips
+
+
 def assign_scene_visual_media(scheme: Dict[str, Any], scenes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Ensures every single scene receives a dedicated, authentic visual media bundle (photo + B-roll).
-    Distributes distinct official Wikimedia Commons photos and Pexels/Pixabay video clips across slides.
+    Ensures every single scene receives a dedicated, authentic visual media bundle (photo + dynamic multi-clip B-roll).
+    Distributes distinct official Wikimedia Commons photos and sequences non-repeating 1080p B-roll cuts across each Act.
     """
     global_bundle = get_topic_visual_bundle(scheme)
     default_img = global_bundle.get("official_image")
     default_broll = global_bundle.get("broll_video")
 
     used_photos = set()
+    used_clip_ids = set()
     if default_img and default_img.get("public_path"):
         used_photos.add(default_img["public_path"])
 
-    for sc in scenes:
+    for idx, sc in enumerate(scenes):
         layout = sc.get("layout_type", "scheme_overview")
         queries_cfg = SCENE_LAYOUT_VISUAL_MAP.get(layout, SCENE_LAYOUT_VISUAL_MAP["scheme_overview"])
 
@@ -401,22 +486,26 @@ def assign_scene_visual_media(scheme: Dict[str, Any], scenes: List[Dict[str, Any
         if not scene_img:
             scene_img = default_img
 
-        # Scene B-Roll video
-        scene_broll = None
-        for bq in queries_cfg["broll_queries"]:
-            scene_broll = fetch_pexels_broll(bq, orientation="landscape")
-            if scene_broll:
-                break
-        if not scene_broll:
-            scene_broll = default_broll
+        # Multi-clip dynamic background sequence for this Act (no single looping video)
+        scene_clips = build_scene_background_clips(
+            scheme=scheme,
+            scene=sc,
+            scene_idx=idx,
+            used_clip_ids=used_clip_ids,
+            public_dest_dir="public/dastawez_broll"
+        )
 
         scene_media = {}
         if scene_img:
             scene_media["official_image_path"] = scene_img.get("public_path")
             scene_media["official_image_title"] = scene_img.get("title")
             scene_media["attribution"] = scene_img.get("attribution", "Wikimedia Commons (Public Domain)")
-        if scene_broll:
-            scene_media["broll_video_path"] = scene_broll.get("public_path")
+
+        scene_media["background_clips"] = scene_clips
+        if scene_clips and scene_clips[0].get("video_path"):
+            scene_media["broll_video_path"] = scene_clips[0]["video_path"]
+        elif default_broll:
+            scene_media["broll_video_path"] = default_broll.get("public_path")
 
         sc["visual_media"] = scene_media
 

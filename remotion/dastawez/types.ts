@@ -34,6 +34,7 @@ export interface SceneVisualMedia {
   attribution?: string;
   media_type?: "image" | "video";
   badge_label?: string;
+  background_clips?: BackgroundClip[];
 }
 
 export interface DastawezScene {
@@ -81,6 +82,9 @@ export interface DastawezScene {
   duration_frames_30fps: number;
   phrases?: Phrase[];
   word_timings?: WordTiming[];
+  hero_stat?: string;
+  hero_badge?: string;
+  action_chips?: string[];
 }
 
 export interface DastawezShowProps {

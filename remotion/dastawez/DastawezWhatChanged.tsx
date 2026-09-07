@@ -1,7 +1,7 @@
 import React from "react";
-import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { WhatChangedData, EvidenceMetadata, SceneVisualMedia } from "./types";
-import { DastawezMediaCard } from "./DastawezMediaCard";
+import { DastawezTopHud } from "./DastawezTopHud";
 
 interface DastawezWhatChangedProps {
   schemeName: string;
@@ -41,450 +41,222 @@ export const DastawezWhatChanged: React.FC<DastawezWhatChangedProps> = ({
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const cameraScale = interpolate(frame, [0, 900], [1.0, 1.02], {
-    extrapolateRight: "clamp",
-  });
-
-  const beat1Spring = spring({ frame, fps, delay: 2, config: { damping: 14, stiffness: 110 } });
-  const beat2Spring = spring({ frame, fps, delay: 14, config: { damping: 14, stiffness: 95 } });
-  const beat3Spring = spring({ frame, fps, delay: 28, config: { damping: 14, stiffness: 95 } });
-
   const domain =
     officialPortalDomain ||
-    (portalUrl ? portalUrl.replace("https://", "").replace("http://", "").split("/")[0] : "gov.in");
+    (portalUrl ? portalUrl.replace("https://", "").replace("http://", "").split("/")[0] : "india.gov.in");
 
-  const oldRule = whatChanged?.old_rule || "पहले सामान्य नियमों के तहत सुविधा चालू थी।";
-  const newRule = whatChanged?.new_rule || "नया सरकारी निर्देश जारी किया गया है।";
-  const deadline = whatChanged?.deadline || "अंतिम तिथि से पूर्व सत्यापन आवश्यक";
-  const reason = whyChanged || "फर्जी लाभार्थियों की रोकथाम और पात्र नागरिकों तक 100% शत-प्रतिशत लाभ पहुंचाने हेतु।";
+  const hudSpring = spring({ frame, fps, delay: 2, config: { damping: 14, stiffness: 120 } });
+  const cardSpring = spring({ frame, fps, delay: 10, config: { damping: 12, stiffness: 100 } });
+  const deadlineSpring = spring({ frame, fps, delay: 18, config: { damping: 12, stiffness: 100 } });
 
-  const imgPath = visualMedia?.official_image_path || officialImagePath;
-  const imgTitle = visualMedia?.official_image_title || officialImageTitle;
-  const vidPath = visualMedia?.broll_video_path || brollVideoPath;
-  const mediaAttr = visualMedia?.attribution || attribution;
+  const oldRule = whatChanged?.old_rule || "पहले सामान्य प्रक्रिया के तहत सुविधा उपलब्ध थी।";
+  const newRule = whatChanged?.new_rule || "अब नए सरकारी आदेश के तहत ऑनलाइन सत्यापन और बायोमेट्रिक अनिवार्य कर दिया गया है।";
+  const deadline = whatChanged?.deadline || "समय सीमा के भीतर प्रक्रिया पूर्ण करना आवश्यक";
 
   return (
     <div
       style={{
-        width: 1920,
-        height: 1080,
+        width: "100%",
+        height: "100%",
         position: "relative",
-        overflow: "hidden",
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        padding: "36px 64px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        boxSizing: "border-box",
+        pointerEvents: "none",
+        zIndex: 10,
       }}
     >
-      {/* Full-Screen Container (Top 36px to Bottom 96px) */}
+      {/* 1. Top Meta HUD */}
+      <div style={{ transform: `translateY(${(1 - hudSpring) * -20}px)`, opacity: hudSpring }}>
+        <DastawezTopHud
+          schemeName={schemeName}
+          domain={domain}
+          urgencyBadge="नया सरकारी नियम 2026"
+          ministry={ministry}
+          actIndex={currentActIndex}
+          totalActs={totalActs}
+          actTitle="नियम में क्या बदला?"
+        />
+      </div>
+
+      {/* 2. Floating Split Comparison HUD */}
       <div
         style={{
-          position: "absolute",
-          top: 36,
-          bottom: 104,
-          left: 56,
-          right: 56,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          transform: `scale(${cameraScale})`,
+          display: "grid",
+          gridTemplateColumns: "1fr 1.15fr",
+          gap: 36,
+          alignItems: "stretch",
+          flex: 1,
+          marginTop: 24,
+          marginBottom: 24,
+          transform: `translateY(${(1 - cardSpring) * 30}px)`,
+          opacity: cardSpring,
         }}
       >
-        {/* Sleek Integrated Top Meta-Bar */}
+        {/* Left: Old Rule Card (Muted Amber/Red Glass) */}
         <div
           style={{
+            background: "rgba(11, 17, 32, 0.88)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            border: "1.5px solid rgba(244, 63, 94, 0.35)",
+            borderRadius: 24,
+            padding: "32px 36px",
             display: "flex",
-            alignItems: "center",
+            flexDirection: "column",
             justifyContent: "space-between",
-            transform: `translateY(${(1 - beat1Spring) * -14}px)`,
-            opacity: beat1Spring,
+            boxShadow: "0 20px 50px rgba(0, 0, 0, 0.6)",
           }}
         >
-          {/* Left: Brand + Official Portal */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                background: "rgba(255, 255, 255, 0.94)",
-                padding: "6px 14px",
-                borderRadius: 12,
-                border: "1px solid rgba(2, 132, 199, 0.25)",
-                boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
-              }}
-            >
-              <div
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <span
                 style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 6,
-                  background: "linear-gradient(135deg, #ea580c, #f97316)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#fff",
-                  fontWeight: 900,
+                  background: "rgba(244, 63, 94, 0.2)",
+                  border: "1px solid rgba(244, 63, 94, 0.6)",
+                  color: "#fda4af",
                   fontSize: 13,
+                  fontWeight: 900,
+                  padding: "5px 12px",
+                  borderRadius: 10,
+                  letterSpacing: 0.8,
                 }}
               >
-                द
-              </div>
-              <span style={{ fontSize: 15, fontWeight: 900, color: "#0f172a" }}>@iDastawez</span>
+                🔴 पहले क्या नियम था
+              </span>
             </div>
-
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                background: "rgba(238, 242, 255, 0.95)",
-                border: "1px solid rgba(99, 102, 241, 0.3)",
-                padding: "6px 14px",
-                borderRadius: 12,
-                fontSize: 13,
-                fontWeight: 800,
-                color: "#3730a3",
+                fontSize: 22,
+                fontWeight: 700,
+                color: "#cbd5e1",
+                lineHeight: 1.5,
               }}
             >
-              <span>🏛️</span>
-              <span>{domain}</span>
-            </div>
-
-            <div
-              style={{
-                background: "rgba(2, 132, 199, 0.12)",
-                border: "1px solid rgba(2, 132, 199, 0.3)",
-                color: "#0369a1",
-                padding: "6px 14px",
-                borderRadius: 12,
-                fontSize: 13,
-                fontWeight: 800,
-              }}
-            >
-              ⚖️ नियमों में आधिकारिक संशोधन
+              {oldRule}
             </div>
           </div>
 
-          {/* Right: Step Indicator */}
           <div
             style={{
+              fontSize: 13,
+              color: "#64748b",
+              borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+              paddingTop: 12,
+              marginTop: 16,
+            }}
+          >
+            ❌ पुरानी व्यवस्था अब अमान्य
+          </div>
+        </div>
+
+        {/* Right: New Directive Card (Luminous Emerald/Cyan Glass) */}
+        <div
+          style={{
+            background: "rgba(11, 17, 32, 0.88)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            border: "2px solid rgba(16, 185, 129, 0.5)",
+            borderRadius: 24,
+            padding: "32px 36px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            boxShadow: "0 24px 60px rgba(0, 0, 0, 0.65), 0 0 30px rgba(16, 185, 129, 0.15)",
+          }}
+        >
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <span
+                style={{
+                  background: "rgba(16, 185, 129, 0.2)",
+                  border: "1px solid rgba(16, 185, 129, 0.6)",
+                  color: "#6ee7b7",
+                  fontSize: 13,
+                  fontWeight: 900,
+                  padding: "5px 12px",
+                  borderRadius: 10,
+                  letterSpacing: 0.8,
+                }}
+              >
+                🟢 2026 में क्या बदला (नया नियम)
+              </span>
+            </div>
+            <div
+              style={{
+                fontSize: 24,
+                fontWeight: 800,
+                color: "#f8fafc",
+                lineHeight: 1.5,
+              }}
+            >
+              {newRule}
+            </div>
+          </div>
+
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 700,
+              color: "#34d399",
+              borderTop: "1px solid rgba(16, 185, 129, 0.2)",
+              paddingTop: 12,
+              marginTop: 16,
               display: "flex",
               alignItems: "center",
               gap: 8,
-              background: "rgba(255, 255, 255, 0.94)",
-              padding: "6px 16px",
-              borderRadius: 12,
-              border: "1px solid rgba(2, 132, 199, 0.2)",
-              boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
             }}
           >
-            <span style={{ fontSize: 13, fontWeight: 900, color: "#0284c7" }}>
-              भाग {currentActIndex}/{totalActs}
-            </span>
-            <span style={{ fontSize: 12, color: "#94a3b8" }}>•</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#334155" }}>
-              नियमों में क्या बदला (नया बनाम पुराना)
-            </span>
+            <span>✅</span>
+            <span>नया आदेश आधिकारिक पोर्टल पर लागू</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Floating Deadline & Consequence HUD Ribbon */}
+      <div
+        style={{
+          transform: `translateY(${(1 - deadlineSpring) * 20}px)`,
+          opacity: deadlineSpring,
+          background: "linear-gradient(90deg, rgba(225, 29, 72, 0.25) 0%, rgba(15, 23, 42, 0.92) 30%, rgba(15, 23, 42, 0.92) 70%, rgba(225, 29, 72, 0.25) 100%)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          border: "1.5px solid rgba(244, 63, 94, 0.5)",
+          borderRadius: 20,
+          padding: "16px 36px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          boxShadow: "0 14px 40px rgba(0, 0, 0, 0.5)",
+          marginBottom: 50,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <span style={{ fontSize: 24 }}>⏰</span>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#fca5a5", textTransform: "uppercase" }}>
+              अंतिम तिथि / समय-सीमा (DEADLINE)
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "#ffffff" }}>
+              {deadline}
+            </div>
           </div>
         </div>
 
-        {/* Section Headline */}
         <div
           style={{
-            marginTop: 10,
-            marginBottom: 10,
-            transform: `translateY(${(1 - beat1Spring) * 12}px)`,
-            opacity: beat1Spring,
+            background: "rgba(225, 29, 72, 0.3)",
+            border: "1px solid rgba(244, 63, 94, 0.6)",
+            color: "#fecdd3",
+            padding: "8px 20px",
+            borderRadius: 14,
+            fontSize: 14,
+            fontWeight: 800,
           }}
         >
-          <h1
-            style={{
-              fontSize: 38,
-              fontWeight: 900,
-              lineHeight: 1.25,
-              color: "#0f172a",
-              margin: 0,
-              letterSpacing: "-0.5px",
-            }}
-          >
-            पहले क्या था और अब 2026 में क्या नया नियम लागू हुआ है?
-          </h1>
-        </div>
-
-        {/* 4-Card Comparative Dashboard Grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.1fr 1.2fr 1fr 1.15fr",
-            gap: 20,
-            flex: 1,
-            maxHeight: 570,
-            transform: `translateY(${(1 - beat2Spring) * 16}px)`,
-            opacity: beat2Spring,
-          }}
-        >
-          {/* Card 1: Old Rule (Soft Red Glass) */}
-          <div
-            style={{
-              background: "rgba(254, 242, 242, 0.95)",
-              border: "1.5px solid rgba(248, 113, 113, 0.4)",
-              borderRadius: 22,
-              padding: "24px 24px",
-              boxShadow: "0 14px 34px rgba(239, 68, 68, 0.06)",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: "#fee2e2",
-                  color: "#b91c1c",
-                  padding: "4px 12px",
-                  borderRadius: 8,
-                  fontSize: 12,
-                  fontWeight: 900,
-                  letterSpacing: 0.5,
-                }}
-              >
-                <span>✕</span>
-                <span>पहले का पुराना नियम (व्यवस्था)</span>
-              </div>
-
-              <div
-                style={{
-                  fontSize: 21,
-                  fontWeight: 700,
-                  color: "#334155",
-                  lineHeight: 1.5,
-                  marginTop: 14,
-                }}
-              >
-                {oldRule}
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: "rgba(255, 255, 255, 0.85)",
-                border: "1px solid rgba(248, 113, 113, 0.25)",
-                padding: "8px 12px",
-                borderRadius: 10,
-                fontSize: 12,
-                fontWeight: 700,
-                color: "#991b1b",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-              }}
-            >
-              <span>⚠️</span>
-              <span>पूर्व व्यवस्था अब समाप्त / संशोधित</span>
-            </div>
-          </div>
-
-          {/* Card 2: New 2026 Rule (Luminous Emerald Glass) */}
-          <div
-            style={{
-              background: "linear-gradient(150deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 253, 244, 0.94) 100%)",
-              border: "2.5px solid rgba(16, 185, 129, 0.6)",
-              borderRadius: 22,
-              padding: "24px 26px",
-              boxShadow: "0 18px 42px rgba(16, 185, 129, 0.12), 0 0 16px rgba(16, 185, 129, 0.1)",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: "#d1fae5",
-                  color: "#047857",
-                  padding: "4px 12px",
-                  borderRadius: 8,
-                  fontSize: 12,
-                  fontWeight: 900,
-                  letterSpacing: 0.5,
-                }}
-              >
-                <span>✓</span>
-                <span>अब 2026 का नया नियम (लागू)</span>
-              </div>
-
-              <div
-                style={{
-                  fontSize: 22,
-                  fontWeight: 900,
-                  color: "#064e3b",
-                  lineHeight: 1.45,
-                  marginTop: 14,
-                }}
-              >
-                {newRule}
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: "rgba(255, 255, 255, 0.9)",
-                border: "1px solid rgba(16, 185, 129, 0.3)",
-                padding: "8px 12px",
-                borderRadius: 10,
-                fontSize: 12,
-                fontWeight: 800,
-                color: "#059669",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-              }}
-            >
-              <span>🔒</span>
-              <span>समयबद्ध सत्यापन अनिवार्य</span>
-            </div>
-          </div>
-
-          {/* Card 3: Why It Changed (Royal Blue Glass) */}
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.95)",
-              border: "1.5px solid rgba(2, 132, 199, 0.3)",
-              borderRadius: 22,
-              padding: "24px 24px",
-              boxShadow: "0 14px 34px rgba(15, 23, 42, 0.06)",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: "rgba(2, 132, 199, 0.12)",
-                  color: "#0284c7",
-                  padding: "4px 12px",
-                  borderRadius: 8,
-                  fontSize: 12,
-                  fontWeight: 900,
-                  letterSpacing: 0.5,
-                }}
-              >
-                <span>💡</span>
-                <span>नियम बदलने का मुख्य कारण</span>
-              </div>
-
-              <div
-                style={{
-                  fontSize: 18,
-                  fontWeight: 700,
-                  color: "#1e293b",
-                  lineHeight: 1.5,
-                  marginTop: 14,
-                }}
-              >
-                {reason}
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: "#f0f9ff",
-                border: "1px solid #bae6fd",
-                padding: "8px 12px",
-                borderRadius: 10,
-                fontSize: 12,
-                fontWeight: 700,
-                color: "#0369a1",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-              }}
-            >
-              <span>⚡</span>
-              <span>100% पारदर्शिता एवं डायरेक्ट ट्रांसफर</span>
-            </div>
-          </div>
-
-          {/* Card 4: Dedicated Visual Media Card */}
-          <DastawezMediaCard
-            imagePath={imgPath}
-            videoPath={vidPath}
-            title={imgTitle || "सत्यापन एवं सरकारी प्रक्रिया"}
-            attribution={mediaAttr || "Wikimedia / Govt Source"}
-            badgeLabel="📸 नियम सत्यापन रिकॉर्ड"
-            mediaType="image"
-            style={{
-              height: "100%",
-            }}
-            fallbackIcon="⚖️"
-            fallbackTitle="आधिकारिक नियम संशोधन अभिलेख"
-          />
-        </div>
-
-        {/* Bottom Saffron Deadline & Urgency Banner */}
-        <div
-          style={{
-            marginTop: 14,
-            background: "rgba(255, 247, 237, 0.96)",
-            border: "1.5px solid rgba(249, 115, 22, 0.45)",
-            borderRadius: 16,
-            padding: "14px 24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 8px 24px rgba(249, 115, 22, 0.08)",
-            transform: `translateY(${(1 - beat3Spring) * 10}px)`,
-            opacity: beat3Spring,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                background: "linear-gradient(135deg, #ea580c, #f97316)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 18,
-                color: "#ffffff",
-                boxShadow: "0 2px 8px rgba(234, 88, 12, 0.3)",
-              }}
-            >
-              ⏰
-            </div>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 800, color: "#9a3412", textTransform: "uppercase" }}>
-                अंतिम तिथि एवं जरूरी निर्देश (OFFICIAL DEADLINE)
-              </div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: "#7c2d12" }}>
-                {deadline}
-              </div>
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: "#ffffff",
-              border: "1px solid rgba(249, 115, 22, 0.3)",
-              padding: "6px 14px",
-              borderRadius: 8,
-              fontSize: 12,
-              fontWeight: 700,
-              color: "#ea580c",
-            }}
-          >
-            समय पर सत्यापन न होने पर लाभ रुक सकता है
-          </div>
+          ⚠️ लापरवाही पर सरकारी लाभ रोका जा सकता है
         </div>
       </div>
     </div>
