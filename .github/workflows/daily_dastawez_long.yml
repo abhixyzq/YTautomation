@@ -29,6 +29,14 @@ on:
         required: false
         type: boolean
         default: false
+      engine:
+        description: 'Render Engine (moviepy = 2-3 min ultra-fast, remotion = browser)'
+        required: false
+        type: choice
+        default: 'moviepy'
+        options:
+          - moviepy
+          - remotion
 
 jobs:
   build-and-publish-long:
@@ -83,6 +91,7 @@ jobs:
       - name: 🎬 Render iDastawez 16:9 Documentary & Auto-Publish
         env:
           INPUT_SCHEME: ${{ inputs.scheme }}
+          INPUT_ENGINE: ${{ inputs.engine }}
           INPUT_PUBLISH: ${{ inputs.publish }}
           INPUT_PRIVACY: ${{ inputs.privacy }}
           INPUT_FORCE: ${{ inputs.force }}
@@ -90,6 +99,10 @@ jobs:
           ARGS=()
           
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ -n "$INPUT_ENGINE" ]; then
+              ARGS+=(--engine "$INPUT_ENGINE")
+            fi
+
             if [ -n "$INPUT_SCHEME" ]; then
               ARGS+=(--scheme "$INPUT_SCHEME")
             fi
@@ -104,8 +117,8 @@ jobs:
               ARGS+=(--render)
             fi
           else
-            # Scheduled daily autonomous 16:9 documentary at 8:00 AM IST
-            ARGS+=(--render --upload --privacy public)
+            # Scheduled daily autonomous 16:9 documentary at 8:00 AM IST (Ultra-fast MoviePy engine)
+            ARGS+=(--engine moviepy --render --upload --privacy public)
           fi
           
           echo "Executing: python run_dastawez.py" "${ARGS[@]}"

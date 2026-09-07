@@ -24,13 +24,13 @@ on:
         required: false
         default: ''
       engine:
-        description: 'Render Engine for Shorts (Remotion vs MoviePy)'
+        description: 'Render Engine (moviepy = 2-3 min ultra-fast, remotion = browser)'
         required: false
         type: choice
-        default: 'remotion'
+        default: 'moviepy'
         options:
-          - remotion
           - moviepy
+          - remotion
       publish:
         description: 'Publish directly to @iDastawez on YouTube'
         required: true
@@ -114,6 +114,8 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             if [ "$INPUT_FORMAT" = "short" ]; then
               ARGS+=(--shorts --engine "$INPUT_ENGINE")
+            else
+              ARGS+=(--engine "$INPUT_ENGINE")
             fi
             
             if [ -n "$INPUT_SCHEME" ]; then
@@ -131,7 +133,7 @@ jobs:
             fi
           else
             # Scheduled daily autonomous run (Defaults to Short 9:16 for high morning engagement)
-            ARGS+=(--shorts --engine remotion --render --upload --privacy public)
+            ARGS+=(--shorts --engine moviepy --render --upload --privacy public)
           fi
           
           echo "Executing: python run_dastawez.py" "${ARGS[@]}"

@@ -37,7 +37,7 @@ def main():
     parser.add_argument("--connect-youtube", action="store_true", help="Authenticate and connect @iDastawez YouTube channel")
     parser.add_argument("--shorts", action="store_true", help="Generate viral 9:16 vertical Short instead of long documentary")
     parser.add_argument("--mode", type=str, default=None, choices=["short", "long"], help="Video format mode: 'short' (9:16) or 'long' (16:9)")
-    parser.add_argument("--engine", type=str, default="remotion", choices=["remotion", "moviepy"], help="Rendering engine for Shorts: 'remotion' (default) or 'moviepy'")
+    parser.add_argument("--engine", type=str, default="moviepy", choices=["moviepy", "remotion"], help="Rendering engine: 'moviepy' (ultra-fast 2-min FFmpeg, default) or 'remotion' (browser React)")
     parser.add_argument("--upload", action="store_true", help="Upload the rendered video directly to YouTube")
     parser.add_argument("--privacy", type=str, default="public", choices=["public", "unlisted", "private"], help="YouTube privacy status")
 
@@ -124,7 +124,8 @@ def main():
             render_thumbnail=True,
             auto_upload=args.upload,
             privacy_status=args.privacy,
-            force=args.force
+            force=args.force,
+            engine=args.engine
         )
 
 

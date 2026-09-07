@@ -35,7 +35,8 @@ def build_daily_dastawez_video(
     render_thumbnail: bool = True,
     auto_upload: bool = False,
     privacy_status: str = "public",
-    force: bool = False
+    force: bool = False,
+    engine: str = "moviepy"
 ) -> Dict[str, Any]:
     """
     Executes the complete daily episode pipeline:
@@ -171,20 +172,37 @@ def build_daily_dastawez_video(
     # 5. Video Composition & Rendering (1920x1080 Landscape)
     video_output_path = os.path.join(episode_dir, "final_explainer_1080p.mp4")
     if render_video:
-        print("\n[Step 5] Rendering Full 1080p Hindi Video with Remotion...")
-        clean_video_props = remotion_props_path.replace("\\", "/")
-        video_cmd = f'npx remotion render remotion/index.ts DastawezLandscape "{video_output_path}" --props="{clean_video_props}" --public-dir=public --concurrency=2 --gl=swangle --image-format=jpeg --jpeg-quality=85 --pixel-format=yuv420p'
-        try:
-            print(f"         Executing Remotion render ({round(total_duration_sec, 1)}s)...")
-            subprocess.run(video_cmd, check=True, shell=True)
-            if os.path.exists(video_output_path) and os.path.getsize(video_output_path) > 1000:
-                size_mb = round(os.path.getsize(video_output_path) / (1024 * 1024), 2)
-                print(f"         ✓ Video successfully rendered: {video_output_path} ({size_mb} MB)")
-            else:
-                raise RuntimeError(f"Video file missing or 0 bytes: {video_output_path}")
-        except Exception as e:
-            print(f"         [Video Render Error] Render failed: {e}")
-            raise
+        print(f"\n[Step 5] Rendering Full 1080p Hindi Video ({engine} engine)...")
+        if engine == "moviepy":
+            try:
+                from dastawez.long_moviepy_compositor import build_dastawez_long_moviepy_video
+                build_dastawez_long_moviepy_video(
+                    script_data=script_data,
+                    voice_data=voice_data,
+                    selected_scheme=selected_scheme,
+                    scenes=remotion_scenes,
+                    output_path=video_output_path
+                )
+                if not os.path.exists(video_output_path) or os.path.getsize(video_output_path) < 1000:
+                    raise RuntimeError("MoviePy did not create valid video file")
+            except Exception as e:
+                print(f"         [MoviePy Warning] Render failed: {e}. Falling back to Remotion...")
+                engine = "remotion"
+
+        if engine == "remotion" and (not os.path.exists(video_output_path) or os.path.getsize(video_output_path) < 1000):
+            clean_video_props = remotion_props_path.replace("\\", "/")
+            video_cmd = f'npx remotion render remotion/index.ts DastawezLandscape "{video_output_path}" --props="{clean_video_props}" --public-dir=public --concurrency=1 --gl=swangle --image-format=jpeg --jpeg-quality=85 --pixel-format=yuv420p'
+            try:
+                print(f"         Executing Remotion render ({round(total_duration_sec, 1)}s)...")
+                subprocess.run(video_cmd, check=True, shell=True)
+                if os.path.exists(video_output_path) and os.path.getsize(video_output_path) > 1000:
+                    size_mb = round(os.path.getsize(video_output_path) / (1024 * 1024), 2)
+                    print(f"         ✓ Video successfully rendered with Remotion: {video_output_path} ({size_mb} MB)")
+                else:
+                    raise RuntimeError(f"Video file missing or 0 bytes: {video_output_path}")
+            except Exception as e:
+                print(f"         [Video Render Error] Render failed: {e}")
+                raise
 
     # 6. Save Complete YouTube Metadata Bundle
     yt_meta_path = os.path.join(episode_dir, "youtube_upload_metadata.json")
