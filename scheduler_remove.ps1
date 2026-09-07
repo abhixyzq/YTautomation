@@ -2,6 +2,8 @@
 # Run this script in PowerShell to delete local scheduled tasks
 
 Unregister-ScheduledTask -TaskName "AutonomousAITechShorts_Morning" -Confirm:$false -ErrorAction SilentlyContinue
+Unregister-ScheduledTask -TaskName "AutonomousAITech_LongEpisode" -Confirm:$false -ErrorAction SilentlyContinue
+Unregister-ScheduledTask -TaskName "AutonomousAITechShorts_Afternoon" -Confirm:$false -ErrorAction SilentlyContinue
 Unregister-ScheduledTask -TaskName "AutonomousAITechShorts_Evening" -Confirm:$false -ErrorAction SilentlyContinue
 
 Write-Host "==========================================================" -ForegroundColor Yellow

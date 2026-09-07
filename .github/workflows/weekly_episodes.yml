@@ -1,9 +1,9 @@
-name: 🎬 Bi-Weekly Tech Episodes (Wednesday & Sunday)
+name: 🎬 Autonomous Daily Tech Long Episodes (8 AM IST)
 
 on:
   schedule:
-    # Every Wednesday (3) and Sunday (0) at 13:53 UTC = 07:23 PM IST (Prime Evening Peak)
-    - cron: '53 13 * * 0,3'
+    # Daily at 02:15 UTC = 07:45 AM IST (12-minute render finishes and publishes right at 08:00 AM IST)
+    - cron: '15 2 * * *'
   workflow_dispatch:
     inputs:
       topic:
@@ -93,7 +93,7 @@ jobs:
               CMD="$CMD --dry-run"
             fi
           else
-            # Automated Wednesday/Sunday run
+            # Automated daily 8:00 AM IST run
             CMD="$CMD --duration 12 --publish"
           fi
           echo "🚀 Executing Episode Pipeline: $CMD"
