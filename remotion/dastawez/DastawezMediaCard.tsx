@@ -1,5 +1,5 @@
 import React from "react";
-import { Img, Video } from "remotion";
+import { Img, OffthreadVideo } from "remotion";
 import { resolveMediaSrc } from "./DastawezShow";
 
 interface DastawezMediaCardProps {
@@ -75,15 +75,13 @@ export const DastawezMediaCard: React.FC<DastawezMediaCardProps> = ({
       {/* Main Visual Display */}
       <div style={{ flex: 1, width: "100%", position: "relative", overflow: "hidden" }}>
         {showVideo ? (
-          <Video
+          <OffthreadVideo
             src={resolvedVideo!}
             style={{
               width: "100%",
               height: "100%",
               objectFit: "cover",
             }}
-            loop
-            muted
           />
         ) : hasImage ? (
           <Img

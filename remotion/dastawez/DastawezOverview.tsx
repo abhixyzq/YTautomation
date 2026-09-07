@@ -1,5 +1,5 @@
 import React from "react";
-import { interpolate, spring, useCurrentFrame, useVideoConfig, Img, Video } from "remotion";
+import { interpolate, spring, useCurrentFrame, useVideoConfig, Img, OffthreadVideo } from "remotion";
 import { EvidenceMetadata, SceneVisualMedia } from "./types";
 import { DastawezTopHud } from "./DastawezTopHud";
 import { resolveMediaSrc } from "./DastawezShow";
@@ -268,11 +268,9 @@ export const DastawezOverview: React.FC<DastawezOverviewProps> = ({
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             ) : resolvedVid ? (
-              <Video
+              <OffthreadVideo
                 src={resolvedVid}
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                loop
-                muted
               />
             ) : (
               <div

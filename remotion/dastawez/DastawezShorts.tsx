@@ -1,7 +1,7 @@
 import React from "react";
 import {
   Audio,
-  Video,
+  OffthreadVideo,
   Img,
   useCurrentFrame,
   useVideoConfig,
@@ -41,10 +41,9 @@ const ShortBackgroundClipItem: React.FC<{
       }}
     >
       {videoSrc ? (
-        <Video
+        <OffthreadVideo
           src={videoSrc}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          loop
         />
       ) : imageSrc ? (
         <Img

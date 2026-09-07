@@ -13,7 +13,6 @@ Config.setChromiumOpenGlRenderer("swangle");
 
 // Fast JPEG encoding for frame interchange between Chrome and FFmpeg (3x-5x faster than PNG)
 Config.setVideoImageFormat("jpeg");
-Config.setStillImageFormat("jpeg");
 Config.setJpegQuality(85);
 
 // Output configuration

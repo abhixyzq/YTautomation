@@ -1,5 +1,5 @@
 import React from "react";
-import { Audio, Video, staticFile, Sequence, useCurrentFrame, interpolate } from "remotion";
+import { Audio, OffthreadVideo, staticFile, Sequence, useCurrentFrame, interpolate } from "remotion";
 import { DastawezShowProps } from "./types";
 import { DastawezOverview } from "./DastawezOverview";
 import { DastawezWhatChanged } from "./DastawezWhatChanged";
@@ -70,7 +70,7 @@ const LongVideoBackgroundClipItem: React.FC<{
       }}
     >
       {videoSrc ? (
-        <Video
+        <OffthreadVideo
           src={videoSrc}
           style={{
             width: "100%",
@@ -79,8 +79,6 @@ const LongVideoBackgroundClipItem: React.FC<{
             transform: `scale(${zoom}) translateX(${panX}px)`,
             transformOrigin: "center center",
           }}
-          loop
-          muted
         />
       ) : (
         <div style={{ width: "100%", height: "100%", background: "#0b1120" }} />
