@@ -8,7 +8,10 @@ import sys
 import ssl
 import re
 import urllib.request
-import bs4
+try:
+    import bs4
+except ImportError:
+    bs4 = None
 from typing import List, Dict, Any, Optional
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -56,54 +59,71 @@ def fetch_all_sarkari_trends() -> Dict[str, List[Dict[str, Any]]]:
         with urllib.request.urlopen(req, timeout=12, context=ctx) as resp:
             html = resp.read().decode("utf-8", errors="ignore")
 
-        soup = bs4.BeautifulSoup(html, "html.parser")
+        if bs4:
+            soup = bs4.BeautifulSoup(html, "html.parser")
 
-        # Find category header blocks
-        for p in soup.find_all("p"):
-            text = p.get_text(strip=True)
-            matched_cat = None
-            text_lower = text.lower()
-            
-            if "job" in text_lower and len(text) < 25:
-                matched_cat = "Latest Jobs"
-            elif "important" in text_lower and len(text) < 25:
-                matched_cat = "Important"
-            elif "certificate" in text_lower and len(text) < 35:
-                matched_cat = "Certificate"
-            elif "admit" in text_lower and len(text) < 25:
-                matched_cat = "Admit Card"
-            elif "admission" in text_lower and len(text) < 25:
-                matched_cat = "Admission"
+            # Find category header blocks
+            for p in soup.find_all("p"):
+                text = p.get_text(strip=True)
+                matched_cat = None
+                text_lower = text.lower()
+                
+                if "job" in text_lower and len(text) < 25:
+                    matched_cat = "Latest Jobs"
+                elif "important" in text_lower and len(text) < 25:
+                    matched_cat = "Important"
+                elif "certificate" in text_lower and len(text) < 35:
+                    matched_cat = "Certificate"
+                elif "admit" in text_lower and len(text) < 25:
+                    matched_cat = "Admit Card"
+                elif "admission" in text_lower and len(text) < 25:
+                    matched_cat = "Admission"
 
-            if matched_cat and matched_cat in categorized_trends:
-                ul = p.find_next("ul")
-                if ul:
-                    items = ul.find_all("li")
-                    for li in items:
-                        a = li.find("a")
-                        if not a:
-                            continue
-                        title = a.get_text(strip=True)
-                        href = a.get("href", "").strip()
-                        if not title or len(title) < 5:
-                            continue
+                if matched_cat and matched_cat in categorized_trends:
+                    ul = p.find_next("ul")
+                    if ul:
+                        items = ul.find_all("li")
+                        for li in items:
+                            a = li.find("a")
+                            if not a:
+                                continue
+                            title = a.get_text(strip=True)
+                            href = a.get("href", "").strip()
+                            if not title or len(title) < 5:
+                                continue
 
-                        # Detect urgency / deadline hints
-                        is_urgent = bool(re.search(r"(last date|अंतिम तिथि|extended|deadline|closing|today)", title, re.IGNORECASE))
-                        is_new = bool(re.search(r"(online form|apply online|शुरू|new|declared)", title, re.IGNORECASE))
+                            # Detect urgency / deadline hints
+                            is_urgent = bool(re.search(r"(last date|अंतिम तिथि|extended|deadline|closing|today)", title, re.IGNORECASE))
+                            is_new = bool(re.search(r"(online form|apply online|शुरू|new|declared)", title, re.IGNORECASE))
 
-                        entry = {
-                            "title": title,
-                            "url": href,
-                            "category": matched_cat,
-                            "is_urgent": is_urgent,
-                            "is_new": is_new,
-                            "source": "SarkariResult.com"
-                        }
-                        
-                        # Avoid duplicates in section
-                        if not any(e["title"] == title for e in categorized_trends[matched_cat]):
-                            categorized_trends[matched_cat].append(entry)
+                            entry = {
+                                "title": title,
+                                "url": href,
+                                "category": matched_cat,
+                                "is_urgent": is_urgent,
+                                "is_new": is_new,
+                                "source": "SarkariResult.com"
+                            }
+                            
+                            # Avoid duplicates in section
+                            if not any(e["title"] == title for e in categorized_trends[matched_cat]):
+                                categorized_trends[matched_cat].append(entry)
+        else:
+            # Fallback regex parser if bs4 is not installed
+            for m in re.finditer(r'<a\s+[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', html, re.IGNORECASE):
+                href = m.group(1).strip()
+                raw_title = re.sub(r'<[^>]+>', '', m.group(2)).strip()
+                if len(raw_title) > 6 and not any(raw_title in e["title"] for e in categorized_trends["Important"]):
+                    is_urgent = bool(re.search(r"(last date|अंतिम तिथि|extended|deadline|closing|today)", raw_title, re.IGNORECASE))
+                    is_new = bool(re.search(r"(online form|apply online|शुरू|new|declared)", raw_title, re.IGNORECASE))
+                    categorized_trends["Important"].append({
+                        "title": raw_title,
+                        "url": href,
+                        "category": "Important",
+                        "is_urgent": is_urgent,
+                        "is_new": is_new,
+                        "source": "SarkariResult.com"
+                    })
 
     except Exception as e:
         print(f"[Sarkari Scraper Warning] Failed to scrape {SARKARI_RESULT_URL}: {e}")
