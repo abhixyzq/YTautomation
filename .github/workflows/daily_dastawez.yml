@@ -1,4 +1,4 @@
-name: 🇮🇳 Autonomous Daily iDastawez Explainer
+name: 🇮🇳 Autonomous Daily iDastawez Video Engine
 
 on:
   schedule:
@@ -6,12 +6,28 @@ on:
     - cron: '30 4 * * *'
   workflow_dispatch:
     inputs:
+      format:
+        description: 'Video Format (Short 9:16 vs Long 16:9 Documentary)'
+        required: true
+        type: choice
+        default: 'short'
+        options:
+          - short
+          - long
       scheme:
         description: 'Specific Scheme ID (leave empty for auto-priority top topic)'
         required: false
         default: ''
+      engine:
+        description: 'Render Engine for Shorts (Remotion vs MoviePy)'
+        required: false
+        type: choice
+        default: 'remotion'
+        options:
+          - remotion
+          - moviepy
       publish:
-        description: 'Publish directly to @iDastawez'
+        description: 'Publish directly to @iDastawez on YouTube'
         required: true
         type: boolean
         default: true
@@ -24,6 +40,11 @@ on:
           - public
           - unlisted
           - private
+      force:
+        description: 'Force run even if topic was covered previously'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build-and-publish-dastawez:
@@ -60,33 +81,54 @@ jobs:
       - name: 📦 Install Remotion Node Dependencies
         run: npm ci
 
-      - name: 🔐 Securely Inject @iDastawez OAuth Credentials
+      - name: 🔐 Securely Inject @iDastawez Credentials & API Keys
         env:
           CLIENT_SECRET_JSON: ${{ secrets.CLIENT_SECRET_JSON }}
           TOKEN_DASTAWEZ_JSON: ${{ secrets.TOKEN_DASTAWEZ_JSON }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: |
           echo "$CLIENT_SECRET_JSON" > client_secret.json
           echo "$TOKEN_DASTAWEZ_JSON" > token_dastawez.json
+          [ -n "$GEMINI_API_KEY" ] && echo "GEMINI_API_KEY=$GEMINI_API_KEY" >> .env || true
+          [ -n "$PEXELS_API_KEY" ] && echo "PEXELS_API_KEY=$PEXELS_API_KEY" >> .env || true
           echo "Verified credential files injected:"
           ls -l client_secret.json token_dastawez.json
 
-      - name: 🎬 Render iDastawez Explainer & Auto-Publish
+      - name: 🎬 Render iDastawez Video & Auto-Publish
         run: |
           CMD="python run_dastawez.py"
           
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.format }}" = "short" ]; then
+              CMD="$CMD --shorts --engine ${{ inputs.engine }}"
+            fi
+            
             if [ -n "${{ inputs.scheme }}" ]; then
               CMD="$CMD --scheme ${{ inputs.scheme }}"
             fi
+            
+            if [ "${{ inputs.force }}" = "true" ] || [ "${{ inputs.force }}" = "True" ]; then
+              CMD="$CMD --force"
+            fi
+            
             if [ "${{ inputs.publish }}" = "true" ] || [ "${{ inputs.publish }}" = "True" ]; then
               CMD="$CMD --render --upload --privacy ${{ inputs.privacy }}"
             else
-              CMD="$CMD --dry-run"
+              CMD="$CMD --render"
             fi
           else
-            # Scheduled daily autonomous run
-            CMD="$CMD --render --upload --privacy public"
+            # Scheduled daily autonomous run (Defaults to Short 9:16 for high morning engagement)
+            CMD="$CMD --shorts --engine remotion --render --upload --privacy public"
           fi
           
           echo "Executing: $CMD"
           eval $CMD
+
+      - name: 📤 Upload Generated Video & Scripts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iDastawez-artifacts
+          path: output/dastawez_episodes/
+          retention-days: 7
