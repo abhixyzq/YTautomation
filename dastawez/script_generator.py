@@ -10,6 +10,7 @@ import os
 import re
 import json
 from typing import Dict, Any, List, Optional
+from dastawez.voice_generator import clean_hindi_for_tts
 
 if hasattr(sys.stdout, "reconfigure"):
     try:
@@ -28,7 +29,7 @@ def clean_for_speech(text: str) -> str:
     # Remove formatting artifacts
     cleaned = re.sub(r"['\"`]", "", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
-    return cleaned
+    return clean_hindi_for_tts(cleaned)
 
 
 def clean_news_headline(headline: Optional[str]) -> str:

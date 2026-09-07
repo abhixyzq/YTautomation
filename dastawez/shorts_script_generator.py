@@ -19,6 +19,8 @@ from dotenv import load_dotenv
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 load_dotenv()
 
+from dastawez.voice_generator import clean_hindi_for_tts
+
 logger = logging.getLogger("dastawez.shorts_script")
 if not logger.handlers:
     h = logging.StreamHandler()
@@ -120,7 +122,12 @@ def generate_fallback_shorts_script(scheme: Dict[str, Any]) -> Dict[str, Any]:
     crisis = re.sub(r"[।\s]+$", "", crisis).strip() + "।"
     action = re.sub(r"[।\s]+$", "", action).strip() + "।"
 
-    full_script = f"{hook} {crisis} {action} {cta}"
+    hook = clean_hindi_for_tts(hook)
+    crisis = clean_hindi_for_tts(crisis)
+    action = clean_hindi_for_tts(action)
+    cta = clean_hindi_for_tts(cta)
+
+    full_script = f"{hook} {crisis} {action} {cta}".strip()
 
     badge_text, bg_col, border_col = get_dynamic_badge(scheme)
 
@@ -421,8 +428,12 @@ RULES FOR 100% MAXIMUM VIEWER RETENTION:
 1. Spoken Language: Natural, conversational Hindi (Hinglish spoken style like a sharp news anchor).
 2. NO bureaucratic robot language. Speak directly to the viewer ("अगर आपके पास राशन कार्ड है...").
 3. DO NOT read parenthetical English translations or acronym repetitions.
-4. Total length MUST be between 85 and 110 words so it speaks in exactly 38-44 seconds.
-5. Structure:
+4. CURRENCY & NUMBER PRONUNCIATION (CRITICAL):
+   - For money/amounts: Write natural Devanagari Hindi or standard ₹ amount (e.g. write '₹6.5 लाख' or 'साढ़े छह लाख रुपये', NEVER 'rs6.5 lakh' or English units).
+   - Write '₹12,000' or 'बारह हज़ार रुपये', '₹50,000' or 'पचास हज़ार रुपये'.
+   - Avoid raw English acronyms in speech (write 'एसएससी', 'एडमिट कार्ड', 'ऑनलाइन आवेदन', not 'SSC', 'Admit Card').
+5. Total length MUST be between 85 and 110 words so it speaks in exactly 38-44 seconds.
+6. Structure:
    - "hook" (15-20 words): Irresistible urgency or warning in the first 3 seconds.
    - "crisis" (25-30 words): What changed, new rules, or deadline.
    - "action" (30-35 words): What exact documents to carry and where to go (CSC, dealer, or portal).
@@ -458,6 +469,12 @@ Return STRICT JSON matching this schema:
         # Ensure full_script is constructed if missing
         if not data.get("full_script"):
             data["full_script"] = f"{data.get('hook', '')} {data.get('crisis', '')} {data.get('action', '')} {data.get('cta', '')}".strip()
+
+        # Clean all spoken dialogue through clean_hindi_for_tts to guarantee 100% natural pronunciation
+        data["full_script"] = clean_hindi_for_tts(data["full_script"])
+        for part in ["hook", "crisis", "action", "cta"]:
+            if data.get(part):
+                data[part] = clean_hindi_for_tts(data[part])
 
         data["storyboard"] = build_dastawez_storyboard(scheme, data)
         data["broll_queries"] = [sc["visual_query"] for sc in data["storyboard"]]
