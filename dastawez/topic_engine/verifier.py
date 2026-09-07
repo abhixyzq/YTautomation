@@ -62,6 +62,10 @@ MINISTRY_KEYWORD_MAP = [
     (r"(awas|आवास|pmay|घर)", "आवासन और शहरी कार्य मंत्रालय", "pmaymis.gov.in", "011-23063285"),
     (r"(shram|श्रम|eshram|मजदूर)", "श्रम एवं रोजगार मंत्रालय", "eshram.gov.in", "14434"),
     (r"(court|न्यायालय|civil court|attendant)", "विधि एवं न्याय मंत्रालय (ई-कोर्ट्स)", "e-courts.gov.in", "1800-11-0031"),
+    (r"(dsssb|delhi subordinate)", "दिल्ली अधीनस्थ सेवा चयन बोर्ड (DSSSB)", "dsssb.delhi.gov.in", "011-22370309"),
+    (r"(bpsc|बिहार लोक सेवा)", "बिहार लोक सेवा आयोग (BPSC)", "bpsc.bih.nic.in", "0612-2215651"),
+    (r"(uppsc|upprpb|यूपी पुलिस|up police)", "उत्तर प्रदेश भर्ती एवं प्रोन्नति बोर्ड (UPPRPB)", "uppbpb.gov.in", "0522-2235752"),
+    (r"(nta|neet|jee|cuet)", "राष्ट्रीय परीक्षा एजेंसी (NTA)", "nta.ac.in", "011-40759000"),
     (r"(bihar|बिहार)", "बिहार सरकार आधिकारिक पोर्टल", "bihar.gov.in", "1800-3456-112"),
 ]
 

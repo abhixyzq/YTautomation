@@ -51,12 +51,8 @@ def build_daily_dastawez_video(
 
     # 1. Topic Selection & Real-Time Prioritization
     if target_scheme_id:
-        matching = [s for s in VERIFIED_GOVT_SCHEMES if s["id"] == target_scheme_id]
-        if matching:
-            ranked_schemes = enrich_and_prioritize_schemes(matching, filter_covered=not force)
-            selected_scheme = ranked_schemes[0]
-        else:
-            raise ValueError(f"Scheme ID {target_scheme_id} not found in verified registry.")
+        from dastawez.topic_engine import resolve_target_scheme
+        selected_scheme = resolve_target_scheme(target_scheme_id, force=force)
     else:
         # Multi-Feed Real-Time Topic Discovery:
         # SarkariResult (#1) + OnlineUpdateSTM (#2) + Ministries + Boards + Google Trends + YouTube Search

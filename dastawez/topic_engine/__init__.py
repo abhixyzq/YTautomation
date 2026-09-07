@@ -5,6 +5,7 @@ SarkariResult (#1) + OnlineUpdateSTM (#2) + Govt Ministries + SSC/UPSC/RRB
 + Google Trends + YouTube Search -> Multi-Factor Scorer -> Official Verifier -> Evidence Pack
 """
 
+import re
 import logging
 from typing import Dict, Any, List, Optional
 
@@ -19,6 +20,66 @@ if not logger.handlers:
     h.setFormatter(logging.Formatter("[iDastawez Topic Engine] %(message)s"))
     logger.addHandler(h)
     logger.setLevel(logging.INFO)
+
+
+def resolve_target_scheme(target_input: str, force: bool = False) -> Dict[str, Any]:
+    """
+    Resolves any user-provided scheme string:
+    1. Exact or prefix ID match in VERIFIED_GOVT_SCHEMES
+    2. Substring match in VERIFIED_GOVT_SCHEMES
+    3. Match across live candidates from SarkariResult / OnlineUpdateSTM
+    4. Ad-hoc candidate synthesis for any arbitrary government topic or query
+    """
+    clean_input = str(target_input or "").strip()
+    if not clean_input:
+        return discover_daily_top_topic(filter_covered=not force)
+
+    # 1. Exact ID match
+    matching = [s for s in VERIFIED_GOVT_SCHEMES if s["id"] == clean_input]
+    if matching:
+        from dastawez.latest_tracker import enrich_and_prioritize_schemes
+        return enrich_and_prioritize_schemes(matching, filter_covered=not force)[0]
+
+    # 2. Substring in verified schemes
+    lower_in = clean_input.lower()
+    matching = [
+        s for s in VERIFIED_GOVT_SCHEMES 
+        if lower_in in s["id"].lower() 
+        or lower_in in s.get("scheme_name_hi", "").lower() 
+        or lower_in in s.get("title", "").lower()
+    ]
+    if matching:
+        from dastawez.latest_tracker import enrich_and_prioritize_schemes
+        return enrich_and_prioritize_schemes(matching, filter_covered=not force)[0]
+
+    # 3. Live search in scraped feeds
+    try:
+        from dastawez.topic_engine.scorer import collect_all_candidates
+        candidates = collect_all_candidates()
+        in_words = [w for w in re.split(r"[\s/|\-_]+", lower_in) if len(w) > 2]
+        for c in candidates:
+            c_title = (c.get("title", "") + " " + c.get("raw_title", "")).lower()
+            if in_words and all(w in c_title for w in in_words[:2]):
+                verified = verify_topic_official_source(c)
+                if verified.get("is_valid"):
+                    logger.info(f"Target matched live feed topic: {verified['title']}")
+                    return build_evidence_pack(verified)
+    except Exception as e:
+        logger.debug(f"Candidate match error: {e}")
+
+    # 4. Ad-hoc dynamic candidate creation
+    logger.info(f"Synthesizing targeted topic evidence pack for: '{clean_input}'")
+    ad_hoc_candidate = {
+        "title": clean_input,
+        "raw_title": clean_input,
+        "source": "Targeted Topic",
+        "url": "https://india.gov.in",
+        "category": "targeted_topic",
+        "is_urgent": True,
+        "base_score": 100
+    }
+    verified = verify_topic_official_source(ad_hoc_candidate)
+    return build_evidence_pack(verified)
 
 
 def discover_daily_top_topic(filter_covered: bool = True) -> Dict[str, Any]:

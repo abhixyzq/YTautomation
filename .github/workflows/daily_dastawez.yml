@@ -96,34 +96,41 @@ jobs:
           ls -l client_secret.json token_dastawez.json
 
       - name: 🎬 Render iDastawez Video & Auto-Publish
+        env:
+          INPUT_SCHEME: ${{ inputs.scheme }}
+          INPUT_FORMAT: ${{ inputs.format }}
+          INPUT_ENGINE: ${{ inputs.engine }}
+          INPUT_PUBLISH: ${{ inputs.publish }}
+          INPUT_PRIVACY: ${{ inputs.privacy }}
+          INPUT_FORCE: ${{ inputs.force }}
         run: |
-          CMD="python run_dastawez.py"
+          ARGS=()
           
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            if [ "${{ inputs.format }}" = "short" ]; then
-              CMD="$CMD --shorts --engine ${{ inputs.engine }}"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "$INPUT_FORMAT" = "short" ]; then
+              ARGS+=(--shorts --engine "$INPUT_ENGINE")
             fi
             
-            if [ -n "${{ inputs.scheme }}" ]; then
-              CMD="$CMD --scheme ${{ inputs.scheme }}"
+            if [ -n "$INPUT_SCHEME" ]; then
+              ARGS+=(--scheme "$INPUT_SCHEME")
             fi
             
-            if [ "${{ inputs.force }}" = "true" ] || [ "${{ inputs.force }}" = "True" ]; then
-              CMD="$CMD --force"
+            if [ "$INPUT_FORCE" = "true" ] || [ "$INPUT_FORCE" = "True" ]; then
+              ARGS+=(--force)
             fi
             
-            if [ "${{ inputs.publish }}" = "true" ] || [ "${{ inputs.publish }}" = "True" ]; then
-              CMD="$CMD --render --upload --privacy ${{ inputs.privacy }}"
+            if [ "$INPUT_PUBLISH" = "true" ] || [ "$INPUT_PUBLISH" = "True" ]; then
+              ARGS+=(--render --upload --privacy "$INPUT_PRIVACY")
             else
-              CMD="$CMD --render"
+              ARGS+=(--render)
             fi
           else
             # Scheduled daily autonomous run (Defaults to Short 9:16 for high morning engagement)
-            CMD="$CMD --shorts --engine remotion --render --upload --privacy public"
+            ARGS+=(--shorts --engine remotion --render --upload --privacy public)
           fi
           
-          echo "Executing: $CMD"
-          eval $CMD
+          echo "Executing: python run_dastawez.py" "${ARGS[@]}"
+          python run_dastawez.py "${ARGS[@]}"
 
       - name: 📤 Upload Generated Video & Scripts
         if: always()
