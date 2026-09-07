@@ -32,16 +32,25 @@ def clean_for_speech(text: str) -> str:
 
 
 def clean_news_headline(headline: Optional[str]) -> str:
-    """Extracts only the core Hindi headline, removing trailing English slugs and publisher names."""
+    """Extracts only the core clean headline, preventing mixed bilingual readouts."""
     if not headline:
         return ""
-    # Strip after " - " if followed by English characters
-    h = re.split(r'\s+-\s+[a-zA-Z]{3,}', headline)[0].strip()
-    # Strip parenthetical English
-    h = clean_for_speech(h)
-    # Strip trailing publisher dashes
-    h = re.sub(r"\s*-\s*(Jagran|Amar Ujala|Bhaskar|Livemint|NDTV|Aaj Tak|Prabhat Khabar).*$", "", h, flags=re.IGNORECASE).strip()
-    return h
+    # Strip common publisher names and junk suffixes
+    h = re.sub(r"\s*-\s*(Jagran|Amar Ujala|Bhaskar|Livemint|NDTV|Aaj Tak|Prabhat Khabar|Sarkari Result|Online Update STM).*$", "", headline, flags=re.IGNORECASE).strip()
+    
+    # If the headline contains both English and Hindi split by - or |, choose the Hindi clause to avoid reading both
+    if re.search(r"[\u0900-\u097F]", h):
+        parts = re.split(r"\s*[\-\|:]\s*", h)
+        hindi_parts = [p.strip() for p in parts if re.search(r"[\u0900-\u097F]", p) and len(p.strip()) > 5]
+        if hindi_parts:
+            h = hindi_parts[0]
+    else:
+        # English only - take primary part before colon/dash
+        parts = re.split(r"\s*[\-\|:]\s*", h)
+        if parts:
+            h = parts[0].strip()
+            
+    return clean_for_speech(h)
 
 
 def generate_dastawez_script(scheme: Dict[str, Any]) -> Dict[str, Any]:
@@ -70,20 +79,19 @@ def generate_dastawez_script(scheme: Dict[str, Any]) -> Dict[str, Any]:
         "helpline": helpline
     }
 
-    # Clean headline for natural inclusion
-    raw_news = scheme.get("latest_news_headline")
-    cleaned_news = clean_news_headline(raw_news)
-    news_dialogue_hook = f"ताज़ा अपडेट के अनुसार—{cleaned_news}। " if cleaned_news else ""
+    # Dynamic Contextual Subject Hook and Consequence
+    target_audience = clean_for_speech(scheme.get("target_audience", ""))
+    action_phrase = clean_for_speech(scheme.get("action_phrase", ""))
+    action_sentence = f"सरकार की तरफ से {action_phrase}। " if action_phrase else ""
 
     # Common Source Verification Dialogue (Natural, human, not robotic)
     source_dialogue = (
-        f"इस पूरी जानकारी की पुष्टि आप आधिकारिक सरकारी पोर्टल {portal_domain} पर जाकर खुद भी कर सकते हैं। "
+        f"इस पूरी जानकारी और आधिकारिक दिशा-निर्देशों की पुष्टि आप सरकारी पोर्टल {portal_domain} पर जाकर खुद भी कर सकते हैं। "
         f"यह पूरा अपडेट {ministry_clean} के आधिकारिक निर्देशों पर आधारित है। "
-        f"किसी भी सरकारी नियम की सही और सटीक जानकारी के लिए हमेशा सरकारी डोमेन जीओवी डॉट इन पर ही भरोसा करें। "
+        f"किसी भी सरकारी नियम की सही और सटीक जानकारी के लिए हमेशा आधिकारिक डोमेन जीओवी डॉट इन पर ही भरोसा करें। "
         f"सच्ची और निष्पक्ष नागरिक जानकारी के लिए आई दस्तावेज़ को सब्सक्राइब ज़रूर करें। धन्यवाद, जय हिन्द!"
     )
 
-    # Dynamic Contextual Subject Hook and Consequence
     if "पैन" in name_clean:
         topic_hook = "अगर आपके पास पैन कार्ड है या आप बैंक खाता और वित्तीय लेन-देन करते हैं"
         consequence = "आपका पैन कार्ड निष्क्रिय हो सकता है और बैंक या टैक्स से जुड़े काम रुक सकते हैं"
@@ -93,12 +101,15 @@ def generate_dastawez_script(scheme: Dict[str, Any]) -> Dict[str, Any]:
     elif "किसान" in name_clean:
         topic_hook = "अगर आप पीएम किसान सम्मान निधि योजना के लाभार्थी किसान हैं"
         consequence = "आपकी अगली किस्त का पैसा खाते में आने से रुक सकता है"
-    elif "स्कॉलरशिप" in name_clean:
-        topic_hook = "अगर आप सरकारी छात्रवृत्ति या स्कॉलरशिप के लिए आवेदन करने वाले हैं"
-        consequence = "आपकी छात्रवृत्ति का आवेदन रुक सकता है"
+    elif "स्कॉलरशिप" in name_clean or "क्रेडिट कार्ड" in name_clean:
+        topic_hook = "अगर आप विद्यार्थी हैं और उच्च शिक्षा या सरकारी छात्रवृत्ति के लिए आवेदन करना चाहते हैं"
+        consequence = "आपकी छात्रवृत्ति या आर्थिक सहायता का आवेदन रुक सकता है"
     elif "आयुष्मान" in name_clean:
         topic_hook = "अगर आपके परिवार में वरिष्ठ नागरिक हैं या आप मुफ्त इलाज योजना से जुड़े हैं"
         consequence = "मुफ्त इलाज के नए कार्ड का लाभ मिलने में रुकावट आ सकती है"
+    elif target_audience:
+        topic_hook = f"अगर आप {target_audience} में आते हैं"
+        consequence = "संबंधित परीक्षा या सरकारी सेवा में रुकावट आ सकती है"
     else:
         topic_hook = f"अगर आप {name_clean} से जुड़े हैं या इसका लाभ लेते हैं"
         consequence = "सरकारी सेवा या लाभ मिलने में रुकावट आ सकती है"
@@ -110,8 +121,8 @@ def generate_dastawez_script(scheme: Dict[str, Any]) -> Dict[str, Any]:
         act1_dialogue = (
             f"हेलो दोस्तों, आई दस्तावेज़ पर आपका स्वागत है। "
             f"{topic_hook}, तो सरकार का एक बहुत बड़ा और ज़रूरी नया अपडेट आया है। "
-            f"{news_dialogue_hook}"
-            f"सरकार ने सभी संबंधित नागरिकों के लिए यह प्रक्रिया पूरी करना ज़रूरी कर दिया है, ताकि आपका {benefit_clean} बिना किसी रुकावट के लगातार मिलता रहे। "
+            f"{action_sentence}"
+            f"यह आधिकारिक प्रक्रिया समय रहते पूरी करना अनिवार्य है, ताकि आपको {benefit_clean} समय पर प्राप्त हो सके। "
             f"आज के वीडियो में हम बहुत आसान भाषा में समझेंगे कि नया नियम क्या है, लास्ट डेट कब तक है, और आपको क्या करना होगा।"
         )
         scenes.append({
@@ -245,11 +256,11 @@ def generate_dastawez_script(scheme: Dict[str, Any]) -> Dict[str, Any]:
         # 1. Overview Hook (Friendly, clear, direct)
         act1_dialogue = (
             f"हेलो दोस्तों, आई दस्तावेज़ पर आपका स्वागत है। "
-            f"आज हम बात कर रहे हैं {ministry_clean} द्वारा चलाई जा रही {name_clean} के बारे में। "
-            f"{news_dialogue_hook}"
-            f"इस योजना के तहत पात्र नागरिकों को {benefit_clean} का सीधा लाभ दिया जा रहा है। "
-            f"{clean_for_speech(scheme.get('latest_official_update', ''))} "
-            f"आज के वीडियो में हम बहुत आसान भाषा में समझेंगे कि इस योजना का लाभ किन्हें मिलेगा, कौन से दस्तावेज़ चाहिए, और अप्लाई कैसे करना है।"
+            f"आज हम बात कर रहे हैं {name_clean} के बारे में। "
+            f"{topic_hook}, तो आपके लिए एक बहुत अच्छी खबर है। "
+            f"{action_sentence}"
+            f"इस योजना के तहत पात्र परिवारों को {benefit_clean} दी जा रही है। "
+            f"आज के वीडियो में हम बहुत आसान भाषा में समझेंगे कि इस योजना के नियम क्या हैं, किन्हें यह लाभ मिलेगा, कौन-कौन से ज़रूरी दस्तावेज़ लगेंगे, और आधिकारिक पोर्टल {portal_domain} पर आपको ऑनलाइन अप्लाई कैसे करना है।"
         )
         scenes.append({
             "scene_id": 1,
@@ -372,10 +383,11 @@ def generate_dastawez_script(scheme: Dict[str, Any]) -> Dict[str, Any]:
         })
 
     # SEO metadata
-    meta_title = f"{name_clean} 2026: {benefit_clean} | New Rules & Online Apply"
+    clean_short_title = re.sub(r"\s+202[0-9]", "", name_clean).strip()
+    meta_title = f"{clean_short_title} 2026: {benefit_clean} | New Rules & Online Apply"
     meta_description = (
-        f"{name_clean} 2026 के नए नियम, पात्रता, आवश्यक दस्तावेज और ऑनलाइन आवेदन की पूरी जानकारी। "
-        f"आधिकारिक पोर्टल {portal_domain} पर कैसे करें सत्यापन। "
+        f"{name_clean} के नए नियम, पात्रता, आवश्यक दस्तावेज़ और ऑनलाइन आवेदन की पूरी जानकारी। "
+        f"आधिकारिक पोर्टल {portal_domain} पर कैसे करें सत्यापन व ऑनलाइन आवेदन। "
         f"हेल्पलाइन: {helpline}। सच्ची और प्रामाणिक नागरिक जानकारी के लिए @iDastawez को सब्सक्राइब करें।"
     )
 

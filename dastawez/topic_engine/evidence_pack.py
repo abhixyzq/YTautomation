@@ -11,6 +11,67 @@ from typing import Dict, Any, List
 from dastawez.topic_engine.verifier import verify_topic_official_source
 
 
+def parse_clean_titles(raw_title: str) -> tuple[str, str]:
+    """
+    Separates mixed Hindi/English headlines and strips promotional suffixes
+    to prevent repetitive bilingual text in synthesized voiceovers.
+    """
+    junk_patterns = [
+        r"(?:online|ऑफलाइन)\s*apply.*$",
+        r"आवेदन\s*शुरू.*$",
+        r"यहाँ\s*से\s*करे\s*अप्लाई.*$",
+        r"मिलेगा\s*₹?[\d,]+.*$",
+        r"direct\s*link.*$",
+        r"last\s*date.*$",
+        r"new\s*update.*$",
+        r"apply\s*now.*$",
+        r"योग्यता,?\s*पात्रता.*$",
+        r"दस्तावेज\s*और\s*आवेदन.*$",
+        r"notification\s*out.*$",
+        r"online\s*form.*$",
+        r"admit\s*card.*$",
+        r"answer\s*key.*$"
+    ]
+    
+    parts = re.split(r"\s*[\-\|:\/]\s*", raw_title)
+    en_candidate = ""
+    hi_candidate = ""
+    
+    for p in parts:
+        p_strip = p.strip()
+        if not p_strip:
+            continue
+        has_hindi = bool(re.search(r"[\u0900-\u097F]", p_strip))
+        if has_hindi and not hi_candidate:
+            cleaned_h = p_strip
+            for jp in junk_patterns:
+                cleaned_h = re.sub(jp, "", cleaned_h, flags=re.IGNORECASE).strip()
+            if len(cleaned_h) >= 4:
+                hi_candidate = cleaned_h
+        elif not has_hindi and not en_candidate:
+            cleaned_e = p_strip
+            for jp in junk_patterns:
+                cleaned_e = re.sub(jp, "", cleaned_e, flags=re.IGNORECASE).strip()
+            if len(cleaned_e) >= 4:
+                en_candidate = cleaned_e
+
+    if not hi_candidate and not en_candidate:
+        base = raw_title
+        for jp in junk_patterns:
+            base = re.sub(jp, "", base, flags=re.IGNORECASE).strip()
+        hi_candidate = base
+        en_candidate = base
+    elif hi_candidate and not en_candidate:
+        en_candidate = hi_candidate
+    elif en_candidate and not hi_candidate:
+        hi_candidate = en_candidate
+
+    return hi_candidate.strip(" -|:"), en_candidate.strip(" -|:")
+
+
+from dastawez.topic_engine.distiller import distill_topic_context, extract_clean_names
+
+
 def build_evidence_pack(verified_topic: Dict[str, Any]) -> Dict[str, Any]:
     """
     Transforms a verified topic into a complete standard scheme data structure
@@ -19,87 +80,40 @@ def build_evidence_pack(verified_topic: Dict[str, Any]) -> Dict[str, Any]:
     # If the topic already has full pre-configured scheme_data (e.g. from static registry), merge it
     if "scheme_data" in verified_topic:
         base_scheme = dict(verified_topic["scheme_data"])
-        # Update with any live headline or priority signals
         if verified_topic.get("title"):
-            base_scheme["latest_news_headline"] = verified_topic["title"]
+            clean_h, _, _ = extract_clean_names(verified_topic["title"])
+            base_scheme["latest_news_headline"] = clean_h
         return base_scheme
 
     title = verified_topic.get("title", "")
-    ministry = verified_topic.get("ministry", "भारत सरकार (Government of India)")
     domain = verified_topic.get("official_portal_domain", "india.gov.in")
     portal_url = verified_topic.get("portal_url", f"https://{domain}")
-    helpline = verified_topic.get("helpline", "1967")
+    ministry = verified_topic.get("ministry", "भारत सरकार (Government of India)")
     notif_ref = verified_topic.get("notification_ref", "GOV/DIR/2026-PUB")
-    category = verified_topic.get("category", "सरकारी योजनाएं एवं नागरिक सेवाएं")
 
-    # Generate a clean scheme ID
-    clean_slug = re.sub(r"[^\w\s]", "", title).lower()
+    # Use smart semantic distiller to extract clean domain fields
+    distilled = distill_topic_context(title, domain)
+
+    clean_slug = re.sub(r"[^\w\s]", "", distilled["scheme_name_en"]).lower()
     clean_slug = re.sub(r"\s+", "_", clean_slug)[:45].strip("_")
+    clean_slug = re.sub(r"_202[0-9]$", "", clean_slug)
     scheme_id = f"auto_{clean_slug}_2026"
 
-    # Analyze vacancy / financial benefit hints
-    benefit_match = re.search(r"(\d+[\d,]*\s*(?:post|पद|लाख|रुपये|₹|scholarship|loan))", title, re.IGNORECASE)
-    if benefit_match:
-        benefit_highlight = f"कुल लाभ / विवरण: {benefit_match.group(1)}"
-    elif "loan" in title.lower() or "ऋण" in title:
-        benefit_highlight = "0% से कम ब्याज दर पर सरकारी शिक्षा ऋण / आर्थिक सहायता"
-    elif "scholarship" in title.lower() or "छात्रवृत्ति" in title:
-        benefit_highlight = "₹10,000 से ₹40,000 तक प्रत्यक्ष छात्रवृत्ति सहायता"
-    elif "pds" in title.lower() or "राशन" in title:
-        benefit_highlight = "मुफ्त मासिक राशन एवं पारदर्शी डिजिटल वितरण"
-    else:
-        benefit_highlight = "आधिकारिक सरकारी अधिसूचना व नागरिक अधिकार"
-
-    # What changed / Rules analysis
-    deadline_match = re.search(r"(last date|अंतिम तिथि|extended|closing|deadline)\s*[:\-]?\s*([^\,\;\|\n]+)", title, re.IGNORECASE)
-    deadline_text = deadline_match.group(0).strip() if deadline_match else "आधिकारिक पोर्टल पर अंतिम तिथि से पूर्व आवेदन करें"
-
-    what_changed = {
-        "old_rule": "पहले ऑफलाइन माध्यम या पुराने पोर्टल से आवेदन और सत्यापन होता था।",
-        "new_rule": f"अब आधिकारिक पोर्टल https://{domain} पर नया 2026 डिजिटल नियम लागू कर दिया गया है।",
-        "deadline": deadline_text
-    }
-
-    # Standardized Documents Checklist
-    documents = [
-        "मूल आधार कार्ड (सक्रिय मोबाइल नंबर से लिंक)",
-        "शैक्षणिक योग्यता प्रमाण पत्र व अंकतालिका",
-        "सक्रिय बैंक खाता पासबुक (आधार-डीबीटी लिंक)",
-        "हाल ही की पासपोर्ट साइज फोटो एवं निवास प्रमाण पत्र"
-    ]
-
-    # Standardized Application Steps
-    steps = [
-        {"step": 1, "title": "आधिकारिक पोर्टल खोलें", "desc": f"केवल https://{domain} पर जाकर आधिकारिक अधिसूचना पढ़ें और पंजीकरण करें।"},
-        {"step": 2, "title": "आधार e-KYC सत्यापन", "desc": "अपना आधार नंबर दर्ज कर मोबाइल OTP या बायोमेट्रिक से पहचान सत्यापित करें।"},
-        {"step": 3, "title": "फॉर्म एवं विवरण दर्ज करें", "desc": "आवश्यक व्यक्तिगत व शैक्षणिक जानकारी भरें और निर्धारित दस्तावेज अपलोड करें।"},
-        {"step": 4, "title": "रसीद एवं स्टेटस सुरक्षित रखें", "desc": "फाइनल सबमिट के बाद आवेदन संख्या (Application Number) और पावती रसीद प्रिंट कर लें।"}
-    ]
-
-    eligibility_yes = [
-        "भारत का कोई भी नागरिक जो निर्धारित आयु व योग्यता पूरी करता हो",
-        "वैध आधार कार्ड और सक्रिय बैंक खाता धारक",
-        "अधिसूचना में दी गई शर्तों के अनुसार पात्र सभी वर्ग"
-    ]
-
-    eligibility_no = [
-        "गलत या अधूरी जानकारी देने वाले आवेदक",
-        "अंतिम तिथि के बाद आवेदन करने वाले व्यक्ति",
-        "अपात्र व फर्जी तरीके से आवेदन करने वाले"
-    ]
-
     priority_groups = [
-        "ग्रामीण एवं वंचित वर्ग के नागरिक",
-        "दिव्यांगजन एवं महिला आवेदक",
-        "समय सीमा से पूर्व आवेदन करने वाले पात्र नागरिक"
+        "ग्रामीण एवं वंचित वर्ग के परिवार",
+        "दिव्यांगजन, वृद्ध एवं महिला मुखिया परिवार",
+        "समय सीमा से पूर्व ऑनलाइन आवेदन करने वाले पात्र नागरिक"
     ]
 
     evidence_pack = {
         "id": scheme_id,
-        "category": category,
-        "topic_type": "regulatory_deadline" if verified_topic.get("is_urgent") else "benefit_scheme",
-        "scheme_name_hi": title,
-        "scheme_name_en": title,
+        "category": distilled["category"],
+        "topic_type": distilled["topic_type"],
+        "scheme_name_hi": distilled["scheme_name_hi"],
+        "scheme_name_en": distilled["scheme_name_en"],
+        "short_name": distilled["short_name"],
+        "target_audience": distilled["target_audience"],
+        "action_phrase": distilled["action_phrase"],
         "ministry": ministry,
         "portal_name": f"{domain} Official Portal",
         "portal_url": portal_url,
@@ -107,19 +121,19 @@ def build_evidence_pack(verified_topic: Dict[str, Any]) -> Dict[str, Any]:
         "notification_ref": notif_ref,
         "last_verified_date": "सितंबर 2026",
         "source_citation": f"{ministry} - आधिकारिक सार्वजनिक सूचना",
-        "helpline": helpline,
-        "benefit_amount": benefit_highlight,
-        "benefit_summary": f"{title} के तहत आधिकारिक पोर्टल {domain} पर समय पर प्रक्रिया पूरी करना अनिवार्य है।",
-        "latest_official_update": f"सार्वजनिक अधिसूचना {notif_ref} के अनुसार प्रक्रिया सक्रिय है।",
-        "latest_news_headline": title,
-        "what_changed": what_changed,
-        "eligibility_yes": eligibility_yes,
-        "eligibility_no": eligibility_no,
+        "helpline": verified_topic.get("helpline") or distilled.get("helpline", "1967"),
+        "benefit_amount": distilled["benefit_amount"],
+        "benefit_summary": distilled["benefit_summary"],
+        "latest_official_update": f"{distilled['action_phrase']} (सार्वजनिक अधिसूचना {notif_ref})",
+        "latest_news_headline": distilled["scheme_name_hi"],
+        "what_changed": distilled["what_changed"],
+        "eligibility_yes": distilled["eligibility_yes"],
+        "eligibility_no": distilled["eligibility_no"],
         "priority_groups": priority_groups,
-        "documents_required": documents,
-        "application_steps": steps,
-        "official_warning": f"यह प्रक्रिया आधिकारिक पोर्टल https://{domain} पर पारदर्शी है। किसी भी अनधिकृत एजेंट या साइबर कैफे वाले को अतिरिक्त शुल्क न दें।",
-        "seo_keywords": [domain, "Online Apply 2026", "New Rules", "Eligibility", "Sarkari Yojana"],
+        "documents_required": distilled["documents_required"],
+        "application_steps": distilled["application_steps"],
+        "official_warning": distilled["official_warning"],
+        "seo_keywords": [domain, "Online Apply 2026", distilled["short_name"], "New Rules", "Sarkari Yojana"],
         "urgency_badge": "ताज़ा आधिकारिक निर्देश 2026",
         "source_feed": verified_topic.get("source", "Sarkari Result"),
         "raw_topic": verified_topic

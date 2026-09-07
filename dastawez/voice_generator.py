@@ -77,10 +77,16 @@ def clean_hindi_for_tts(text: str) -> str:
 
     # 7. Convert common Rupee representations
     text = re.sub(r"₹\s*5,00,000", "पाँच लाख रुपये", text)
+    text = re.sub(r"₹\s*4,00,000", "चार लाख रुपये", text)
+    text = re.sub(r"₹\s*1,20,000", "एक लाख बीस हज़ार रुपये", text)
+    text = re.sub(r"₹\s*50,000", "पचास हज़ार रुपये", text)
+    text = re.sub(r"₹\s*25,000", "पच्चीस हज़ार रुपये", text)
+    text = re.sub(r"₹\s*12,000", "बारह हज़ार रुपये", text)
+    text = re.sub(r"₹\s*10,000", "दस हज़ार रुपये", text)
     text = re.sub(r"₹\s*6,000", "छह हज़ार रुपये", text)
     text = re.sub(r"₹\s*2,000", "दो हज़ार रुपये", text)
-    text = re.sub(r"₹\s*10,000", "दस हज़ार रुपये", text)
     text = re.sub(r"₹\s*1,000", "एक हज़ार रुपये", text)
+    text = re.sub(r"₹\s*(\d+),(\d+)", r"\1\2 रुपये", text)
     text = re.sub(r"₹\s*(\d+)", r"\1 रुपये", text)
 
     # 8. Convert percentages
