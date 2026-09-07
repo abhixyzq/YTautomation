@@ -19,7 +19,10 @@ import json
 import shutil
 import subprocess
 import logging
+import warnings
 from typing import Dict, Any, List, Optional, Tuple
+
+warnings.filterwarnings("ignore", category=UserWarning, module="moviepy")
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import numpy as np
 import imageio_ffmpeg
@@ -108,10 +111,11 @@ def render_remotion_video(props_dict: Dict[str, Any], output_path: str) -> bool:
         "--pixel-format=yuv420p"
     ]
 
-    logger.info(f"Invoking Remotion render: {' '.join(cmd)}")
+    cmd_str = " ".join(f'"{arg}"' if " " in arg else arg for arg in cmd)
+    logger.info(f"Invoking Remotion render: {cmd_str}")
     try:
         res = subprocess.run(
-            cmd,
+            cmd_str,
             shell=True,
             check=False,
             capture_output=True,

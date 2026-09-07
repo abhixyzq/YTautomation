@@ -17,7 +17,10 @@ import os
 import sys
 import math
 import logging
+import warnings
 from typing import Dict, Any, List, Optional, Tuple
+
+warnings.filterwarnings("ignore", category=UserWarning, module="moviepy")
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 from moviepy import (
