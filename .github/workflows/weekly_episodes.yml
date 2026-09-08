@@ -79,7 +79,7 @@ jobs:
 
       - name: 🎬 Render 16:9 Landscape Episode & Publish to YouTube Only
         run: |
-          CMD="python main.py --mode long"
+          CMD="python main.py --mode long --channel tech"
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ -n "${{ inputs.topic }}" ]; then
               CMD="$CMD --topic \"${{ inputs.topic }}\""

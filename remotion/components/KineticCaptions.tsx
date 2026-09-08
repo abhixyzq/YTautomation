@@ -78,7 +78,7 @@ export const KineticCaptions: React.FC<KineticCaptionsProps> = ({
                 textShadow,
                 transform: `scale(${scale})`,
                 display: "inline-block",
-                fontFamily: "system-ui, -apple-system, sans-serif",
+                fontFamily: "'Noto Sans Devanagari', 'Nirmala UI', 'Segoe UI', system-ui, -apple-system, sans-serif",
                 letterSpacing: "0.5px",
               }}
             >

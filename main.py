@@ -39,40 +39,59 @@ from src.youtube_uploader import upload_short_to_youtube, upload_long_video_to_y
 from src.instagram_uploader import upload_reel_to_instagram
 
 
-def print_banner(mode: str = "short"):
+def print_banner(mode: str = "short", channel: str = "tech", language: str = "en"):
+    is_hi = language.lower() in ("hi", "hindi", "dastawez")
+    ch_name = "@iDastawez (Hindi)" if channel.lower() in ("dastawez", "idastawez") else "@TechShow (English)"
     if mode == "long":
-        banner = """
+        banner = f"""
 ========================================================================
    MIND-BENDING VISUAL EXPLAINER & DEEP DIVE (16:9 BROADCAST 1080P)
+   Target Channel: {ch_name} | Language: {'हिन्दी (HINDI)' if is_hi else 'ENGLISH'}
    Architecture: Veritasium + Lemmino + Think School (High-IQ Deep Dives)
 ========================================================================
 """
     else:
-        banner = """
+        banner = f"""
 ========================================================================
    CINEMATIC TECH DOCUMENTARY SHORTS PIPELINE (100% REAL 4K FOOTAGE)
+   Target Channel: {ch_name} | Language: {'हिन्दी (HINDI)' if is_hi else 'ENGLISH'}
    Architecture: Fireship / Vox Style (Zero Cheap Avatars, Broadcast Grade)
 ========================================================================
 """
     print(banner)
 
 
-def run_pipeline(dry_run: bool = True, custom_topic: str = None):
-    print_banner(mode="short")
+def run_pipeline(
+    dry_run: bool = True, 
+    custom_topic: str = None, 
+    channel: str = "tech", 
+    language: str = None,
+    story_override: dict = None
+):
+    channel_clean = channel.lower()
+    if language is None:
+        language = "hi" if channel_clean in ("dastawez", "idastawez", "hindi") else "en"
+    is_hindi = language.lower() in ("hi", "hindi", "dastawez")
+
+    print_banner(mode="short", channel=channel_clean, language=language)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # ---------------------------------------------------------
     # STEP 1: Trending Tech News Discovery & Duplicate Prevention
     # ---------------------------------------------------------
-    logger.info(">>> STEP 1: Scanning Hacker News, Reddit, and RSS for Trending Tech...")
-    if custom_topic:
+    if story_override:
+        story = story_override
+        logger.info(f">>> STEP 1: Using Shared Story for Dual Broadcast: {story.get('title')}")
+    elif custom_topic:
         story = {
             "title": custom_topic,
             "source": "Custom User Topic",
             "summary": custom_topic,
             "url": "https://news.ycombinator.com"
         }
+        logger.info(f">>> STEP 1: Custom User Topic: {custom_topic}")
     else:
+        logger.info(">>> STEP 1: Scanning Hacker News, Reddit, and RSS for Trending Tech...")
         stories = get_trending_tech_stories()
         if not stories:
             logger.error("No tech stories available. Exiting.")
@@ -87,26 +106,26 @@ def run_pipeline(dry_run: bool = True, custom_topic: str = None):
         import random
         # Pick from top fresh trending stories to guarantee variety across daily drops
         story = random.choice(fresh_stories[:min(5, len(fresh_stories))])
-        
-    logger.info(f"Selected Fresh Story: [{story['source']}] {story['title']}")
+        logger.info(f"Selected Fresh Story: [{story['source']}] {story['title']}")
 
     # ---------------------------------------------------------
-    # STEP 2: Script Generation (Gemini 1.5 Flash Free Tier)
+    # STEP 2: Script Generation (English or Hindi)
     # ---------------------------------------------------------
-    logger.info(">>> STEP 2: Generating Viral 35-45s Tech Script via Gemini...")
-    script_data = generate_tech_script(story)
+    logger.info(f">>> STEP 2: Generating Viral 35-45s Tech Script ({'Hindi' if is_hindi else 'English'})...")
+    script_data = generate_tech_script(story, language=language)
     logger.info(f"Video Title: {script_data['title']}")
     logger.info(f"Hook: {script_data.get('hook', '')}")
     logger.info(f"Full Script: {script_data['full_script']}")
 
     # ---------------------------------------------------------
-    # STEP 3: Neural Voice Synthesis (edge-tts)
+    # STEP 3: Neural Voice Synthesis (Brian for EN / Madhur for HI)
     # ---------------------------------------------------------
-    logger.info(">>> STEP 3: Synthesizing Studio Neural Audio via edge-tts...")
-    audio_temp_path = f"temp/speech_{timestamp}.mp3"
+    logger.info(f">>> STEP 3: Synthesizing Studio Neural Audio ({'hi-IN-MadhurNeural' if is_hindi else 'en-US-Brian'})...")
+    audio_temp_path = f"temp/speech_{channel_clean}_{timestamp}.mp3"
     voice_data = generate_voiceover(
         text=script_data["full_script"],
-        output_path=audio_temp_path
+        output_path=audio_temp_path,
+        language=language
     )
     logger.info(f"Voiceover Ready: {voice_data['duration']}s | Words: {len(voice_data['word_timings'])}")
 
@@ -114,7 +133,7 @@ def run_pipeline(dry_run: bool = True, custom_topic: str = None):
     # STEP 4: Video Compositing (Cyber Canvas + Avatar + Captions)
     # ---------------------------------------------------------
     logger.info(">>> STEP 4: Compositing 1080x1920 Vertical Short at 30 FPS...")
-    output_filename = f"output/Short_{timestamp}.mp4"
+    output_filename = f"output/Short_{channel_clean}_{timestamp}.mp4"
     final_video_path = build_shorts_video(
         story=script_data,
         voice_data=voice_data,
@@ -125,10 +144,10 @@ def run_pipeline(dry_run: bool = True, custom_topic: str = None):
     logger.info(f"Video Render Complete! Path: {final_video_path} ({file_size_mb:.2f} MB)")
 
     # ---------------------------------------------------------
-    # STEP 5: YouTube Publishing
+    # STEP 5: YouTube Publishing to Target Channel
     # ---------------------------------------------------------
     if not dry_run:
-        logger.info(">>> STEP 5A: Publishing Video Directly to YouTube...")
+        logger.info(f">>> STEP 5A: Publishing Video Directly to YouTube [{channel_clean.upper()}]...")
         publish_mode = os.getenv("PUBLISH_MODE", "PUBLIC")
         video_url = upload_short_to_youtube(
             video_path=final_video_path,
@@ -136,26 +155,28 @@ def run_pipeline(dry_run: bool = True, custom_topic: str = None):
             description=f"{script_data.get('hook', '')}\n\n{script_data.get('body', '')}\n\n{script_data.get('cta', '')}",
             tags=script_data.get("tags", ["Shorts", "Tech", "AI"]),
             privacy_status=publish_mode,
-            comment_text=script_data.get("cta")
+            comment_text=script_data.get("cta"),
+            channel=channel_clean
         )
         if video_url:
             logger.info(f"MISSION ACCOMPLISHED! YouTube Video URL: {video_url}")
         else:
-            logger.info(f"Video saved locally at {final_video_path}. Add client_secret.json to enable auto-upload.")
+            logger.info(f"Video saved locally at {final_video_path}.")
 
         # ---------------------------------------------------------
-        # STEP 5B: Instagram Reels Publishing (Optional, Auto-Detected)
+        # STEP 5B: Instagram Reels Publishing (Optional for tech)
         # ---------------------------------------------------------
-        logger.info(">>> STEP 5B: Checking Instagram Reels Publishing...")
-        ig_url = upload_reel_to_instagram(
-            video_path=final_video_path,
-            title=script_data["title"],
-            description=f"{script_data.get('hook', '')}\n\n{script_data.get('body', '')}\n\n{script_data.get('cta', '')}",
-            tags=script_data.get("tags", ["Shorts", "Tech", "AI"]),
-            comment_text=script_data.get("cta")
-        )
-        if ig_url:
-            logger.info(f"MISSION ACCOMPLISHED! Instagram Reel Live: {ig_url}")
+        if channel_clean == "tech":
+            logger.info(">>> STEP 5B: Checking Instagram Reels Publishing...")
+            ig_url = upload_reel_to_instagram(
+                video_path=final_video_path,
+                title=script_data["title"],
+                description=f"{script_data.get('hook', '')}\n\n{script_data.get('body', '')}\n\n{script_data.get('cta', '')}",
+                tags=script_data.get("tags", ["Shorts", "Tech", "AI"]),
+                comment_text=script_data.get("cta")
+            )
+            if ig_url:
+                logger.info(f"MISSION ACCOMPLISHED! Instagram Reel Live: {ig_url}")
     else:
         logger.info("DRY RUN MODE: Video generated and verified. YouTube and Instagram uploads skipped.")
 
@@ -164,6 +185,7 @@ def run_pipeline(dry_run: bool = True, custom_topic: str = None):
 
     print("\n" + "="*72)
     print(f"  OUTPUT VIDEO: {os.path.abspath(final_video_path)}")
+    print(f"  CHANNEL:      {channel_clean.upper()} ({'HINDI' if is_hindi else 'ENGLISH'})")
     print(f"  DURATION:     {voice_data['duration']}s")
     print(f"  FILE SIZE:    {file_size_mb:.2f} MB")
     print(f"  STATUS:       READY FOR BROADCAST")
@@ -171,20 +193,34 @@ def run_pipeline(dry_run: bool = True, custom_topic: str = None):
     return final_video_path
 
 
-def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: str = None):
+def run_long_pipeline(
+    duration: int = 12, 
+    dry_run: bool = True, 
+    custom_topic: str = None,
+    channel: str = "tech",
+    language: str = None,
+    story_override: dict = None
+):
     """
     Episodic 16:9 Landscape Long-Form Satire & Deep Dive Pipeline (1920x1080).
     5 Dynamic Chapters, Multi-Track Audio Scoring, Clickable YouTube Timestamps.
     """
-    print_banner(mode="long")
+    channel_clean = channel.lower()
+    if language is None:
+        language = "hi" if channel_clean in ("dastawez", "idastawez", "hindi") else "en"
+    is_hindi = language.lower() in ("hi", "hindi", "dastawez")
+
+    print_banner(mode="long", channel=channel_clean, language=language)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # ---------------------------------------------------------
     # STEP 1: Deep-Dive Topic Selection & Mystery Sourcing
     # ---------------------------------------------------------
-    logger.info(">>> STEP 1: Sourcing Mind-Bending Deep-Dive Mystery for 16:9 Episode...")
-    from src.deep_dive_topics import get_deep_dive_topic, CURATED_MYSTERIES
-    if custom_topic:
+    if story_override:
+        story = story_override
+        logger.info(f">>> STEP 1: Using Shared Story for Dual Long Episode: {story.get('title')}")
+    elif custom_topic:
+        from src.deep_dive_topics import CURATED_MYSTERIES
         matched = next((m for m in CURATED_MYSTERIES if custom_topic.lower() in m["title"].lower()), None)
         if matched:
             story = matched
@@ -199,7 +235,10 @@ def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: st
                 "url": "https://en.wikipedia.org",
                 "source": "Deep Dive Inquiry"
             }
+        logger.info(f">>> STEP 1: Custom Deep-Dive Topic: {custom_topic}")
     else:
+        logger.info(">>> STEP 1: Sourcing Mind-Bending Deep-Dive Mystery for 16:9 Episode...")
+        from src.deep_dive_topics import get_deep_dive_topic
         from src.news_fetcher import load_published_history
         history = load_published_history()
         published_titles = [h.get("title", "") for h in history]
@@ -208,21 +247,22 @@ def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: st
     logger.info(f"Mind-Bending Topic: [{story.get('category', 'Engineering')}] {story.get('title')}")
 
     # ---------------------------------------------------------
-    # STEP 2: 4-Act High-IQ Explainer Script Generation
+    # STEP 2: 4-Act High-IQ Explainer Script Generation (English or Hindi)
     # ---------------------------------------------------------
-    logger.info(f">>> STEP 2: Generating {duration}-Minute 4-Act Explainer Script via Gemini...")
-    script_data = generate_long_form_script(story, duration_minutes=duration)
+    logger.info(f">>> STEP 2: Generating {duration}-Minute 4-Act Explainer Script ({'Hindi' if is_hindi else 'English'})...")
+    script_data = generate_long_form_script(story, duration_minutes=duration, language=language)
     logger.info(f"Episode Title: {script_data['title']}")
     logger.info(f"Total Acts: {len(script_data.get('chapters', []))}")
 
     # ---------------------------------------------------------
     # STEP 3: Studio Neural Voice Synthesis
     # ---------------------------------------------------------
-    logger.info(">>> STEP 3: Synthesizing Full Narration Audio via edge-tts...")
-    audio_temp_path = f"temp/long_speech_{timestamp}.mp3"
+    logger.info(f">>> STEP 3: Synthesizing Narration Audio ({'hi-IN-MadhurNeural' if is_hindi else 'en-US-Brian'})...")
+    audio_temp_path = f"temp/long_speech_{channel_clean}_{timestamp}.mp3"
     voice_data = generate_voiceover(
         text=script_data["full_script"],
-        output_path=audio_temp_path
+        output_path=audio_temp_path,
+        language=language
     )
     logger.info(f"Audio Synthesized: {voice_data['duration']:.1f}s | Words: {len(voice_data['word_timings'])}")
 
@@ -230,7 +270,7 @@ def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: st
     # STEP 4: 1920x1080 Landscape Video Compositing
     # ---------------------------------------------------------
     logger.info(">>> STEP 4: Compositing 16:9 Landscape Video (Mind-Bending Visual Explainer)...")
-    output_filename = f"output/Episode_{timestamp}.mp4"
+    output_filename = f"output/Episode_{channel_clean}_{timestamp}.mp4"
     final_video_path, chapters_meta = build_long_video(
         script_data=script_data,
         voice_data=voice_data,
@@ -247,7 +287,7 @@ def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: st
     # ---------------------------------------------------------
     logger.info(">>> STEP 4B: Generating 1280x720 High-CTR Thumbnail via Remotion...")
     from src.thumbnail_generator import generate_episode_thumbnail
-    thumbnail_filename = f"output/Thumbnail_{timestamp}.jpg"
+    thumbnail_filename = f"output/Thumbnail_{channel_clean}_{timestamp}.jpg"
     final_thumbnail_path = generate_episode_thumbnail(story, thumbnail_filename)
     if final_thumbnail_path and os.path.exists(final_thumbnail_path):
         thumb_size_kb = os.path.getsize(final_thumbnail_path) / 1024
@@ -260,7 +300,7 @@ def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: st
     # STEP 5: YouTube Long Video Publishing with Timestamps & Thumbnail
     # ---------------------------------------------------------
     if not dry_run:
-        logger.info(">>> STEP 5: Publishing 16:9 Episode to YouTube with Clickable Chapters & Thumbnail...")
+        logger.info(f">>> STEP 5: Publishing 16:9 Episode to YouTube [{channel_clean.upper()}]...")
         publish_mode = os.getenv("PUBLISH_MODE", "PUBLIC")
         video_url = upload_long_video_to_youtube(
             video_path=final_video_path,
@@ -270,10 +310,11 @@ def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: st
             tags=script_data.get("tags", ["TechNews", "Coding", "SoftwareEngineering"]),
             privacy_status=publish_mode,
             comment_text=script_data.get("cta_question"),
-            thumbnail_path=final_thumbnail_path
+            thumbnail_path=final_thumbnail_path,
+            channel=channel_clean
         )
         if video_url:
-            logger.info(f"BROADCAST LIVE ON YOUTUBE: {video_url}")
+            logger.info(f"BROADCAST LIVE ON YOUTUBE [{channel_clean.upper()}]: {video_url}")
         else:
             logger.info(f"Video saved locally at {final_video_path}.")
     else:
@@ -285,6 +326,7 @@ def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: st
     print(f"  OUTPUT EPISODE:   {os.path.abspath(final_video_path)}")
     if final_thumbnail_path:
         print(f"  OUTPUT THUMBNAIL: {os.path.abspath(final_thumbnail_path)}")
+    print(f"  CHANNEL:          {channel_clean.upper()} ({'HINDI' if is_hindi else 'ENGLISH'})")
     print(f"  RESOLUTION:       1920x1080 (16:9 Landscape)")
     print(f"  DURATION:         {voice_data['duration']:.1f}s")
     print(f"  FILE SIZE:        {file_size_mb:.2f} MB")
@@ -294,8 +336,10 @@ def run_long_pipeline(duration: int = 12, dry_run: bool = True, custom_topic: st
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Autonomous Tech Video Pipeline (Shorts & Long Shows)")
+    parser = argparse.ArgumentParser(description="Autonomous Bilingual Tech Video Pipeline (English & Hindi)")
     parser.add_argument("--mode", choices=["short", "long"], default="short", help="Video mode: 'short' (9:16 vertical) or 'long' (16:9 horizontal)")
+    parser.add_argument("--channel", choices=["tech", "dastawez", "both"], default="tech", help="Target channel: 'tech' (English), 'dastawez' (Hindi), or 'both' (Dual Broadcast)")
+    parser.add_argument("--lang", choices=["en", "hi"], default=None, help="Force language: 'en' for English or 'hi' for Hindi (defaults automatically based on channel)")
     parser.add_argument("--duration", type=int, default=12, help="Target duration in minutes for long mode (default: 12)")
     parser.add_argument("--dry-run", action="store_true", default=False, help="Run generation without uploading to YouTube")
     parser.add_argument("--publish", action="store_true", default=False, help="Run generation and auto-publish to YouTube")
@@ -306,7 +350,58 @@ if __name__ == "__main__":
     # Default to dry-run if publish flag is not explicitly passed
     is_dry_run = not args.publish
 
-    if args.mode == "long":
-        run_long_pipeline(duration=args.duration, dry_run=is_dry_run, custom_topic=args.topic)
+    if args.channel == "both":
+        # Dual broadcast: pick topic once, generate both English & Hindi videos!
+        if args.mode == "long":
+            from src.deep_dive_topics import get_deep_dive_topic, CURATED_MYSTERIES
+            from src.news_fetcher import load_published_history
+            if args.topic:
+                matched = next((m for m in CURATED_MYSTERIES if args.topic.lower() in m["title"].lower()), None)
+                shared_story = matched or {
+                    "title": args.topic,
+                    "category": "Science & Deep Technology",
+                    "core_paradox": f"The hidden engineering reality behind {args.topic}.",
+                    "real_world_analogy": "An everyday physical metaphor that makes this complex system instantly intuitive.",
+                    "catastrophe_case_study": f"The critical breaking point of {args.topic} when pushed to its limits.",
+                    "paradigm_shift": f"How {args.topic} fundamentally alters our understanding of technology.",
+                    "url": "https://en.wikipedia.org",
+                    "source": "Deep Dive Inquiry"
+                }
+            else:
+                history = load_published_history()
+                published_titles = [h.get("title", "") for h in history]
+                shared_story = get_deep_dive_topic(previously_published=published_titles)
+            
+            logger.info("==================================================")
+            logger.info("🚀 BROADCAST 1/2: TECH CHANNEL (ENGLISH 16:9)")
+            logger.info("==================================================")
+            run_long_pipeline(duration=args.duration, dry_run=is_dry_run, channel="tech", language="en", story_override=shared_story)
+
+            logger.info("==================================================")
+            logger.info("🇮🇳 BROADCAST 2/2: IDASTAWEZ CHANNEL (HINDI 16:9)")
+            logger.info("==================================================")
+            run_long_pipeline(duration=args.duration, dry_run=is_dry_run, channel="dastawez", language="hi", story_override=shared_story)
+        else:
+            # Shorts mode
+            if args.topic:
+                shared_story = {"title": args.topic, "source": "Custom Topic", "summary": args.topic, "url": "https://news.ycombinator.com"}
+            else:
+                stories = get_trending_tech_stories()
+                fresh = filter_previously_published_stories(stories) if stories else []
+                import random
+                shared_story = random.choice(fresh[:min(5, len(fresh))]) if fresh else (stories[0] if stories else None)
+            
+            logger.info("==================================================")
+            logger.info("🚀 BROADCAST 1/2: TECH CHANNEL (ENGLISH SHORTS)")
+            logger.info("==================================================")
+            run_pipeline(dry_run=is_dry_run, channel="tech", language="en", story_override=shared_story)
+
+            logger.info("==================================================")
+            logger.info("🇮🇳 BROADCAST 2/2: IDASTAWEZ CHANNEL (HINDI SHORTS)")
+            logger.info("==================================================")
+            run_pipeline(dry_run=is_dry_run, channel="dastawez", language="hi", story_override=shared_story)
     else:
-        run_pipeline(dry_run=is_dry_run, custom_topic=args.topic)
+        if args.mode == "long":
+            run_long_pipeline(duration=args.duration, dry_run=is_dry_run, custom_topic=args.topic, channel=args.channel, language=args.lang)
+        else:
+            run_pipeline(dry_run=is_dry_run, custom_topic=args.topic, channel=args.channel, language=args.lang)

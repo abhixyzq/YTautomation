@@ -23,25 +23,34 @@ logger = logging.getLogger(__name__)
 
 # Scope required for uploading YouTube videos
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
-TOKEN_FILE = "token.json"
 CLIENT_SECRET_FILE = os.getenv("YOUTUBE_CLIENT_SECRET_FILE", "client_secret.json")
 
 
-def get_youtube_service():
-    """Authenticate and return an authorized YouTube Data API service instance."""
+def resolve_token_file(channel: str = "tech", token_file: Optional[str] = None) -> str:
+    """Resolve token file path based on selected target channel."""
+    if token_file:
+        return token_file
+    if channel.lower() in ("dastawez", "idastawez", "hindi"):
+        return os.getenv("YOUTUBE_TOKEN_DASTAWEZ_FILE", "token_dastawez.json")
+    return os.getenv("YOUTUBE_TOKEN_FILE", "token.json")
+
+
+def get_youtube_service(channel: str = "tech", token_file: Optional[str] = None):
+    """Authenticate and return an authorized YouTube Data API service instance for specified channel."""
+    target_token_file = resolve_token_file(channel, token_file)
     creds = None
     
-    # 1. Check if token.json already exists (saved session)
-    if os.path.exists(TOKEN_FILE):
+    # 1. Check if token file already exists (saved session)
+    if os.path.exists(target_token_file):
         try:
-            creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+            creds = Credentials.from_authorized_user_file(target_token_file, SCOPES)
         except Exception as e:
-            logger.warning(f"Failed to load cached token: {e}")
+            logger.warning(f"Failed to load cached token ({target_token_file}): {e}")
 
     # 2. If no valid credentials, refresh or initiate OAuth flow
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            logger.info("Refreshing expired YouTube OAuth token...")
+            logger.info(f"Refreshing expired YouTube OAuth token for [{channel.upper()}] ({target_token_file})...")
             creds.refresh(Request())
         else:
             if not os.path.exists(CLIENT_SECRET_FILE):
@@ -55,14 +64,14 @@ def get_youtube_service():
                 )
                 return None
             
-            logger.info("Initiating browser OAuth authentication for YouTube...")
+            logger.info(f"Initiating browser OAuth authentication for YouTube [{channel.upper()}]...")
             flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
             creds = flow.run_local_server(port=0)
 
         # Save credentials for future unattended runs
-        with open(TOKEN_FILE, "w") as token:
+        with open(target_token_file, "w") as token:
             token.write(creds.to_json())
-            logger.info("Saved YouTube OAuth credentials to token.json.")
+            logger.info(f"Saved YouTube OAuth credentials to {target_token_file}.")
 
     return build("youtube", "v3", credentials=creds)
 
@@ -102,17 +111,19 @@ def upload_short_to_youtube(
     description: str,
     tags: list = None,
     privacy_status: str = "public",
-    comment_text: str = None
+    comment_text: str = None,
+    channel: str = "tech",
+    token_file: Optional[str] = None
 ) -> Optional[str]:
     """
-    Upload a video file as a YouTube Short and post the initial engagement question.
+    Upload a video file as a YouTube Short to the specified channel and post the initial engagement question.
     Returns the uploaded YouTube Video URL.
     """
     if not os.path.exists(video_path):
         logger.error(f"Video file not found: {video_path}")
         return None
 
-    youtube = get_youtube_service()
+    youtube = get_youtube_service(channel=channel, token_file=token_file)
     if not youtube:
         logger.warning(f"Skipping upload. Video rendered and ready locally at: {video_path}")
         return None
@@ -202,7 +213,9 @@ def upload_long_video_to_youtube(
     tags: list = None,
     privacy_status: str = "public",
     comment_text: str = None,
-    thumbnail_path: str = None
+    thumbnail_path: str = None,
+    channel: str = "tech",
+    token_file: Optional[str] = None
 ) -> Optional[str]:
     """
     Upload a 16:9 horizontal long video to YouTube with clickable chapters / timestamps in description
@@ -213,7 +226,7 @@ def upload_long_video_to_youtube(
         logger.error(f"Video file not found: {video_path}")
         return None
 
-    youtube = get_youtube_service()
+    youtube = get_youtube_service(channel=channel, token_file=token_file)
     if not youtube:
         logger.warning(f"Skipping upload. Video rendered and ready locally at: {video_path}")
         return None

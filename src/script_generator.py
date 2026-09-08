@@ -124,6 +124,75 @@ OUTPUT FORMAT: Strict valid JSON only, no markdown backticks:
 }
 """
 
+SYSTEM_PROMPT_HINDI = """
+You are an elite Indian Tech Explainer, Lead Architect, and High-IQ Storyteller (in the fast-paced, witty style of Fireship / Vox + Think School / Dhruv Rathee in Hindi).
+Your task is to convert a raw trending tech or engineering breakthrough/catastrophe story into an addictive, meme-rich, ultra-viral 35-42 second YouTube Shorts script in HINDI.
+
+THE #1 GOAL IS 85%+ RETENTION AND ZERO BORING MOMENTS.
+
+TONE & PERSONALITY (INDIAN TECH INSIDER / FIRESHIP FACTOR):
+- Sarcastic, conversational, insider developer wit in clean Devanagari Hindi (हिन्दी).
+- Speak naturally like a smart senior engineer sharing an insane, eye-opening story with friends.
+- Use natural conversational Hindi spoken by top modern Indian creators. International tech words (AI, software, code, server, bug, rocket, glitch, update, 64-bit) can be kept in phonetic Devanagari or English words (e.g. "सॉफ्टवेयर", "रॉकेट", "64-बिट", "बग") so it feels punchy, energetic, and 100% natural.
+- DO NOT use ancient, overly formal Sanskritized Hindi that sounds like a boring radio broadcast.
+
+STRICT HOOK RULES (FIRST 3 SECONDS) - MAXIMUM THUMB-STOPPING CURIOSITY:
+- The FIRST SENTENCE MUST be a counter-intuitive paradox or mind-bending revelation in Hindi that freezes the viewer's thumb immediately:
+  * Example: "गणित को हमेशा से दुनिया का सबसे अटूट नियम माना गया था, जब तक AI ने इसमें एक भयानक खामी नहीं ढूंढ ली..."
+  * Example: "सिर्फ दस लाइनों के एक कोड ने पांच सौ मिलियन डॉलर का रॉकेट सैंतीस सेकंड में हवा में उड़ा दिया..."
+  * Example: "दुनिया के सारे बैंक आज भी 1980 के उस कोड पर चल रहे हैं जिसे कोई इंजीनियर छूने की हिम्मत नहीं करता..."
+- ABSOLUTELY NEVER use boring openings: "आज की टेक न्यूज़ में...", "गूगल ने नया फीचर निकाला है..."
+
+TITLE FORMULA (HIGH-CTR BRACKETS + MYSTERY + EMOJI IN HINDI):
+- Short, punchy curiosity titles under 60 chars:
+  * Example: "64-Bit की गलती और $500M का रॉकेट स्वाहा! 💀 #Tech #Shorts"
+  * Example: "Bank के सर्वर में 40 साल पुराना Bug ⚠️ #Coding #Shorts"
+  * Example: "AI ने तोड़ा Maths का सबसे बड़ा नियम 🤯 #Tech #Shorts"
+
+CRITICAL STORYBOARD RULE:
+- "narration_part" MUST be the Hindi sentence snippet.
+- "visual_query" MUST ALWAYS BE IN ENGLISH (e.g. "rocket explosion 4k", "cyberpunk server rack", "hacker coding keyboard", "shocked face meme") so stock video and meme search APIs work 100% accurately!
+
+STRUCTURE:
+1. HOOK (0-3s): Mind-bending premise in Hindi.
+2. THE BREAKDOWN (3-16s): What broke or launched with punchy facts and numbers in Hindi.
+3. UNDER THE HOOD (16-28s): The technical engineering reason explained with wit in Hindi.
+4. THE IMPLICATION (28-36s): What this means for tech and humanity in Hindi.
+5. COMMENT BAIT CTA (36-40s): A polarizing debate question in Hindi.
+
+LENGTH: 90 to 115 words total in Hindi (speaks in approx 36 seconds at natural pace).
+
+OUTPUT FORMAT: Strict valid JSON only, no markdown backticks:
+{
+  "title": "Short High-CTR Hindi Title 💀 #Tech #Shorts",
+  "hook": "First thumb-stopping sentence in Hindi",
+  "body": "Fast-paced witty explanation in Hindi",
+  "cta": "Polarizing debate question in Hindi",
+  "full_script": "Complete smooth Hindi voiceover script without stage directions or emojis",
+  "tags": ["TechNews", "HindiTech", "AI", "Coding", "Shorts", "Facts"],
+  "visual_keywords": ["rocket explosion", "server room", "cyberpunk coding", "robotics factory"],
+  "storyboard": [
+    {
+      "narration_part": "सिर्फ दस लाइनों के एक कोड ने पांच सौ मिलियन डॉलर का रॉकेट उड़ा दिया",
+      "visual_query": "rocket launch explosion deep space",
+      "visual_type": "broll"
+    },
+    {
+      "narration_part": "इंजीनियर्स को लगा कि यह सिर्फ एक मामूली नंबर कन्वर्जन था",
+      "visual_query": "software developer panic dark office",
+      "visual_type": "broll"
+    },
+    {
+      "narration_part": "लेकिन सिस्टम ने 64-बिट फ्लोट को 16-बिट में ठूंसने की कोशिश की",
+      "visual_query": "michael jordan stop it",
+      "visual_type": "meme",
+      "meme_punchline": "STOP IT. GET SOME HELP.",
+      "sfx": "bruh"
+    }
+  ]
+}
+"""
+
 
 def build_semantic_storyboard(title: str, full_script: str) -> list:
     """Break script into chronological scenes with 2-3 authentic human reaction memes (Fireship Style)."""
@@ -326,17 +395,61 @@ def generate_fallback_script(story: Dict[str, str]) -> Dict[str, Any]:
     }
 
 
-def generate_tech_script(story: Dict[str, str]) -> Dict[str, Any]:
-    """Generate viral YouTube Shorts script using Gemini API with multi-model cascade."""
+def generate_fallback_script_hindi(story: Dict[str, str]) -> Dict[str, Any]:
+    """Smart randomized viral fallback generator in Hindi when Gemini API is unreachable."""
+    title = story.get("title", "Massive AI Breakthrough")
+    clean_title = title.replace('"', '').replace("'", "").strip()
+    
+    hook_templates = [
+        f"कोई इसके बारे में बात नहीं कर रहा, लेकिन {clean_title} ने पूरी टेक दुनिया को हिला कर रख दिया है।",
+        f"इंजीनियर्स अभी पूरी तरह हैरान हैं कि आखिर {clean_title} कैसे संभव हुआ।",
+        f"यह नया टेक खुलासा इतना खतरनाक है कि बड़ी टेक कंपनियां इसे छिपाने की कोशिश कर रही थीं: {clean_title}।"
+    ]
+    
+    body_templates = [
+        f"सिस्टम के अंदर जब बेंचमार्क टेस्ट किए गए, तो परफॉरमेंस में ऐसा उछाल देखा गया जो पहले कभी नहीं हुआ था। कोडबेस की पड़ताल करने पर पता चला कि एक बिल्कुल नया एग्जीक्यूशन प्रोटोकॉल काम कर रहा है जो सारे पुराने बॉटलनेक्स को बायपास कर देता है।",
+        f"इंजीनियर्स ने जब डेटा का विश्लेषण किया तो पाया कि ऑपरेशनल कॉस्ट अस्सी प्रतिशत तक कम हो गई है। यह सिर्फ एक मामूली अपडेट नहीं है, बल्कि कंप्यूटर आर्किटेक्चर को पूरी तरह से दोबारा लिखने की शुरुआत है।"
+    ]
+    
+    cta_templates = [
+        "क्या यह तकनीक का सबसे बड़ा चमत्कार है या एक बड़ा खतरा? अपनी राय नीचे कमेंट्स में बताएं!",
+        "क्या आपको लगता है कि यह सॉफ्टवेयर इंजीनियर्स की नौकरियां खत्म कर देगा? कमेंट में अपनी राय लिखें!"
+    ]
+    
+    hook = random.choice(hook_templates)
+    body = random.choice(body_templates)
+    cta = random.choice(cta_templates)
+    full_script = f"{hook} {body} {cta}"
+    
+    storyboard = build_semantic_storyboard(clean_title, full_script)
+    
+    return {
+        "title": f"🚨 {clean_title[:45]} #Shorts #Tech #Hindi",
+        "hook": hook,
+        "body": body,
+        "cta": cta,
+        "full_script": full_script,
+        "tags": ["TechNews", "HindiTech", "AI", "Coding", "Shorts", "Facts"],
+        "visual_keywords": [s["visual_query"] for s in storyboard if s.get("visual_query")],
+        "storyboard": storyboard
+    }
+
+
+def generate_tech_script(story: Dict[str, str], language: str = "en") -> Dict[str, Any]:
+    """Generate viral YouTube Shorts script using Gemini API with multi-model cascade and Hindi support."""
+    is_hindi = language.lower() in ("hi", "hindi", "dastawez")
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     
     if not api_key:
-        logger.info("No GEMINI_API_KEY found in environment. Using smart template script.")
-        return generate_fallback_script(story)
+        logger.info(f"No GEMINI_API_KEY found in environment. Using smart template script ({'Hindi' if is_hindi else 'English'}).")
+        return generate_fallback_script_hindi(story) if is_hindi else generate_fallback_script(story)
         
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key, transport='rest')
+        
+        system_prompt_to_use = SYSTEM_PROMPT_HINDI if is_hindi else SYSTEM_PROMPT
+        lang_directive = "in HINDI (Devanagari script for narration/title/cta, but English keywords for visual_query)" if is_hindi else "in ENGLISH"
         
         user_prompt = f"""
 Trending Story Title: {story.get('title')}
@@ -344,14 +457,14 @@ Source: {story.get('source')}
 Summary: {story.get('summary')}
 URL: {story.get('url')}
 
-Generate the ultra-viral high-retention Shorts JSON:
+Generate the ultra-viral high-retention Shorts JSON {lang_directive}:
 """
         # Try candidate models in order of quota and speed
         for model_name in CANDIDATE_MODELS:
             try:
                 model = genai.GenerativeModel(model_name)
                 response = model.generate_content(
-                    f"{SYSTEM_PROMPT}\n\n{user_prompt}",
+                    f"{system_prompt_to_use}\n\n{user_prompt}",
                     generation_config={"response_mime_type": "application/json"}
                 )
                 raw_text = response.text.strip()
@@ -367,18 +480,18 @@ Generate the ultra-viral high-retention Shorts JSON:
                     
                 data["visual_keywords"] = [s.get("visual_query") for s in data["storyboard"] if s.get("visual_query")]
 
-                logger.info(f"Generated viral script via {model_name}: {data.get('title')} ({len(data['storyboard'])} storyboard scenes)")
+                logger.info(f"Generated viral script ({'Hindi' if is_hindi else 'English'}) via {model_name}: {data.get('title')} ({len(data['storyboard'])} storyboard scenes)")
                 return data
             except Exception as model_err:
                 logger.warning(f"Model {model_name} failed: {model_err}. Trying next model...")
                 continue
                 
         logger.warning("All Gemini candidate models failed. Falling back to dynamic template.")
-        return generate_fallback_script(story)
+        return generate_fallback_script_hindi(story) if is_hindi else generate_fallback_script(story)
         
     except Exception as e:
         logger.warning(f"Error calling Gemini API: {e}. Falling back to template script.")
-        return generate_fallback_script(story)
+        return generate_fallback_script_hindi(story) if is_hindi else generate_fallback_script(story)
 
 
 if __name__ == "__main__":

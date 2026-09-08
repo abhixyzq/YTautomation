@@ -61,11 +61,25 @@ CHAPTER_SCHEME = [
 ]
 
 
-def build_system_prompt(duration_minutes: int, target_words: int) -> str:
+def build_system_prompt(duration_minutes: int, target_words: int, language: str = "en") -> str:
+    is_hindi = language.lower() in ("hi", "hindi", "dastawez")
+    
+    lang_directive = """
+LANGUAGE & SCRIPT RULES (HINDI DEVANAGARI):
+- Write the ENTIRE spoken script (all "dialogue" fields, chapter titles, subtitles, summary, cta_question) in fluent, intellectual, engaging HINDI (हिन्दी - Devanagari script).
+- Style: Think School / Dhruv Rathee / Discovery Science Hindi commentary.
+- International technical words (e.g. 'सॉफ्टवेयर', 'रॉकेट', 'इंजीनियरिंग', 'सिस्टम', 'आर्किटेक्चर', '64-बिट', 'एल्गोरिदम') can be used naturally in Devanagari.
+- CRITICAL: All visual queries ("broll_query", search terms) MUST ALWAYS BE IN ENGLISH so visual search engines (Pexels, stock footage) find the correct 4K clips!
+""" if is_hindi else """
+LANGUAGE: Fluent, intellectual, captivating English (in the style of Veritasium, Lemmino, Johnny Harris).
+"""
+
     return f"""
 You are the lead science & technology documentary essayist (in the style of Veritasium, Lemmino, Johnny Harris, and Think School).
 Your mission is to produce a masterclass {duration_minutes}-minute video essay script (approximately {target_words} words).
 The narrative must leave the audience breathless, elevating their understanding of technology, physics, and engineering.
+
+{lang_directive}
 
 ABSOLUTE PRIORITIES:
 1. INTELLECTUAL MAGNETISM (HIGH-IQ STORYTELLING):
@@ -429,10 +443,10 @@ def generate_procedural_long_script(story: Dict[str, Any], duration_minutes: int
     }
 
 
-def generate_long_form_script(story: Dict[str, Any], duration_minutes: int = 12) -> Dict[str, Any]:
+def generate_long_form_script(story: Dict[str, Any], duration_minutes: int = 12, language: str = "en") -> Dict[str, Any]:
     """
-    Generate 4-Act Mind-Bending Visual Explainer script via Gemini with multi-model cascade
-    and automatic procedural fallback.
+    Generate 4-Act Mind-Bending Visual Explainer script via Gemini with multi-model cascade,
+    Hindi Devanagari support, and automatic procedural fallback.
     """
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     target_words = int(duration_minutes * 145)
@@ -445,7 +459,7 @@ def generate_long_form_script(story: Dict[str, Any], duration_minutes: int = 12)
         import google.generativeai as genai
         genai.configure(api_key=api_key, transport='rest')
 
-        sys_prompt = build_system_prompt(duration_minutes, target_words)
+        sys_prompt = build_system_prompt(duration_minutes, target_words, language=language)
         user_prompt = f"""
 TOPIC TO ADAPT INTO A MIND-BENDING VISUAL EXPLAINER (VERITASIUM / LEMMINO / THINK SCHOOL STYLE):
 Title: {story.get('title')}

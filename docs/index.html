@@ -925,10 +925,17 @@ nav.bottom-nav {
     <!-- Automated Daily Schedule Matrix -->
     <div class="card">
       <div class="card-title">
-        <span>🕒 Automated Publishing Schedule</span>
+        <span>🕒 Automated Dual Publishing Schedule</span>
         <span style="font-size:10px; color:var(--accent-emerald); font-weight:800; letter-spacing:0.5px;">ACTIVE</span>
       </div>
 
+      <!-- Channel 1: Tech Channel -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+        <span style="font-size:12px; font-weight:800; color:var(--accent-cyan); text-transform:uppercase; letter-spacing:0.5px;">
+          🚀 Tech Channel (English)
+        </span>
+        <span style="font-size:10px; background:rgba(6,182,212,0.15); color:var(--accent-cyan); padding:2px 6px; border-radius:4px; font-weight:700;">DAILY</span>
+      </div>
       <div class="sched-item">
         <div class="sched-name"><span>🌅 Morning Tech Short (9:16)</span></div>
         <div class="sched-time">06:00 AM IST</div>
@@ -941,9 +948,33 @@ nav.bottom-nav {
         <div class="sched-name"><span>🌙 Evening Peak Short (9:16)</span></div>
         <div class="sched-time">08:00 PM IST</div>
       </div>
-      <div class="sched-item" style="border-color:rgba(139,92,246,0.4);">
+      <div class="sched-item" style="border-color:rgba(139,92,246,0.4); margin-bottom:16px;">
         <div class="sched-name"><span>🎬 Daily Long Episode (16:9)</span></div>
         <div class="sched-time" style="color:var(--accent-purple); font-weight:800;">08:00 AM IST</div>
+      </div>
+
+      <!-- Channel 2: iDastawez (Hindi) -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; border-top:1px dashed rgba(255,255,255,0.1); padding-top:12px;">
+        <span style="font-size:12px; font-weight:800; color:var(--accent-emerald); text-transform:uppercase; letter-spacing:0.5px;">
+          🇮🇳 iDastawez (हिन्दी Explainer)
+        </span>
+        <span style="font-size:10px; background:rgba(16,185,129,0.15); color:var(--accent-emerald); padding:2px 6px; border-radius:4px; font-weight:700;">DAILY</span>
+      </div>
+      <div class="sched-item" style="border-color:rgba(16,185,129,0.3);">
+        <div class="sched-name"><span>🌅 Morning Hindi Short (9:16)</span></div>
+        <div class="sched-time" style="color:var(--accent-emerald);">06:00 AM IST</div>
+      </div>
+      <div class="sched-item" style="border-color:rgba(16,185,129,0.3);">
+        <div class="sched-name"><span>☀️ Afternoon Hindi Short (9:16)</span></div>
+        <div class="sched-time" style="color:var(--accent-emerald);">01:00 PM IST</div>
+      </div>
+      <div class="sched-item" style="border-color:rgba(16,185,129,0.3);">
+        <div class="sched-name"><span>🌙 Evening Peak Hindi Short (9:16)</span></div>
+        <div class="sched-time" style="color:var(--accent-emerald);">08:00 PM IST</div>
+      </div>
+      <div class="sched-item" style="border-color:rgba(234,88,12,0.4);">
+        <div class="sched-name"><span>🎬 Daily Long Hindi Deep-Dive (16:9)</span></div>
+        <div class="sched-time" style="color:#fb923c; font-weight:800;">08:00 AM IST</div>
       </div>
     </div>
   </section>
@@ -951,6 +982,19 @@ nav.bottom-nav {
   <!-- TAB 2: CLOUD GENERATOR -->
   <section id="tab-run" class="tab-pane">
     <div class="card">
+      <div class="card-title">Target YouTube Channel & Language</div>
+      <div class="mode-toggle" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom:16px;">
+        <button id="btnChanTech" class="mode-btn active" onclick="setChannel('tech')">
+          <span>🚀 Tech (EN)</span>
+        </button>
+        <button id="btnChanDastawez" class="mode-btn" onclick="setChannel('dastawez')">
+          <span>🇮🇳 iDastawez (HI)</span>
+        </button>
+        <button id="btnChanBoth" class="mode-btn" onclick="setChannel('both')">
+          <span>🌐 Both</span>
+        </button>
+      </div>
+
       <div class="card-title">Video Format</div>
       <div class="mode-toggle">
         <button id="btnModeShort" class="mode-btn active" onclick="setMode('short')">
@@ -1076,7 +1120,11 @@ nav.bottom-nav {
         </div>
         <div style="display:flex; justify-content:space-between; padding:8px 12px; background:rgba(255,255,255,0.02); border-radius:8px;">
           <span><code>TOKEN_JSON</code></span>
-          <span style="color:var(--accent-emerald);">YouTube Channel Token</span>
+          <span style="color:var(--accent-emerald);">Tech Channel Token</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:8px 12px; background:rgba(255,255,255,0.02); border-radius:8px;">
+          <span><code>TOKEN_DASTAWEZ_JSON</code></span>
+          <span style="color:var(--accent-emerald);">iDastawez Channel Token</span>
         </div>
       </div>
       <div style="margin-top:14px;">
@@ -1114,6 +1162,7 @@ nav.bottom-nav {
 // State
 let currentTab = 'overview';
 let currentMode = 'short';
+let currentChannel = 'tech';
 let activeRunId = null;
 let activeRunStart = null;
 let timerInterval = null;
@@ -1121,6 +1170,16 @@ let timerInterval = null;
 const GITHUB_OWNER = 'abhixyzq';
 const GITHUB_REPO = 'YTautomation';
 const WORKFLOW_FILE = 'daily_shorts.yml';
+
+function setChannel(ch) {
+  currentChannel = ch;
+  const btnTech = document.getElementById('btnChanTech');
+  const btnDas = document.getElementById('btnChanDastawez');
+  const btnBoth = document.getElementById('btnChanBoth');
+  if (btnTech) btnTech.classList.toggle('active', ch === 'tech');
+  if (btnDas) btnDas.classList.toggle('active', ch === 'dastawez');
+  if (btnBoth) btnBoth.classList.toggle('active', ch === 'both');
+}
 
 function getRepo() {
   return localStorage.getItem('autotube_repo') || `${GITHUB_OWNER}/${GITHUB_REPO}`;
@@ -1233,32 +1292,41 @@ async function triggerWorkflow() {
   btn.disabled = true;
   btn.innerHTML = '<span>⏳ Dispatching to GitHub Cloud...</span>';
 
-  try {
-    const res = await ghFetch(`/repos/${repo}/actions/workflows/${WORKFLOW_FILE}/dispatches`, {
-      method: 'POST',
-      body: JSON.stringify({
-        ref: 'main',
-        inputs: {
-          mode: currentMode,
-          topic: topic,
-          duration: String(duration),
-          publish: publish
-        }
-      })
-    });
+  let workflowsToDispatch = [];
+  if (currentChannel === 'tech') {
+    workflowsToDispatch.push(currentMode === 'long' ? 'weekly_episodes.yml' : 'daily_shorts.yml');
+  } else if (currentChannel === 'dastawez') {
+    workflowsToDispatch.push('daily_dastawez.yml');
+  } else {
+    // Both channels: dispatch to tech and iDastawez
+    workflowsToDispatch.push(currentMode === 'long' ? 'weekly_episodes.yml' : 'daily_shorts.yml');
+    workflowsToDispatch.push('daily_dastawez.yml');
+  }
 
-    if (res.status === 204 || res.ok) {
-      showToast('🚀 Cloud Render Triggered! Switching to Cloud Jobs...');
-      btn.disabled = false;
-      btn.innerHTML = '<span>🚀 Trigger Cloud Render (GitHub Actions)</span>';
-      switchTab('jobs');
-      setTimeout(fetchWorkflowRuns, 3500);
-    } else {
-      const data = await res.json();
-      showToast(`❌ GitHub Error: ${data.message || 'Check workflow inputs'}`);
-      btn.disabled = false;
-      btn.innerHTML = '<span>🚀 Trigger Cloud Render (GitHub Actions)</span>';
+  try {
+    for (const wf of workflowsToDispatch) {
+      const inputsPayload = {
+        mode: currentMode,
+        topic: topic,
+        publish: publish
+      };
+      if (currentMode === 'long') {
+        inputsPayload.duration = String(duration);
+      }
+      await ghFetch(`/repos/${repo}/actions/workflows/${wf}/dispatches`, {
+        method: 'POST',
+        body: JSON.stringify({
+          ref: 'main',
+          inputs: inputsPayload
+        })
+      });
     }
+
+    showToast(`🚀 Dispatched to ${workflowsToDispatch.length > 1 ? 'Both Channels' : currentChannel.toUpperCase()}! Switching to Cloud Jobs...`);
+    btn.disabled = false;
+    btn.innerHTML = '<span>🚀 Trigger Cloud Render (GitHub Actions)</span>';
+    switchTab('jobs');
+    setTimeout(fetchWorkflowRuns, 3500);
   } catch (err) {
     showToast('❌ Connection error to GitHub API');
     btn.disabled = false;

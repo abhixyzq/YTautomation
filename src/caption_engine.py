@@ -13,10 +13,14 @@ from typing import List, Dict, Any, Optional
 from PIL import Image, ImageDraw, ImageFont
 
 FONT_CANDIDATES = [
+    "assets/fonts/NotoSansDevanagari-Bold.ttf",
     "assets/fonts/bold.ttf",
+    "C:/Windows/Fonts/mangalb.ttf",
+    "C:/Windows/Fonts/NirmalaB.ttf",
     "C:/Windows/Fonts/segoeuib.ttf",
     "C:/Windows/Fonts/arialbd.ttf",
     "C:/Windows/Fonts/impact.ttf",
+    "/usr/share/fonts/truetype/noto/NotoSansDevanagari-Bold.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
     "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf"

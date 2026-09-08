@@ -1,15 +1,16 @@
-name: 🚀 Autonomous Daily Tech Shorts (6 AM, 1 PM, 8 PM IST)
+name: 🇮🇳 Autonomous Daily iDastawez Engine (Hindi Shorts & Long Episodes)
 
 on:
   schedule:
-    # 3 times daily (UTC to IST with anti-congestion pre-buffer so videos publish on time):
-    # 00:20 UTC = 05:50 AM IST (Guarantees Morning Tech Short publishes by 06:00 AM IST)
-    # 07:20 UTC = 12:50 PM IST (Guarantees Afternoon Tech Short publishes by 01:00 PM IST)
-    # 14:20 UTC = 07:50 PM IST (Guarantees Prime Evening Tech Short publishes by 08:00 PM IST)
+    # 00:20 UTC = 05:50 AM IST (Morning Hindi Short publishes by 06:00 AM IST)
+    # 02:15 UTC = 07:45 AM IST (Daily Long Hindi Episode publishes by 08:00 AM IST)
+    # 07:20 UTC = 12:50 PM IST (Afternoon Hindi Short publishes by 01:00 PM IST)
+    # 14:20 UTC = 07:50 PM IST (Evening Prime Hindi Short publishes by 08:00 PM IST)
     - cron: '20 0 * * *'
+    - cron: '15 2 * * *'
     - cron: '20 7 * * *'
     - cron: '20 14 * * *'
-  workflow_dispatch: # Allows manual trigger from GitHub Actions UI or Web Dashboard
+  workflow_dispatch:
     inputs:
       mode:
         description: 'Video Format'
@@ -20,22 +21,23 @@ on:
           - short
           - long
       topic:
-        description: 'Custom Topic / Angle (Leave empty for auto-trending news)'
+        description: 'Custom Topic (Leave empty for auto-discovery)'
         required: false
         default: ''
       duration:
-        description: 'Target Duration in minutes (for Long Episode)'
+        description: 'Duration in minutes (for Long mode)'
         required: false
         default: '12'
       publish:
-        description: 'Publish directly to YouTube'
+        description: 'Publish directly to @iDastawez on YouTube'
         required: true
         type: boolean
         default: true
 
 jobs:
-  build-and-publish:
+  build-and-publish-dastawez:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: write
 
@@ -49,10 +51,10 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: 📦 Install System Dependencies (FFmpeg & Fonts)
+      - name: 📦 Install System Dependencies (FFmpeg & Hindi Devanagari Fonts)
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg fonts-dejavu-core fonts-liberation fonts-noto-color-emoji
+          sudo apt-get install -y ffmpeg fonts-deva fonts-indic fonts-dejavu-core fonts-liberation fonts-noto-color-emoji
 
       - name: ⚙️ Set up Node.js 20 for Remotion Engine
         uses: actions/setup-node@v4
@@ -68,34 +70,33 @@ jobs:
       - name: 📦 Install Remotion Node Dependencies
         run: npm ci
 
-      - name: 🔐 Securely Inject Secrets & OAuth Credentials
+      - name: 🔐 Securely Inject @iDastawez Credentials & API Keys
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           GIPHY_API_KEY: ${{ secrets.GIPHY_API_KEY || 'Y8PSKU5ua4A75zQRA6EHOZ9FcAySv9U6' }}
           CLIENT_SECRET_JSON: ${{ secrets.CLIENT_SECRET_JSON }}
-          TOKEN_JSON: ${{ secrets.TOKEN_JSON }}
-          INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
-          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          TOKEN_DASTAWEZ_JSON: ${{ secrets.TOKEN_DASTAWEZ_JSON }}
         run: |
           echo "GEMINI_API_KEY=$GEMINI_API_KEY" >> .env
           echo "PEXELS_API_KEY=$PEXELS_API_KEY" >> .env
           echo "GIPHY_API_KEY=$GIPHY_API_KEY" >> .env
-          echo "VOICE_NAME=en-US-BrianMultilingualNeural" >> .env
-          echo "VOICE_RATE=+2%" >> .env
+          echo "VOICE_NAME_HI=hi-IN-MadhurNeural" >> .env
+          echo "VOICE_RATE=+3%" >> .env
           echo "VOICE_PITCH=+0Hz" >> .env
-          echo "LANGUAGE=ENG" >> .env
           echo "PUBLISH_MODE=PUBLIC" >> .env
           echo "YOUTUBE_CLIENT_SECRET_FILE=client_secret.json" >> .env
-          echo "INSTAGRAM_ACCOUNT_ID=$INSTAGRAM_ACCOUNT_ID" >> .env
-          echo "INSTAGRAM_ACCESS_TOKEN=$INSTAGRAM_ACCESS_TOKEN" >> .env
+          echo "YOUTUBE_TOKEN_DASTAWEZ_FILE=token_dastawez.json" >> .env
 
           echo "$CLIENT_SECRET_JSON" > client_secret.json
-          echo "$TOKEN_JSON" > token.json
+          echo "$TOKEN_DASTAWEZ_JSON" > token_dastawez.json
+          echo "Verified credential files injected:"
+          ls -l client_secret.json token_dastawez.json
 
-      - name: 🎬 Render Video & Auto-Publish
+      - name: 🎬 Render Video & Auto-Publish to @iDastawez
         run: |
-          CMD="python main.py --channel tech"
+          CMD="python main.py --channel dastawez"
+          
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             MODE="${{ inputs.mode }}"
             [ -z "$MODE" ] && MODE="short"
@@ -114,10 +115,18 @@ jobs:
               CMD="$CMD --dry-run"
             fi
           else
-            # Scheduled cron run (Daily Short published automatically)
-            CMD="$CMD --mode short --publish"
+            # Cron schedule routing:
+            # At 02:15 UTC, publish Long Episode (8:00 AM IST)
+            # At 00:20, 07:20, 14:20 UTC, publish Shorts (6 AM, 1 PM, 8 PM IST)
+            CRON_HOUR=$(date -u +%H)
+            if [ "$CRON_HOUR" = "02" ]; then
+              CMD="$CMD --mode long --duration 12 --publish"
+            else
+              CMD="$CMD --mode short --publish"
+            fi
           fi
-          echo "🚀 Executing pipeline command: $CMD"
+          
+          echo "🚀 Executing iDastawez Hindi Pipeline: $CMD"
           eval $CMD
 
       - name: 💾 Commit & Sync Published Story History
@@ -132,4 +141,4 @@ jobs:
       - name: 🧹 Clean Up Ephemeral Secrets
         if: always()
         run: |
-          rm -f .env client_secret.json token.json
+          rm -f .env client_secret.json token_dastawez.json

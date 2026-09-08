@@ -15,7 +15,8 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_VOICE = os.getenv("VOICE_NAME", "en-US-BrianMultilingualNeural")
+DEFAULT_VOICE_EN = os.getenv("VOICE_NAME", "en-US-BrianMultilingualNeural")
+DEFAULT_VOICE_HI = os.getenv("VOICE_NAME_HI", "hi-IN-MadhurNeural")
 DEFAULT_RATE = os.getenv("VOICE_RATE", "+2%")
 DEFAULT_PITCH = os.getenv("VOICE_PITCH", "+0Hz")
 
@@ -24,7 +25,7 @@ def enhance_speech_text(text: str) -> str:
     """
     Inject natural human prosody into the text for Edge-TTS.
     Adds natural micro-pauses at key transitions and replaces rushed punctuation
-    so the neural voice breathes and sounds 100% human-like.
+    so the neural voice breathes and sounds 100% human-like in both English and Hindi.
     """
     import re
     # Clean excessive whitespace
@@ -41,6 +42,12 @@ def enhance_speech_text(text: str) -> str:
         ("Essentially", "Essentially,"),
         ("Believe it or not", "Believe it or not,"),
         ("Here is the catch", "Here's the catch,"),
+        # Hindi natural conversational pauses
+        ("लेकिन", "लेकिन,"),
+        ("दरअसल", "दरअसल,"),
+        ("हैरानी की बात यह है कि", "हैरानी की बात यह है कि,"),
+        ("सच तो यह है कि", "सच तो यह है कि,"),
+        ("इसके पीछे की वजह", "इसके पीछे की वजह,"),
     ]
     for orig, repl in transitions:
         pattern = re.compile(rf'\b{re.escape(orig)}\b(?!\s*,)', re.IGNORECASE)
@@ -85,14 +92,20 @@ def _calculate_word_timings(sentence_boundaries: List[Dict[str, Any]]) -> List[D
 async def _generate_audio_async(
     text: str,
     output_audio_path: str,
-    voice: str = DEFAULT_VOICE,
-    rate: str = DEFAULT_RATE,
-    pitch: str = DEFAULT_PITCH
+    voice: Optional[str] = None,
+    rate: Optional[str] = None,
+    pitch: Optional[str] = None,
+    language: str = "en"
 ) -> Dict[str, Any]:
     """Internal async synthesizer collecting audio chunks and sentence boundaries."""
     os.makedirs(os.path.dirname(output_audio_path), exist_ok=True)
+    is_hindi = language.lower() in ("hi", "hindi", "dastawez")
     
-    communicate = edge_tts.Communicate(text=text, voice=voice, rate=rate, pitch=pitch)
+    selected_voice = voice or (DEFAULT_VOICE_HI if is_hindi else DEFAULT_VOICE_EN)
+    selected_rate = rate or ("+3%" if is_hindi else DEFAULT_RATE)
+    selected_pitch = pitch or DEFAULT_PITCH
+    
+    communicate = edge_tts.Communicate(text=text, voice=selected_voice, rate=selected_rate, pitch=selected_pitch)
     sentence_boundaries = []
     
     with open(output_audio_path, "wb") as audio_file:
@@ -111,13 +124,9 @@ async def _generate_audio_async(
         total_duration = word_timings[-1]["end"] + 0.3
     else:
         # Fallback if no boundaries returned
-        import imageio_ffmpeg
-        import subprocess
-        ffprobe_exe = imageio_ffmpeg.get_ffmpeg_exe()
-        # Estimate ~130 words/minute
         total_duration = max(len(text.split()) / 2.5, 5.0)
 
-    logger.info(f"Generated neural voiceover: {total_duration:.1f}s, {len(word_timings)} words.")
+    logger.info(f"Generated neural voiceover [{selected_voice}]: {total_duration:.1f}s, {len(word_timings)} words.")
     
     return {
         "audio_path": output_audio_path,
@@ -129,13 +138,14 @@ async def _generate_audio_async(
 def generate_voiceover(
     text: str,
     output_path: str = "temp/voiceover.mp3",
-    voice: str = DEFAULT_VOICE,
-    rate: str = DEFAULT_RATE,
-    pitch: str = DEFAULT_PITCH
+    voice: Optional[str] = None,
+    rate: Optional[str] = None,
+    pitch: Optional[str] = None,
+    language: str = "en"
 ) -> Dict[str, Any]:
-    """Synchronous entry point for generating voiceover audio and timestamps with prosody."""
+    """Synchronous entry point for generating voiceover audio and timestamps with prosody and language routing."""
     enhanced = enhance_speech_text(text)
-    return asyncio.run(_generate_audio_async(enhanced, output_path, voice, rate, pitch))
+    return asyncio.run(_generate_audio_async(enhanced, output_path, voice, rate, pitch, language))
 
 
 if __name__ == "__main__":
