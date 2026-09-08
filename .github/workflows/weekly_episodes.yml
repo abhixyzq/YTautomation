@@ -91,6 +91,10 @@ jobs:
 
       - name: 🎬 Render 16:9 Landscape Episode & Publish to YouTube Only
         run: |
+          # Pre-seed Remotion public assets directory with bundled audio
+          mkdir -p public/assets/audio
+          cp -r assets/audio/* public/assets/audio/ 2>/dev/null || true
+
           CHANNEL="tech"
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             [ -n "${{ inputs.channel }}" ] && CHANNEL="${{ inputs.channel }}"

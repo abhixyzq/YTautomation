@@ -78,17 +78,41 @@ def render_remotion_video(props_dict: Dict[str, Any], output_path: str) -> bool:
         except Exception as e:
             logger.warning(f"Could not copy audio to public dir: {e}")
 
-    # 2. Sync only active B-roll / media clips for this episode into public/
-    for sc in props_dict.get("scenes", []):
-        bp = sc.get("broll_path")
-        if bp and os.path.exists(bp):
-            target_bp = os.path.join(public_dir, bp)
-            if not os.path.exists(target_bp):
-                os.makedirs(os.path.dirname(target_bp), exist_ok=True)
+    # 1B. Sync ambient audio bed into public/
+    ambient_path = props_dict.get("ambient_path")
+    if ambient_path and os.path.exists(ambient_path):
+        target_amb = os.path.join(public_dir, ambient_path)
+        os.makedirs(os.path.dirname(target_amb), exist_ok=True)
+        try:
+            shutil.copy2(ambient_path, target_amb)
+        except Exception as e:
+            logger.warning(f"Could not copy ambient audio to public dir: {e}")
+
+    # 1C. Sync all bundled audio assets (ambient, whoosh, pop, etc.) into public/assets/audio
+    if os.path.exists("assets/audio"):
+        target_audio_dir = os.path.join(public_dir, "assets", "audio")
+        os.makedirs(target_audio_dir, exist_ok=True)
+        for f in os.listdir("assets/audio"):
+            src_f = os.path.join("assets/audio", f)
+            dst_f = os.path.join(target_audio_dir, f)
+            if os.path.isfile(src_f) and not os.path.exists(dst_f):
                 try:
-                    shutil.copy2(bp, target_bp)
+                    shutil.copy2(src_f, dst_f)
                 except Exception:
                     pass
+
+    # 2. Sync active B-roll and Meme media clips for this episode into public/
+    for sc in props_dict.get("scenes", []):
+        for media_key in ("broll_path", "meme_path"):
+            mp = sc.get(media_key)
+            if mp and os.path.exists(mp):
+                target_mp = os.path.join(public_dir, mp)
+                if not os.path.exists(target_mp):
+                    os.makedirs(os.path.dirname(target_mp), exist_ok=True)
+                    try:
+                        shutil.copy2(mp, target_mp)
+                    except Exception:
+                        pass
 
     props_path = os.path.join(temp_dir, "remotion_props.json")
 

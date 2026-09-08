@@ -98,6 +98,10 @@ jobs:
 
       - name: 🎬 Render Video & Auto-Publish to @iDastawez
         run: |
+          # Pre-seed Remotion public assets directory with bundled audio
+          mkdir -p public/assets/audio
+          cp -r assets/audio/* public/assets/audio/ 2>/dev/null || true
+
           CMD="python main.py --channel dastawez"
           
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then

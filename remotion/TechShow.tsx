@@ -38,11 +38,12 @@ export const resolveMediaSrc = (path?: string) => {
     normalized = normalized.substring("public/".length);
   }
 
-  // Also strip workspace marker if present
-  const marker = "/automate/";
-  const idx = normalized.indexOf(marker);
-  if (idx !== -1) {
-    normalized = normalized.substring(idx + marker.length);
+  // Also strip workspace markers if present (local or GitHub Actions)
+  for (const m of ["/automate/", "/YTautomation/"]) {
+    const idx = normalized.lastIndexOf(m);
+    if (idx !== -1) {
+      normalized = normalized.substring(idx + m.length);
+    }
   }
 
   const rel = normalized.replace(/^\/+/, "");
