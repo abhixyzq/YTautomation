@@ -154,5 +154,11 @@
     "url": "",
     "source": "",
     "published_at": "2026-09-08T07:31:39.509303"
+  },
+  {
+    "title": "I've factored the RSA keys of a Certificate Authority from the 90s",
+    "url": "https://mcpherrin.ca/2026/09/07/rsa.html",
+    "source": "Hacker News",
+    "published_at": "2026-09-08T08:34:45.596162"
   }
 ]
