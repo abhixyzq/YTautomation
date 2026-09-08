@@ -146,6 +146,11 @@ def run_pipeline(
     # ---------------------------------------------------------
     # STEP 5: YouTube Publishing to Target Channel
     # ---------------------------------------------------------
+    from src.seo_engine import generate_shorts_seo
+    seo_preview = generate_shorts_seo(story, raw_title=script_data["title"], channel=channel_clean, language=language)
+    logger.info(f"Shorts SEO Title: {seo_preview['title']}")
+    logger.info(f"Shorts Tags ({len(seo_preview['tags'])}): {', '.join(seo_preview['tags'][:6])}...")
+
     if not dry_run:
         logger.info(f">>> STEP 5A: Publishing Video Directly to YouTube [{channel_clean.upper()}]...")
         publish_mode = os.getenv("PUBLISH_MODE", "PUBLIC")
@@ -156,7 +161,9 @@ def run_pipeline(
             tags=script_data.get("tags", ["Shorts", "Tech", "AI"]),
             privacy_status=publish_mode,
             comment_text=script_data.get("cta"),
-            channel=channel_clean
+            channel=channel_clean,
+            story=story,
+            language=language
         )
         if video_url:
             logger.info(f"MISSION ACCOMPLISHED! YouTube Video URL: {video_url}")
@@ -299,6 +306,11 @@ def run_long_pipeline(
     # ---------------------------------------------------------
     # STEP 5: YouTube Long Video Publishing with Timestamps & Thumbnail
     # ---------------------------------------------------------
+    from src.seo_engine import generate_masterclass_seo
+    seo_preview = generate_masterclass_seo(story, chapters=chapters_meta, channel=channel_clean, language=language)
+    logger.info(f"Masterclass SEO Title: {seo_preview['title']}")
+    logger.info(f"Target Tags ({len(seo_preview['tags'])}): {', '.join(seo_preview['tags'][:8])}...")
+
     if not dry_run:
         logger.info(f">>> STEP 5: Publishing 16:9 Episode to YouTube [{channel_clean.upper()}]...")
         publish_mode = os.getenv("PUBLISH_MODE", "PUBLIC")
@@ -311,7 +323,9 @@ def run_long_pipeline(
             privacy_status=publish_mode,
             comment_text=script_data.get("cta_question"),
             thumbnail_path=final_thumbnail_path,
-            channel=channel_clean
+            channel=channel_clean,
+            story=story,
+            language=language
         )
         if video_url:
             logger.info(f"BROADCAST LIVE ON YOUTUBE [{channel_clean.upper()}]: {video_url}")

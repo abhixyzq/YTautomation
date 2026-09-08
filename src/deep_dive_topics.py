@@ -80,6 +80,86 @@ CURATED_MYSTERIES: List[Dict[str, Any]] = [
         "real_world_analogy": "Rewiring a car's speedometer so it says you're going 40 MPH while secretly flooring the accelerator to 180 MPH until the engine melts.",
         "catastrophe_case_study": "Zero-day weaponization: Stuxnet used 4 separate Windows zero-day exploits, PLC programmable logic overrides, and frequency manipulation.",
         "paradigm_shift": "Cyber warfare is kinetic warfare. Anything controlled by software can be weaponized as a bomb."
+    },
+    {
+        "id": "boeing_737_mcas_software_flaw",
+        "category": "Aerospace & Systems Safety",
+        "title": "Boeing 737 MAX: The Software Loop That Overrode The Pilots",
+        "core_paradox": "A commercial airliner with dual human pilots and redundant mechanical controls was repeatedly pitched into catastrophic nose-dives by an invisible background software routine relying on a single angle-of-attack sensor.",
+        "inciting_incident": "Lion Air 610 and Ethiopian 302: Pilots desperately fought the trim wheel against automated software commands they were never trained existed.",
+        "real_world_analogy": "Installing a powerful autopilot that grabs the steering wheel and pushes your car into the ditch every 10 seconds because a single windshield sensor has dust on it.",
+        "catastrophe_case_study": "MCAS (Maneuvering Characteristics Augmentation System) lacked sensor cross-check logic, creating a fatal single-point-of-failure in life-critical flight control.",
+        "paradigm_shift": "Automation without human observability is lethal. When software hides physical control from operators, failure is inevitable."
+    },
+    {
+        "id": "voyager_1_15_billion_miles_patch",
+        "category": "Interstellar Engineering & Computing",
+        "title": "NASA's Impossible Hack: Fixing Code 15 Billion Miles Away",
+        "core_paradox": "Voyager 1 was launched in 1977 with 68 kilobytes of memory on an 8-track tape drive. In 2024, NASA engineers debugged and patched corrupted memory registers across a 45-hour radio round-trip in interstellar space.",
+        "inciting_incident": "November 2023: Voyager 1's telemetry system begins transmitting an unbroken loop of repeating binary zeroes instead of interstellar scientific data.",
+        "real_world_analogy": "Performing open-heart surgery with chopsticks on a patient who is on Mars, where every movement of your hand takes two full days to execute.",
+        "catastrophe_case_study": "Flight Data System (FDS) memory chip failure: 3% of memory corrupted, requiring NASA to split the corrupted routine into fragments and relocate them across disparate free memory blocks.",
+        "paradigm_shift": "Simplicity and documentation endure. 50-year-old assembly code with handwritten memos outlasted modern disposable software architectures."
+    },
+    {
+        "id": "y2k_bug_myth_vs_reality",
+        "category": "Software History & Infrastructure",
+        "title": "The Y2K Bug: How a $500 Billion Fix Saved the Modern World",
+        "core_paradox": "People remember Y2K as an overhyped media hoax because 'nothing happened'. In reality, nothing happened because humanity executed the largest coordinated software remediation in history.",
+        "inciting_incident": "Early programmers stored years as two digits ('99' instead of '1999') to save precious punch-card bytes, creating a global clock overflow at midnight 2000.",
+        "real_world_analogy": "An odometer that rolls from 99 to 00, causing life support, oil refineries, and nuclear reactors to believe it is 1900 and shut down.",
+        "catastrophe_case_study": "COBOL retrofitting: Hundreds of thousands of retired mainframe engineers mobilized to inspect billions of lines of financial and military code before midnight.",
+        "paradigm_shift": "The greatest engineering successes are invisible. When engineers do their job flawlessly, the public assumes there was never any danger."
+    },
+    {
+        "id": "bitcoin_genesis_block_mystery",
+        "category": "Cryptographic Protocols & Game Theory",
+        "title": "The Cryptographic Enigma of Satoshi Nakamoto's Genesis Block",
+        "core_paradox": "Block 0 of the Bitcoin blockchain contains 50 unspendable coins and a permanent newspaper headline about bank bailouts. Its creator vanished, leaving behind an unstoppable economic protocol.",
+        "inciting_incident": "January 3, 2009: Hash 000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f is mined into existence.",
+        "real_world_analogy": "Carving a mathematical clock into stone that ticks every 10 minutes, owned by nobody, powered by proof-of-work thermodynamic physics.",
+        "catastrophe_case_study": "The Byzantine Generals Problem solved without central authority using cryptographic SHA-256 difficulty adjustments.",
+        "paradigm_shift": "Money is an information protocol. Scarcity can be enforced through pure computational energy."
+    },
+    {
+        "id": "morris_worm_1988_internet_crash",
+        "category": "Cybersecurity & Internet Archeology",
+        "title": "The 99-Line Program That Took Down the Entire Internet in 1988",
+        "core_paradox": "A 23-year-old Cornell student wanted to measure the size of the internet. A single arithmetic replication bug caused his worm to infect and freeze 10% of all connected computers on Earth.",
+        "inciting_incident": "November 2, 1988: Systems at MIT, NASA, and DARPA slow to a crawl as hundreds of copies of the same program overwhelm Unix processes.",
+        "real_world_analogy": "Sending a census survey letter with instructions to photocopy itself 10 times and mail it to every neighbor—until post offices choke to death.",
+        "catastrophe_case_study": "Buffer overflow in fingerd and sendmail debug trap: The first conviction under the Computer Fraud and Abuse Act.",
+        "paradigm_shift": "The internet was built on implicit trust among academics. The Morris Worm proved that digital infrastructure requires zero-trust architecture."
+    },
+    {
+        "id": "therac_25_deadliest_race_condition",
+        "category": "Medical Engineering & Systems Safety",
+        "title": "The Deadliest Race Condition: When Code Turned Radiation Lethal",
+        "core_paradox": "A state-of-the-art cancer radiation therapy machine removed physical hardware interlocks in favor of software safety checks. A typing-speed race condition administered lethal 25,000-rad radiation doses.",
+        "inciting_incident": "1985-1987: Patients at clinics in Texas and Washington reported feeling intense electrical shocks, while machine operators saw cryptic 'Malfunction 54' error codes.",
+        "real_world_analogy": "A physical gate switch replaced with a software flag, but if the operator types too fast, the flag updates half a millisecond before the tungsten shield moves into place.",
+        "catastrophe_case_study": "One-byte counter overflow in shared memory between the keyboard entry routine and beam alignment task.",
+        "paradigm_shift": "Software must never replace physical fail-safes. In life-critical systems, software safety is an illusion without hardware interlocks."
+    },
+    {
+        "id": "flash_crash_2010_trillion_dollar_drop",
+        "category": "Algorithmic Finance & Chaos Theory",
+        "title": "The 2010 Flash Crash: How Bots Erased $1 Trillion in 36 Minutes",
+        "core_paradox": "At 2:42 PM on May 6, 2010, the Dow Jones plunged 1,000 points in minutes. Shares of Procter & Gamble dropped to a single penny before rebounding—driven by automated high-frequency trading algorithms feeding each other bad data.",
+        "inciting_incident": "A single $4.1 billion automated sell order dumped into the E-mini S&P futures market triggered an algorithmic liquidity vacuum across all electronic exchanges.",
+        "real_world_analogy": "Two automated microphone speakers facing each other, generating a deafening feedback loop that blows out the amplifiers in seconds.",
+        "catastrophe_case_study": "Hot-potato volume trading: Market-maker algorithms shut down simultaneously to avoid risk, causing liquidity to evaporate to zero.",
+        "paradigm_shift": "Markets are no longer human auctions. They are decentralized algorithmic networks susceptible to instantaneous cascading collapse."
+    },
+    {
+        "id": "deepseek_v3_moe_architecture_breakthrough",
+        "category": "AI Architecture & Silicon Economics",
+        "title": "How DeepSeek Broke the Trillion-Dollar AI Hardware Monopoly",
+        "core_paradox": "Silicon Valley spent $100 billion buying tens of thousands of Nvidia H100 GPUs to train frontier LLMs. A small Chinese lab trained an open model of equivalent capability for under $6 million using Multi-Head Latent Attention.",
+        "inciting_incident": "January 2025: DeepSeek-V3 and R1 launch open-source weights, causing a historic single-day $600 billion wipeout in US semiconductor market cap.",
+        "real_world_analogy": "While everyone was buying bigger fuel tanks for a rocket, someone invented a hybrid engine that uses 95% less fuel by firing only 8 of its 256 thrusters per millisecond.",
+        "catastrophe_case_study": "FP8 mixed precision, dual-pipe overlapping communication, and Multi-token Prediction circumventing memory bandwidth bottlenecks.",
+        "paradigm_shift": "Brute-force compute scaling has diminishing returns. Algorithmic architectural efficiency will always triumph over raw capital expenditure."
     }
 ]
 

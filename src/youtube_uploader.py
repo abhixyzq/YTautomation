@@ -113,10 +113,12 @@ def upload_short_to_youtube(
     privacy_status: str = "public",
     comment_text: str = None,
     channel: str = "tech",
-    token_file: Optional[str] = None
+    token_file: Optional[str] = None,
+    story: Optional[dict] = None,
+    language: Optional[str] = None
 ) -> Optional[str]:
     """
-    Upload a video file as a YouTube Short to the specified channel and post the initial engagement question.
+    Upload a video file as a YouTube Short to the specified channel with algorithm-optimized SEO.
     Returns the uploaded YouTube Video URL.
     """
     if not os.path.exists(video_path):
@@ -128,38 +130,21 @@ def upload_short_to_youtube(
         logger.warning(f"Skipping upload. Video rendered and ready locally at: {video_path}")
         return None
 
-    # 1. High-CTR Title with mandatory #Shorts tag
-    clean_title = title.replace("#Shorts", "").replace("#shorts", "").strip()
-    final_title = f"{clean_title[:75]} #Shorts #Tech #AI"
+    from src.seo_engine import generate_shorts_seo
 
-    # 2. Comprehensive High-Volume Tags Matrix
-    default_push_tags = [
-        "Shorts", "Tech", "AI", "Artificial Intelligence", "TechNews",
-        "Coding", "Software Engineering", "Web Development", "Developers",
-        "Machine Learning", "Programming", "Tech Trends 2026"
-    ]
-    if tags:
-        combined_tags = list(dict.fromkeys(tags + default_push_tags))[:25]
-    else:
-        combined_tags = default_push_tags
-
-    pinned_prompt = comment_text or "What's your perspective on this? Drop your take below! 👇"
-
-    # 3. Rich SEO Description with Call-To-Action & Pinned Question for Algorithm Boost
-    seo_description = f"""💬 QUESTION OF THE DAY:
-{pinned_prompt}
-Drop your perspective in the comments below! 👇
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{clean_title}
-
-{description.strip()}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔔 Subscribe for daily cutting-edge tech and AI insights.
-
-#Shorts #Tech #AI #ArtificialIntelligence #Coding #SoftwareEngineering #TechNews #WebDevelopment #Programming #TechTrends
-"""
+    # 1. Generate Algorithm-Optimized Shorts SEO Metadata
+    resolved_lang = language or ("hi" if channel.lower() in ("dastawez", "idastawez", "hindi") else "en")
+    seo_meta = generate_shorts_seo(
+        story=story or {"title": title, "summary": description, "cta": comment_text},
+        raw_title=title,
+        description=description,
+        channel=channel,
+        language=resolved_lang
+    )
+    final_title = seo_meta["title"]
+    seo_description = seo_meta["description"]
+    combined_tags = tags or seo_meta["tags"]
+    pinned_prompt = comment_text or seo_meta["pinned_comment"]
 
     body = {
         "snippet": {
@@ -181,7 +166,7 @@ Drop your perspective in the comments below! 👇
         mimetype="video/mp4"
     )
 
-    logger.info(f"Uploading '{title}' to YouTube as [{privacy_status.upper()}]...")
+    logger.info(f"Uploading '{final_title}' (Short) to YouTube [{channel.upper()}] as [{privacy_status.upper()}]...")
     request = youtube.videos().insert(
         part="snippet,status",
         body=body,
@@ -196,11 +181,10 @@ Drop your perspective in the comments below! 👇
 
     video_id = response.get("id")
     video_url = f"https://youtu.be/{video_id}"
-    logger.info(f"SUCCESS! Video live at: {video_url}")
+    logger.info(f"SUCCESS! Short live at: {video_url}")
 
-    # 4. Attempt to post first engagement comment
-    first_comment = f"👇 QUESTION OF THE DAY:\n{pinned_prompt}"
-    post_first_comment(youtube, video_id, first_comment)
+    # 2. Attempt to post first engagement comment
+    post_first_comment(youtube, video_id, pinned_prompt)
 
     return video_url
 
@@ -215,11 +199,13 @@ def upload_long_video_to_youtube(
     comment_text: str = None,
     thumbnail_path: str = None,
     channel: str = "tech",
-    token_file: Optional[str] = None
+    token_file: Optional[str] = None,
+    story: Optional[dict] = None,
+    language: Optional[str] = None
 ) -> Optional[str]:
     """
-    Upload a 16:9 horizontal long video to YouTube with clickable chapters / timestamps in description
-    and high-CTR custom thumbnail.
+    Upload a 16:9 horizontal long video to YouTube with 5-layer SEO metadata architecture,
+    clickable chapters / timestamps for Google Key Moments, and custom thumbnail.
     Returns the uploaded YouTube Video URL.
     """
     if not os.path.exists(video_path):
@@ -231,48 +217,26 @@ def upload_long_video_to_youtube(
         logger.warning(f"Skipping upload. Video rendered and ready locally at: {video_path}")
         return None
 
-    # 1. Clean Title (No #Shorts tag for long videos)
-    clean_title = title.replace("#Shorts", "").replace("#shorts", "").strip()
-    final_title = f"{clean_title[:95]}"
+    from src.seo_engine import generate_masterclass_seo
 
-    # 2. Comprehensive High-Volume Tags Matrix
-    default_push_tags = [
-        "Software Engineering", "Computer Science", "System Architecture",
-        "Science Explainer", "Engineering Deep Dive", "Veritasium Style",
-        "Deep Dive Documentary", "Physics", "Cybersecurity", "Tech 2026"
-    ]
+    # 1. Generate 5-Layer Masterclass SEO Metadata
+    resolved_lang = language or ("hi" if channel.lower() in ("dastawez", "idastawez", "hindi") else "en")
+    seo_meta = generate_masterclass_seo(
+        story=story or {"title": title, "summary": description, "cta_question": comment_text},
+        chapters=chapters,
+        channel=channel,
+        language=resolved_lang
+    )
+
+    final_title = seo_meta["title"]
+    seo_description = seo_meta["description"]
+    pinned_prompt = comment_text or seo_meta["pinned_comment"]
+    
+    # Merge custom tags with high-performance SEO tags
     if tags:
-        combined_tags = list(dict.fromkeys(tags + default_push_tags))[:25]
+        combined_tags = list(dict.fromkeys(seo_meta["tags"] + tags))[:25]
     else:
-        combined_tags = default_push_tags
-
-    pinned_prompt = comment_text or "What was the worst outage you ever witnessed in production? Drop your take below! 👇"
-
-    # 3. Format Clickable YouTube Chapter Markers
-    chapters_text = ""
-    if chapters:
-        chapter_lines = []
-        for ch in chapters:
-            timestamp = ch.get("timestamp", "00:00")
-            ch_title = ch.get("title", f"Chapter {ch.get('chapter_id', '')}")
-            chapter_lines.append(f"{timestamp} - {ch_title}")
-        chapters_text = "\n📌 CHAPTERS & TIMESTAMPS:\n" + "\n".join(chapter_lines) + "\n"
-
-    # 4. Rich SEO Description
-    seo_description = f"""💬 QUESTION OF THE DAY:
-{pinned_prompt}
-Drop your perspective in the comments below! 👇
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{clean_title}
-
-{description.strip()}
-{chapters_text}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔔 Subscribe for weekly deep dives, tech investigations, and developer satire.
-
-#TechNews #SoftwareEngineering #SiliconValley #Coding #SystemArchitecture #AI #CloudComputing #Programming
-"""
+        combined_tags = seo_meta["tags"]
 
     body = {
         "snippet": {
