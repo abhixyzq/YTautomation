@@ -7,7 +7,7 @@ Generates audio and computes exact word-level timing offsets for viral captions.
 import os
 import asyncio
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import edge_tts
 from dotenv import load_dotenv
 
@@ -55,6 +55,16 @@ def enhance_speech_text(text: str) -> str:
         
     # Replace em-dashes and double hyphens with comma for natural breath
     cleaned = cleaned.replace("—", ", ").replace("--", ", ")
+
+    # Currency and number pronunciation fixes for neural voice (Hindi & English)
+    cleaned = re.sub(r'(?:rs\.?|inr|₹)\s*([\d,.]+)\s*(?:lakh|लाख)', r'\g<1> लाख रुपये', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'(?:rs\.?|inr|₹)\s*([\d,.]+)\s*(?:crore|करोड़)', r'\g<1> करोड़ रुपये', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'(?:rs\.?|inr|₹)\s*([\d,.]+)', r'\g<1> रुपये', cleaned, flags=re.IGNORECASE)
+
+    cleaned = re.sub(r'\$\s*([\d,.]+)\s*(?:billion|बिलियन)', r'\g<1> बिलियन डॉलर', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'\$\s*([\d,.]+)\s*(?:million|मिलियन)', r'\g<1> मिलियन डॉलर', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'\$\s*([\d,.]+)', r'\g<1> डॉलर', cleaned)
+
     return cleaned
 
 

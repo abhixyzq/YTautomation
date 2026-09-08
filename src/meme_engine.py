@@ -13,6 +13,8 @@ import random
 from typing import Dict, Any, Optional, Tuple
 from PIL import Image, ImageDraw, ImageFont
 
+from src.text_renderer import draw_shaped_text, get_text_dimensions, has_devanagari
+
 # Curated visual themes to make each video look distinctly unique
 THEMES = {
     "fireship_dark": {
@@ -283,29 +285,30 @@ def render_cinematic_meme_scene(
             lw, lh = l_img.size
             bg.paste(l_img, (card_x + target_w - lw - 10, card_y + 10), l_img)
 
-        # Bold Fireship Punchline Header
+        # Bold Fireship Punchline Header with complex script shaping
         punchline = meme_data.get("punchline", "THIS IS FINE")
-        bbox = draw.textbbox((0, 0), punchline, font=font_bold)
-        pw = bbox[2] - bbox[0]
+        pw, ph = get_text_dimensions(punchline, 48, bold=True)
         px = (width - pw) // 2
         py = card_y - 90
         if py < 280:
             py = card_y + target_h + 25
 
         draw.rounded_rectangle(
-            [px - 26, py - 10, px + pw + 26, py + 68],
+            [px - 26, py - 10, px + pw + 26, py + ph + 18],
             radius=16,
             fill=(5, 10, 18, 245),
             outline=(255, 255, 255, 210),
             width=3
         )
-        draw.text(
+        draw_shaped_text(
+            bg,
             (px, py),
             punchline,
-            font=font_bold,
-            fill=(255, 255, 255),
-            stroke_fill=(0, 0, 0),
-            stroke_width=4
+            font_size=48,
+            fill_color=(255, 255, 255, 255),
+            stroke_color=(0, 0, 0, 255),
+            stroke_width=4,
+            bold=True
         )
 
         return bg.convert("RGB")
@@ -341,27 +344,28 @@ def render_cinematic_meme_scene(
         frame.paste(l_img, (card_x + target_w - lw - 10, card_y + 10), l_img)
 
     punchline = meme_data.get("punchline", "THIS IS FINE")
-    bbox = draw.textbbox((0, 0), punchline, font=font_bold)
-    pw = bbox[2] - bbox[0]
+    pw, ph = get_text_dimensions(punchline, 48, bold=True)
     px = (width - pw) // 2
     py = card_y - 90
     if py < 280:
         py = card_y + target_h + 25
 
     draw.rounded_rectangle(
-        [px - 26, py - 10, px + pw + 26, py + 68],
+        [px - 26, py - 10, px + pw + 26, py + ph + 18],
         radius=16,
         fill=(5, 10, 18, 245),
         outline=(255, 255, 255, 210),
         width=3
     )
-    draw.text(
+    draw_shaped_text(
+        frame,
         (px, py),
         punchline,
-        font=font_bold,
-        fill=(255, 255, 255),
-        stroke_fill=(0, 0, 0),
-        stroke_width=4
+        font_size=48,
+        fill_color=(255, 255, 255, 255),
+        stroke_color=(0, 0, 0, 255),
+        stroke_width=4,
+        bold=True
     )
 
     return frame.convert("RGB")

@@ -38,6 +38,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.broll_downloader import fetch_broll_clip, get_curated_broll_clips
 from src.giphy_fetcher import search_giphy_meme_clip
 from src.meme_engine import render_cinematic_meme_scene, prepare_meme_scene_data, LOCAL_REAL_MEMES
+from src.text_renderer import draw_shaped_text, get_text_dimensions, wrap_text_lines, has_devanagari
 
 logger = logging.getLogger(__name__)
 
@@ -139,8 +140,16 @@ def _find_font(candidates: List[str]) -> Optional[str]:
     return None
 
 FONT_PATH_BOLD = _find_font([
+    "assets/fonts/NotoSansDevanagari.ttf",
+    "assets/fonts/NotoSansDevanagari-Bold.ttf",
+    "C:/Windows/Fonts/NirmalaB.ttf",
+    "C:/Windows/Fonts/Nirmala.ttf",
+    "C:/Windows/Fonts/mangalb.ttf",
+    "C:/Windows/Fonts/mangal.ttf",
     "C:/Windows/Fonts/segoeuib.ttf",
     "C:/Windows/Fonts/arialbd.ttf",
+    "/usr/share/fonts/truetype/noto/NotoSansDevanagari-Bold.ttf",
+    "/usr/share/fonts/truetype/deva/NotoSansDevanagari-Bold.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"
 ])
@@ -439,21 +448,9 @@ class ChapterBumperRenderer:
         draw.rounded_rectangle([bx, center_y - 170, bx + bw, center_y - 116], radius=16, fill=(225, 29, 72, 235), outline=(255, 120, 150), width=2)
         draw.text((bx + 28, center_y - 156), badge_text, font=self.font_pill, fill=(255, 255, 255))
 
-        # Title (Upper case, bold, centered with word-wrapping to prevent screen edge cutoff)
-        t_clean = chapter_title.upper()
-        t_words = t_clean.split()
-        t_lines = []
-        curr_t = []
-        for w in t_words:
-            curr_t.append(w)
-            bb = draw.textbbox((0, 0), " ".join(curr_t), font=self.font_huge)
-            if (bb[2] - bb[0]) > (width - 160):
-                curr_t.pop()
-                if curr_t:
-                    t_lines.append(" ".join(curr_t))
-                curr_t = [w]
-        if curr_t:
-            t_lines.append(" ".join(curr_t))
+        # Title (Centered with word-wrapping and complex script shaping)
+        t_clean = chapter_title
+        t_lines = wrap_text_lines(t_clean, max_width=width - 160, font_size=68, bold=True)
         if not t_lines:
             t_lines = [t_clean]
 
@@ -463,11 +460,10 @@ class ChapterBumperRenderer:
 
         max_line_w = 0
         for idx, tline in enumerate(t_lines):
-            t_bb = draw.textbbox((0, 0), tline, font=self.font_huge)
-            t_w = t_bb[2] - t_bb[0]
+            t_w, _ = get_text_dimensions(tline, 68, bold=True)
             max_line_w = max(max_line_w, t_w)
             tx = max(40, (width - t_w) // 2)
-            draw.text((tx, start_ty + (idx * line_h)), tline, font=self.font_huge, fill=(255, 255, 255))
+            draw_shaped_text(img, (tx, start_ty + (idx * line_h)), tline, font_size=68, fill_color=(255, 255, 255, 255), stroke_color=(0, 0, 0, 255), stroke_width=3, bold=True)
 
         # Cyan / Gold Accent Line
         lw = min(max_line_w + 80, width - 400)
@@ -486,9 +482,9 @@ class ChapterBumperRenderer:
 
 
 class LongCaptionRenderer:
-    """16:9 Landscape Captions in the lower third with active word highlighting."""
-    def __init__(self):
-        self.font = ImageFont.truetype(FONT_PATH_BOLD, 36) if FONT_PATH_BOLD else ImageFont.load_default()
+    """16:9 Landscape Captions in the lower third with active word highlighting and complex Indic shaping."""
+    def __init__(self, font_size: int = 36):
+        self.font_size = font_size
 
     def render_caption_frame(self, phrase: Dict[str, Any], current_time: float, width: int = WIDTH, height: int = HEIGHT) -> Image.Image:
         overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
@@ -498,17 +494,16 @@ class LongCaptionRenderer:
         if not words:
             return overlay
 
-        # Calculate word bounding boxes
+        # Calculate word bounding boxes with complex script shaping
         word_data = []
-        space_w = draw.textbbox((0, 0), " ", font=self.font)[2]
+        space_w = get_text_dimensions(" ", self.font_size, bold=True)[0]
         total_w = 0
 
         for w_item in words:
             w_text = w_item["word"].strip()
             if not w_text:
                 continue
-            bb = draw.textbbox((0, 0), w_text, font=self.font)
-            ww = bb[2] - bb[0]
+            ww, _ = get_text_dimensions(w_text, self.font_size, bold=True)
             word_data.append((w_item, w_text, ww))
             total_w += ww + space_w
 
@@ -531,12 +526,19 @@ class LongCaptionRenderer:
         curr_x = start_x
         for w_item, w_text, ww in word_data:
             is_active = w_item["start"] <= current_time <= w_item["end"]
-            text_color = (255, 235, 0) if is_active else (255, 255, 255)
+            text_color = (255, 235, 0, 255) if is_active else (255, 255, 255, 255)
 
-            # Drop shadow
-            draw.text((curr_x + 2, y_pos + 2), w_text, font=self.font, fill=(0, 0, 0, 220))
-            draw.text((curr_x, y_pos), w_text, font=self.font, fill=text_color)
-            curr_x += ww + space_w
+            tw, _ = draw_shaped_text(
+                overlay,
+                (curr_x, y_pos),
+                w_text,
+                font_size=self.font_size,
+                fill_color=text_color,
+                stroke_color=(0, 0, 0, 255),
+                stroke_width=3 if is_active else 2,
+                bold=True
+            )
+            curr_x += max(tw, ww) + space_w
 
         return overlay
 

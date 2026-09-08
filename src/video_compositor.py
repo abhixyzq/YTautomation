@@ -29,6 +29,7 @@ from moviepy import (
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.caption_engine import CaptionRenderer, group_words_into_phrases
+from src.text_renderer import draw_shaped_text, get_text_dimensions, wrap_text_lines, has_devanagari
 from src.broll_downloader import get_curated_broll_clips
 from src.meme_engine import (
     pick_story_theme, 
@@ -51,8 +52,16 @@ def _find_font(candidates: List[str]) -> Optional[str]:
     return None
 
 FONT_PATH_BOLD = _find_font([
+    "assets/fonts/NotoSansDevanagari.ttf",
+    "assets/fonts/NotoSansDevanagari-Bold.ttf",
+    "C:/Windows/Fonts/NirmalaB.ttf",
+    "C:/Windows/Fonts/Nirmala.ttf",
+    "C:/Windows/Fonts/mangalb.ttf",
+    "C:/Windows/Fonts/mangal.ttf",
     "C:/Windows/Fonts/segoeuib.ttf",
     "C:/Windows/Fonts/arialbd.ttf",
+    "/usr/share/fonts/truetype/noto/NotoSansDevanagari-Bold.ttf",
+    "/usr/share/fonts/truetype/deva/NotoSansDevanagari-Bold.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"
 ])
@@ -214,42 +223,45 @@ class CinematicDocumentaryEngine:
 
         # 1. Top Live Dynamic Category Pill (Customized by Story Topic)
         badge_text, bg_col, border_col = get_dynamic_badge_meta(story)
-        badge_bbox = draw.textbbox((0, 0), badge_text, font=self.font_badge)
-        badge_w = (badge_bbox[2] - badge_bbox[0]) + 52
+        badge_bw, badge_bh = get_text_dimensions(badge_text, 26, bold=True)
+        badge_w = badge_bw + 52
         draw.rounded_rectangle([70, 130, 70 + badge_w, 185], radius=14, fill=bg_col, outline=border_col, width=2)
-        draw.text((96, 142), badge_text, font=self.font_badge, fill=(255, 255, 255))
+        draw_shaped_text(overlay, (96, 142), badge_text, font_size=26, fill_color=(255, 255, 255, 255), stroke_color=None, stroke_width=0, bold=True)
 
-        # 2. Glassmorphic Headline Box (Top) - strictly printable ASCII to guarantee no glyph boxes
-        import re
+        # 2. Glassmorphic Headline Box (Top) - Full Latin & Devanagari (Hindi) Support
         clean_headline = re.sub(r'#\w+', '', story_title)
-        clean_headline = re.sub(r'[^\x20-\x7E]', '', clean_headline).strip()
+        # Preserve Latin, Devanagari, numbers, currency symbols, and essential punctuation
+        clean_headline = re.sub(r'[^\w\s\d\u0900-\u097F.,!?\'":;$\-%/—–\-()|₹]', '', clean_headline).strip()
         headline = " ".join(clean_headline.split())
-        words = headline.split()
-        lines = []
-        curr_line = []
-        for w in words:
-            curr_line.append(w)
-            bbox = draw.textbbox((0, 0), " ".join(curr_line), font=self.font_title)
-            if (bbox[2] - bbox[0]) > 840:
-                curr_line.pop()
-                lines.append(" ".join(curr_line))
-                curr_line = [w]
-        if curr_line:
-            lines.append(" ".join(curr_line))
+
+        font_size = 44
+        lines = wrap_text_lines(headline, max_width=860, font_size=font_size, bold=True)
+        if not lines:
+            lines = [headline] if headline else ["BREAKING INTEL"]
         lines = lines[:3]
 
-        card_h = len(lines) * 62 + 45
+        line_spacing = 62
+        card_h = len(lines) * line_spacing + 45
         draw.rounded_rectangle(
             [60, 210, 1020, 210 + card_h],
             radius=20,
-            fill=(10, 15, 28, 210),  # Dark glass backing
-            outline=(0, 235, 255, 160),
+            fill=(10, 15, 28, 225),  # Dark glass backing
+            outline=(0, 235, 255, 175),
             width=3
         )
         line_y = 232
         for line in lines:
-            draw.text((92, line_y), line, font=self.font_title, fill=(255, 255, 255))
-            line_y += 62
+            draw_shaped_text(
+                overlay,
+                (92, line_y),
+                line,
+                font_size=font_size,
+                fill_color=(255, 255, 255, 255),
+                stroke_color=(0, 0, 0, 255),
+                stroke_width=2,
+                bold=True
+            )
+            line_y += line_spacing
 
         return overlay
 

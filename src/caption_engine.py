@@ -12,11 +12,16 @@ import math
 from typing import List, Dict, Any, Optional
 from PIL import Image, ImageDraw, ImageFont
 
+from src.text_renderer import draw_shaped_text, get_text_dimensions, has_devanagari
+
 FONT_CANDIDATES = [
+    "assets/fonts/NotoSansDevanagari.ttf",
     "assets/fonts/NotoSansDevanagari-Bold.ttf",
     "assets/fonts/bold.ttf",
-    "C:/Windows/Fonts/mangalb.ttf",
     "C:/Windows/Fonts/NirmalaB.ttf",
+    "C:/Windows/Fonts/Nirmala.ttf",
+    "C:/Windows/Fonts/mangalb.ttf",
+    "C:/Windows/Fonts/mangal.ttf",
     "C:/Windows/Fonts/segoeuib.ttf",
     "C:/Windows/Fonts/arialbd.ttf",
     "C:/Windows/Fonts/impact.ttf",
@@ -194,11 +199,10 @@ class CaptionRenderer:
 
         # 1. Start with base font and autoscale down if words are too wide
         curr_font_size = self.base_font_size
-        font = self._get_font(curr_font_size)
         emoji_font = self._get_emoji_font(int(curr_font_size * 0.85))
 
-        space_w = draw.textbbox((0, 0), " ", font=font)[2]
-        word_widths = [draw.textbbox((0, 0), text, font=font)[2] - draw.textbbox((0, 0), text, font=font)[0] for text, _, _ in word_items]
+        space_w = get_text_dimensions(" ", curr_font_size, bold=True)[0]
+        word_widths = [get_text_dimensions(text, curr_font_size, bold=True)[0] for text, _, _ in word_items]
 
         emoji_w = 0
         if phrase_emoji:
@@ -214,10 +218,9 @@ class CaptionRenderer:
         if total_w > self.max_allowed_width:
             scale = self.max_allowed_width / total_w
             curr_font_size = max(int(self.base_font_size * scale), 42)
-            font = self._get_font(curr_font_size)
             emoji_font = self._get_emoji_font(int(curr_font_size * 0.85))
-            space_w = draw.textbbox((0, 0), " ", font=font)[2]
-            word_widths = [draw.textbbox((0, 0), text, font=font)[2] - draw.textbbox((0, 0), text, font=font)[0] for text, _, _ in word_items]
+            space_w = get_text_dimensions(" ", curr_font_size, bold=True)[0]
+            word_widths = [get_text_dimensions(text, curr_font_size, bold=True)[0] for text, _, _ in word_items]
             if phrase_emoji:
                 try:
                     em_box = draw.textbbox((0, 0), phrase_emoji, font=emoji_font)
@@ -233,8 +236,7 @@ class CaptionRenderer:
         # 3. Dynamic contrast backing badge (pill)
         pad_x = 30
         pad_y = 18
-        text_sample_bbox = draw.textbbox((0, 0), "AG", font=font)
-        line_height = text_sample_bbox[3] - text_sample_bbox[1]
+        line_height = get_text_dimensions("AG", curr_font_size, bold=True)[1]
 
         box_left = max(40, start_x - pad_x)
         box_right = min(self.width - 40, start_x + total_w + pad_x)
@@ -250,7 +252,7 @@ class CaptionRenderer:
             width=3
         )
 
-        # 4. Render active word highlight and crisp white surrounding text
+        # 4. Render active word highlight and crisp white surrounding text with accurate complex shaping
         curr_x = start_x
         for (text, w_start, w_end), w_w in zip(word_items, word_widths):
             is_active = (w_start <= current_time <= w_end + 0.08)
@@ -259,15 +261,17 @@ class CaptionRenderer:
             stroke_color = (0, 0, 0, 255)
             stroke_w = 4 if is_active else 3
 
-            draw.text(
+            tw, _ = draw_shaped_text(
+                overlay,
                 (curr_x, y_pos),
                 text,
-                font=font,
-                fill=text_color,
-                stroke_fill=stroke_color,
-                stroke_width=stroke_w
+                font_size=curr_font_size,
+                fill_color=text_color,
+                stroke_color=stroke_color,
+                stroke_width=stroke_w,
+                bold=True
             )
-            curr_x += w_w + space_w
+            curr_x += max(tw, w_w) + space_w
 
         # 5. Render dynamic 3D emoji if present
         if phrase_emoji:
