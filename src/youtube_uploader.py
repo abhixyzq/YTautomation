@@ -27,11 +27,19 @@ CLIENT_SECRET_FILE = os.getenv("YOUTUBE_CLIENT_SECRET_FILE", "client_secret.json
 
 
 def resolve_token_file(channel: str = "tech", token_file: Optional[str] = None) -> str:
-    """Resolve token file path based on selected target channel."""
+    """Resolve token file path based on selected target channel with seamless fallback."""
     if token_file:
         return token_file
     if channel.lower() in ("dastawez", "idastawez", "hindi"):
-        return os.getenv("YOUTUBE_TOKEN_DASTAWEZ_FILE", "token_dastawez.json")
+        dastawez_token = os.getenv("YOUTUBE_TOKEN_DASTAWEZ_FILE", "token_dastawez.json")
+        if os.path.exists(dastawez_token) and os.path.getsize(dastawez_token) > 10:
+            return dastawez_token
+        # Graceful fallback: If separate dastawez token is missing, use default token.json
+        general_token = os.getenv("YOUTUBE_TOKEN_FILE", "token.json")
+        if os.path.exists(general_token) and os.path.getsize(general_token) > 10:
+            logger.info(f"Target token '{dastawez_token}' not found. Using channel token '{general_token}'.")
+            return general_token
+        return dastawez_token
     return os.getenv("YOUTUBE_TOKEN_FILE", "token.json")
 
 

@@ -76,7 +76,8 @@ jobs:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           GIPHY_API_KEY: ${{ secrets.GIPHY_API_KEY || 'Y8PSKU5ua4A75zQRA6EHOZ9FcAySv9U6' }}
           CLIENT_SECRET_JSON: ${{ secrets.CLIENT_SECRET_JSON }}
-          TOKEN_DASTAWEZ_JSON: ${{ secrets.TOKEN_DASTAWEZ_JSON }}
+          TOKEN_DASTAWEZ_JSON: ${{ secrets.TOKEN_DASTAWEZ_JSON || secrets.TOKEN_JSON }}
+          TOKEN_JSON: ${{ secrets.TOKEN_JSON }}
         run: |
           echo "GEMINI_API_KEY=$GEMINI_API_KEY" >> .env
           echo "PEXELS_API_KEY=$PEXELS_API_KEY" >> .env
@@ -87,11 +88,13 @@ jobs:
           echo "PUBLISH_MODE=PUBLIC" >> .env
           echo "YOUTUBE_CLIENT_SECRET_FILE=client_secret.json" >> .env
           echo "YOUTUBE_TOKEN_DASTAWEZ_FILE=token_dastawez.json" >> .env
+          echo "YOUTUBE_TOKEN_FILE=token.json" >> .env
 
           echo "$CLIENT_SECRET_JSON" > client_secret.json
           echo "$TOKEN_DASTAWEZ_JSON" > token_dastawez.json
+          echo "$TOKEN_JSON" > token.json
           echo "Verified credential files injected:"
-          ls -l client_secret.json token_dastawez.json
+          ls -l client_secret.json token_dastawez.json token.json
 
       - name: 🎬 Render Video & Auto-Publish to @iDastawez
         run: |
@@ -141,4 +144,4 @@ jobs:
       - name: 🧹 Clean Up Ephemeral Secrets
         if: always()
         run: |
-          rm -f .env client_secret.json token_dastawez.json
+          rm -f .env client_secret.json token_dastawez.json token.json

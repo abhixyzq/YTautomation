@@ -11,6 +11,14 @@ on:
     - cron: '20 14 * * *'
   workflow_dispatch: # Allows manual trigger from GitHub Actions UI or Web Dashboard
     inputs:
+      channel:
+        description: 'Target Channel & Language'
+        required: true
+        default: 'tech'
+        type: choice
+        options:
+          - tech
+          - dastawez
       mode:
         description: 'Video Format'
         required: true
@@ -75,6 +83,7 @@ jobs:
           GIPHY_API_KEY: ${{ secrets.GIPHY_API_KEY || 'Y8PSKU5ua4A75zQRA6EHOZ9FcAySv9U6' }}
           CLIENT_SECRET_JSON: ${{ secrets.CLIENT_SECRET_JSON }}
           TOKEN_JSON: ${{ secrets.TOKEN_JSON }}
+          TOKEN_DASTAWEZ_JSON: ${{ secrets.TOKEN_DASTAWEZ_JSON || secrets.TOKEN_JSON }}
           INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
           INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
         run: |
@@ -87,15 +96,22 @@ jobs:
           echo "LANGUAGE=ENG" >> .env
           echo "PUBLISH_MODE=PUBLIC" >> .env
           echo "YOUTUBE_CLIENT_SECRET_FILE=client_secret.json" >> .env
+          echo "YOUTUBE_TOKEN_FILE=token.json" >> .env
+          echo "YOUTUBE_TOKEN_DASTAWEZ_FILE=token_dastawez.json" >> .env
           echo "INSTAGRAM_ACCOUNT_ID=$INSTAGRAM_ACCOUNT_ID" >> .env
           echo "INSTAGRAM_ACCESS_TOKEN=$INSTAGRAM_ACCESS_TOKEN" >> .env
 
           echo "$CLIENT_SECRET_JSON" > client_secret.json
           echo "$TOKEN_JSON" > token.json
+          echo "$TOKEN_DASTAWEZ_JSON" > token_dastawez.json
 
       - name: 🎬 Render Video & Auto-Publish
         run: |
-          CMD="python main.py --channel tech"
+          CHANNEL="tech"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            [ -n "${{ inputs.channel }}" ] && CHANNEL="${{ inputs.channel }}"
+          fi
+          CMD="python main.py --channel $CHANNEL"
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             MODE="${{ inputs.mode }}"
             [ -z "$MODE" ] && MODE="short"
@@ -132,4 +148,4 @@ jobs:
       - name: 🧹 Clean Up Ephemeral Secrets
         if: always()
         run: |
-          rm -f .env client_secret.json token.json
+          rm -f .env client_secret.json token.json token_dastawez.json
