@@ -256,5 +256,11 @@
     "url": "https://www.nomanssky.com/cosmos-update/",
     "source": "Hacker News",
     "published_at": "2026-09-10T08:39:30.297382"
+  },
+  {
+    "title": "Deep Inside the Linux Kernel Sits an Ancient Function Nobody Dares to Delete",
+    "url": "https://news.ycombinator.com/item?id=kernel-ancient-code",
+    "source": "HackerNews",
+    "published_at": "2026-09-10T12:17:54.150975"
   }
 ]
