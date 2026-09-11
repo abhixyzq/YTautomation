@@ -310,5 +310,11 @@
     "url": "https://mmoustafa.com/blog/so-you-want-to-use-openrouter/",
     "source": "Hacker News",
     "published_at": "2026-09-11T12:17:03.772212"
+  },
+  {
+    "title": "Godot and Rust based multiplexer (terminal panes and more)",
+    "url": "https://github.com/godot-pty/gpty",
+    "source": "Hacker News",
+    "published_at": "2026-09-11T17:49:56.577358"
   }
 ]
