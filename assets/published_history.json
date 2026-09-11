@@ -298,5 +298,11 @@
     "url": "https://auberon.xyz/blog/posts/deathray/",
     "source": "Hacker News",
     "published_at": "2026-09-11T07:22:45.227280"
+  },
+  {
+    "title": "Shopify is moving from React Native back to Swift and Kotlin",
+    "url": "https://shopify.engineering/back-to-native",
+    "source": "Hacker News",
+    "published_at": "2026-09-11T08:34:43.163486"
   }
 ]
