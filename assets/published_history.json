@@ -334,5 +334,11 @@
     "url": "https://www.youtube.com/watch?v=iZODN0QUgjI",
     "source": "Hacker News",
     "published_at": "2026-09-12T11:40:23.947560"
+  },
+  {
+    "title": "A Mathematical Framework for Transformer Circuits (2021)",
+    "url": "https://transformer-circuits.pub/2021/framework/index.html",
+    "source": "Hacker News",
+    "published_at": "2026-09-12T17:16:32.987078"
   }
 ]
