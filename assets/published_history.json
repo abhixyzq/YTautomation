@@ -346,5 +346,11 @@
     "url": "https://www.economist.com/interactive/briefing/2026/09/03/nvidia-is-the-central-bank-of-ai",
     "source": "Hacker News",
     "published_at": "2026-09-13T05:00:12.827276"
+  },
+  {
+    "title": "Real-SWE: Benchmarking AI models on private, real-world, enterprise codebases",
+    "url": "https://withspecific.com/benchmarks/real-swe",
+    "source": "Hacker News",
+    "published_at": "2026-09-13T07:32:49.017493"
   }
 ]
