@@ -1,86 +1,140 @@
-# 🚀 Autonomous AI Avatar Tech Shorts Pipeline (100% Free)
+# 🚀 YTautomation: Autonomous Tech Video Pipeline
 
-An end-to-end, zero-cost, fully autonomous pipeline for generating high-retention 9:16 YouTube Shorts on trending tech and artificial intelligence news.
+End-to-end automation for generating and publishing bilingual tech videos:
+- **Shorts (9:16)** for rapid trend coverage
+- **Long episodes (16:9)** for deep-dive explainers
+- **English (@TechShow)** and **Hindi (@iDastawez)** channel flows
 
----
-
-## 💎 Key Features
-- **100% Free & Unlimited:** No HeyGen subscriptions, no ElevenLabs character limits, no watermarks.
-- **Hardware-Optimized:** Custom-built for integrated graphics (Intel Iris Xe) and Windows.
-- **Trending News Ingestion:** Auto-scrapes Hacker News, Reddit (`r/technology`, `r/artificial`), and TechCrunch RSS feeds.
-- **Gemini 1.5 Flash:** Free tier (15 requests/minute) for generating viral 35-45 second hooks and high-retention scripts.
-- **Neural Voiceover:** `edge-tts` Microsoft Neural Voice (`en-US-ChristopherNeural` - authoritative tech documentary tone).
-- **Audio-Reactive AI Presenter:** Animated tech host bubble with neon glow, sinusoidal breathing motion, and live status badge.
-- **Dynamic Captions:** High-contrast viral subtitles with word-by-word active highlights (Hormozi/MrBeast style).
-- **Direct YouTube Upload:** Uploads as public or draft YouTube Shorts with `#Shorts #Tech #AI` metadata via YouTube Data API v3.
-- **Automation Ready:** Includes `run_daily.bat` and `scheduler_setup.ps1` to publish 2x daily (9:00 AM & 6:00 PM).
+The project can run locally, but production publishing is designed around **GitHub Actions schedules**.
 
 ---
 
-## 📁 Project Structure
+## ✨ What this repo does
 
-```
-automate/
-├── assets/
-│   └── avatar_host.jpg       # High-authority AI presenter portrait
-├── src/
-│   ├── news_fetcher.py       # Scrapes top trending tech news
-│   ├── script_generator.py   # Gemini 1.5 Flash viral script engine
-│   ├── voice_generator.py    # edge-tts neural audio & timestamping
-│   ├── avatar_engine.py      # Audio-reactive animated presenter bubble
-│   ├── caption_engine.py     # Word-level highlighted subtitles
-│   ├── video_compositor.py   # 1080x1920 9:16 video renderer
-│   └── youtube_uploader.py   # YouTube Data API v3 publisher
-├── output/                   # Rendered YouTube Shorts MP4s
-├── temp/                     # Audio clips and intermediate frames
-├── .env.example              # Configuration template
-├── main.py                   # Master orchestrator
-├── run_daily.bat             # 1-click execution batch file
-├── scheduler_setup.ps1       # Windows Task Scheduler automated setup
-└── requirements.txt          # Python dependencies
+- Fetches trending stories (Hacker News, Reddit, RSS) or uses a custom topic
+- Generates script content with Gemini
+- Creates neural narration (`edge-tts`)
+- Renders:
+  - vertical Shorts via Python compositor
+  - landscape long episodes via Remotion + Python pipeline
+- Auto-publishes to YouTube (and Instagram Reel for tech shorts when configured)
+- Tracks published stories to avoid repeats (`assets/published_history.json`)
+
+---
+
+## 📁 Project structure
+
+```text
+/home/runner/work/YTautomation/YTautomation
+├── assets/                    # audio, meme assets, avatar image, publish history
+├── src/                       # pipeline modules (fetch, script, voice, render, upload)
+├── remotion/                  # long-form visual/thumbnail components
+├── .github/workflows/         # scheduled automation workflows
+├── main.py                    # entry point
+├── requirements.txt           # Python dependencies
+├── package.json               # Remotion/Node dependencies
+├── .env.example               # local environment template
+└── scheduler_*.ps1, run_daily.bat
 ```
 
 ---
 
-## ⚡ Quick Start
+## ⚙️ Prerequisites
 
-### 1. Test Run Locally (Dry Run)
-Test the entire pipeline without uploading to YouTube:
-```powershell
-python main.py --dry-run
-```
-Your final video will be generated and saved in the `output/` folder!
+- Python **3.11+**
+- Node.js **20+**
+- FFmpeg available in PATH
+- System fonts for Devanagari/Hindi rendering (for Hindi output)
 
-### 2. Custom Topic Run
-To make a video on a specific tech headline:
-```powershell
-python main.py --topic "DeepSeek V3 Open Source Model Outperforms GPT-4"
-```
+---
 
-### 3. Add Google Gemini API Key ($0 Free)
-1. Go to [Google AI Studio](https://aistudio.google.com/).
-2. Click **Get API Key** and create a free key (no credit card required).
-3. Open `.env` and set:
-   ```env
-   GEMINI_API_KEY=your_gemini_key_here
+## 🧪 Local setup
+
+1. Install Python dependencies:
+   ```bash
+   pip install -r requirements.txt
    ```
 
-### 4. Enable YouTube Auto-Upload ($0 Free)
-1. Go to [Google Cloud Console](https://console.cloud.google.com/).
-2. Create a new project and enable **YouTube Data API v3**.
-3. Go to **Credentials** > **Create Credentials** > **OAuth Client ID**.
-4. Application type: **Desktop App**.
-5. Click **Download JSON**, rename it to `client_secret.json`, and place it in this project folder.
-6. The first time you run `python main.py --publish`, a browser window will open asking you to sign in with your YouTube account. It saves `token.json` locally so subsequent runs are 100% automated and silent!
+2. Install Node dependencies (required for Remotion-based long visuals/thumbnails):
+   ```bash
+   npm ci
+   ```
+
+3. Create local env file:
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Add credentials in `.env` as needed:
+   - `GEMINI_API_KEY`
+   - `PEXELS_API_KEY` (optional)
+   - YouTube OAuth files (`client_secret.json`, token files) for publishing
+   - Instagram keys only if using IG publishing
 
 ---
 
-## 🕒 Setting Up Automated 2x Daily Execution
+## ▶️ Usage
 
-To run automatically at 9:00 AM and 6:00 PM every day:
-1. Open PowerShell as Administrator.
-2. Run:
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\scheduler_setup.ps1
-   ```
-This registers the tasks in Windows Task Scheduler to execute `run_daily.bat` autonomously.
+> By default, runs are dry-run unless `--publish` is passed.
+
+### Short video (default mode)
+```bash
+python main.py --channel tech --dry-run
+```
+
+### Long episode
+```bash
+python main.py --mode long --channel tech --duration 12 --dry-run
+```
+
+### Hindi channel
+```bash
+python main.py --channel dastawez --mode short --publish
+```
+
+### Dual-channel run
+```bash
+python main.py --channel both --mode short --publish
+```
+
+### Custom topic
+```bash
+python main.py --mode long --channel tech --topic "AI chip war" --duration 10 --publish
+```
+
+### Key CLI options
+- `--mode short|long`
+- `--channel tech|dastawez|both`
+- `--lang en|hi` (optional override)
+- `--duration <minutes>` (long mode)
+- `--topic "..."`
+- `--publish` (otherwise dry-run behavior)
+
+---
+
+## 🤖 GitHub Actions automation
+
+Primary workflows:
+- `daily_shorts.yml` → tech shorts schedule + manual dispatch
+- `daily_dastawez.yml` → Hindi shorts + long schedule + manual dispatch
+- `weekly_episodes.yml` (named daily long episodes) → long-form episode automation
+
+These workflows install dependencies, inject secrets, run `main.py`, and persist publish history updates.
+
+---
+
+## 🔐 Required GitHub Secrets (for CI publishing)
+
+- `GEMINI_API_KEY`
+- `PEXELS_API_KEY` (optional but recommended)
+- `CLIENT_SECRET_JSON`
+- `TOKEN_JSON`
+- `TOKEN_DASTAWEZ_JSON` (or fallback behavior in workflows)
+- `INSTAGRAM_ACCOUNT_ID` / `INSTAGRAM_ACCESS_TOKEN` (optional IG flow)
+
+---
+
+## 📝 Notes
+
+- `run_daily.bat` is intentionally disabled for local laptop execution in the current setup.
+- Windows scheduler scripts are present, but the active production path is GitHub Actions automation.
