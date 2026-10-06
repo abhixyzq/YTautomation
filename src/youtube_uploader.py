@@ -22,7 +22,10 @@ from googleapiclient.http import MediaFileUpload
 logger = logging.getLogger(__name__)
 
 # Scope required for uploading YouTube videos
-SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+SCOPES = [
+    "https://www.googleapis.com/auth/youtube.upload",
+    "https://www.googleapis.com/auth/youtube.force-ssl"
+]
 CLIENT_SECRET_FILE = os.getenv("YOUTUBE_CLIENT_SECRET_FILE", "client_secret.json")
 
 
@@ -51,34 +54,61 @@ def get_youtube_service(channel: str = "tech", token_file: Optional[str] = None)
     # 1. Check if token file already exists (saved session)
     if os.path.exists(target_token_file):
         try:
-            creds = Credentials.from_authorized_user_file(target_token_file, SCOPES)
+            creds = Credentials.from_authorized_user_file(target_token_file)
         except Exception as e:
             logger.warning(f"Failed to load cached token ({target_token_file}): {e}")
 
-    # 2. If no valid credentials, refresh or initiate OAuth flow
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            logger.info(f"Refreshing expired YouTube OAuth token for [{channel.upper()}] ({target_token_file})...")
+    # 2. If credentials exist but expired, attempt refresh
+    if creds and creds.expired and creds.refresh_token:
+        logger.info(f"Refreshing expired YouTube OAuth token for [{channel.upper()}] ({target_token_file})...")
+        try:
             creds.refresh(Request())
-        else:
-            if not os.path.exists(CLIENT_SECRET_FILE):
-                logger.error(
-                    f"'{CLIENT_SECRET_FILE}' not found! "
-                    "To enable auto-uploading to YouTube:\n"
-                    "1. Visit https://console.cloud.google.com/\n"
-                    "2. Enable 'YouTube Data API v3'\n"
-                    "3. Go to Credentials -> Create Credentials -> OAuth Client ID (Desktop App)\n"
-                    "4. Download the JSON and save as 'client_secret.json' in this folder."
-                )
-                return None
-            
-            logger.info(f"Initiating browser OAuth authentication for YouTube [{channel.upper()}]...")
-            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
-            creds = flow.run_local_server(port=0)
+        except Exception as e:
+            logger.error(
+                f"❌ Failed to refresh YouTube OAuth token: {e}\n"
+                "👉 This usually happens because Google Cloud OAuth Consent Screen is in 'Testing' mode (expires in 7 days),\n"
+                "   or the token was revoked.\n"
+                "👉 Solution: Set OAuth Consent Screen to 'In production' (Publish App) and generate a new token using 'python generate_token.py'."
+            )
+            creds = None
+
+    # 3. If still no valid credentials, handle interactive authentication or CI failure
+    if not creds or not creds.valid:
+        if not os.path.exists(CLIENT_SECRET_FILE):
+            logger.error(
+                f"'{CLIENT_SECRET_FILE}' not found! "
+                "To enable auto-uploading to YouTube:\n"
+                "1. Visit https://console.cloud.google.com/\n"
+                "2. Enable 'YouTube Data API v3'\n"
+                "3. Go to Credentials -> Create Credentials -> OAuth Client ID (Desktop App)\n"
+                "4. Download the JSON and save as 'client_secret.json' in this folder."
+            )
+            return None
+
+        # If running in GitHub Actions / CI, interactive browser auth is impossible
+        if os.getenv("CI") or os.getenv("GITHUB_ACTIONS"):
+            logger.error(
+                f"❌ YouTube authentication failed in GitHub Actions!\n"
+                f"The token in '{target_token_file}' is invalid or expired ('invalid_grant').\n"
+                "-------------------------------------------------------------------------\n"
+                "HOW TO FIX THIS:\n"
+                "1. Set Google Cloud OAuth status to 'In production' (Publish App) to prevent 7-day expiration:\n"
+                "   https://console.cloud.google.com/apis/credentials/consent?project=youtubeautomation-507613\n"
+                "2. Run 'python generate_token.py' on your local computer to generate a fresh token.\n"
+                "3. Update GitHub Secret 'TOKEN_JSON' (or 'TOKEN_DASTAWEZ_JSON') at:\n"
+                "   https://github.com/abhixyzq/YTautomation/settings/secrets/actions\n"
+                "-------------------------------------------------------------------------"
+            )
+            return None
+
+        logger.info(f"Initiating browser OAuth authentication for YouTube [{channel.upper()}]...")
+        flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+        creds = flow.run_local_server(port=0, prompt="consent", access_type="offline")
 
         # Save credentials for future unattended runs
-        with open(target_token_file, "w") as token:
-            token.write(creds.to_json())
+        if creds and creds.valid:
+            with open(target_token_file, "w") as token:
+                token.write(creds.to_json())
             logger.info(f"Saved YouTube OAuth credentials to {target_token_file}.")
 
     return build("youtube", "v3", credentials=creds)
